@@ -1,0 +1,16 @@
+<p align="center">
+    <table class="data" align="center" id="MainDataTable">
+        <tr class="tabheader">
+			<th>Status</th>
+            <th>Path</th>
+            <th>Max. Age</th>
+        </tr>
+        [% FOREACH dirline IN dirlines %]
+            <tr>
+					<td><img src="/pics/led_[% dirline.status %].gif" alt="[% dirline.status %]"</td>
+                    <td>[% dirline.path %]</td>
+					<td align="right">[% dirline.maxage %]</td>
+            </tr>
+        [% END %]
+    </table>
+</p>

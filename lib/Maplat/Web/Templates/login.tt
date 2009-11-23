@@ -1,0 +1,68 @@
+<script language="javascript">
+    function openMainWindow (Adresse) {
+      var MainWindow = window.open (Adresse, "mywindow","menubar=0,resizable=1,location=0,toolbar=0,scrollbars=1,width=900,height=800,statusbar=1");
+      MainWindow.focus();
+      self.close();
+      return false;
+    }
+</script>
+<form name="login" method="post" action="[% PostLink %]">
+    <table class="data" align="center" id="MainDataTable">
+        <tr class="tabheader">
+            <th colspan="2">
+                <div class="infotext">Authentification</div>
+            </th>
+        </tr>
+        <tr>
+            <td align="right">Name:</td>
+            <td align="left">
+                <input type="text" name="username" size="30" value="[% username %]" maxLength=40 size=20>
+            </td>
+        </tr>
+        <tr>
+            <td align="right">Password:</td>
+            <td align="left">
+                <input type="password" name="password" size="30" id="password" value="[% password %]">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2">&nbsp;</td>
+        </tr>
+        [% IF statustext %]
+            <tr>
+                <td colspan="2">&nbsp;</td>
+            </tr>
+            <tr class="tabheader">
+                <th colspan="2">
+                    <div class="infotext">Status</div>
+                </th>
+            </tr>
+            <tr>
+                <th colspan="2">
+                    <div class="[% statuscolor %]">[% statustext %]</div>
+                </th>
+            </tr>
+        [% END %]
+        <tr>
+            <td colspan="2" align="center">
+                <input type="submit" value="Login">
+                <input type="reset" value="Reset">
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" align="center">
+                <a href="" onClick="return openMainWindow('[% PostLink %]');">Make me an application</a>
+            </td>
+        </tr>
+    </table>
+
+    <script type="text/javascript">
+		// <![CDATA[
+		$(function() {
+			$("#password").hashmask();
+		});
+		// ]]>
+	</script
+
+</form>
+

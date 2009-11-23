@@ -1,0 +1,178 @@
+
+# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# Developed under Artistic license
+# for Magna Powertrain Ilz
+
+
+package Maplat::Web::StaticCache;
+use Maplat::Web::BaseModule;
+@ISA = ('Maplat::Web::BaseModule');
+
+our $VERSION = 0.9;
+
+use strict;
+use warnings;
+
+use Carp;
+
+sub new {
+    my ($proto, %config) = @_;
+    my $class = ref($proto) || $proto;
+    
+    my $self = $class->SUPER::new(%config); # Call parent NEW
+    bless $self, $class; # Re-bless with our class
+        
+    return $self;
+}
+
+sub reload {
+    my ($self) = shift;
+
+    # Empty cache
+    my %files;
+    $self->{cache} = \%files;  
+
+    my $fcount = 0;
+
+	my $extrabase = "";
+	if($self->{path} =~ /Images/i) {
+		$extrabase = "/Maplat/Web/Images";
+	} elsif($self->{path} =~ /Static/i) {
+		$extrabase = "/Maplat/Web/Static";
+	}
+	foreach my $bdir (@INC) {
+		next if($bdir eq ".");
+		my $fulldir = $bdir . $extrabase;
+		print "   ** checking $fulldir \n";
+		if(-d $fulldir) {
+			print "   **** loading extra static files\n";
+			$fcount += $self->load_dir($fulldir, $self->{webpath});
+		}
+	}
+
+	$fcount += $self->load_dir($self->{path}, $self->{webpath});
+    $fcount += 0; # Dummy for debug breakpoint
+
+}
+
+sub load_dir {
+    my ($self, $basedir, $basewebpath) = @_;
+
+    my $fcount = 0;
+
+    opendir(my $dfh, $basedir) or die($!);
+    while((my $fname = readdir($dfh))) {
+        next if($fname =~ /^\./);
+        my $nfname = $basedir . "/" . $fname;
+        if(-d $nfname) {
+            # Got ourself a directory, go recursive
+            $fcount += $self->load_dir($nfname, $basewebpath . $fname . "/");
+            next;
+        }
+
+        next if($fname !~ /(.*)\.([a-zA-Z0-9]*)/);
+        my ($kname, $type) = ($1, $2);
+        if($type =~ /jpg/i) {
+            $type = "image/jpeg";
+        } elsif($type =~ /bmp/i) {
+            $type = "image/bitmap";
+        } elsif($type =~ /htm/i) {
+            $type = "text/html";
+        } elsif($type =~ /css/i) {
+            $type = "text/css";
+        } elsif($type =~ /js/i) {
+            $type = "application/javascript";
+        }
+        
+        open(my $fh, "<", $nfname) or confess($!);
+        my $holdTerminator = $/;
+        undef $/;
+        binmode($fh);
+        my $data = <$fh>;
+        $/ = $holdTerminator;
+        close($fh);
+        my %entry = (name   => $kname,
+                    fullname=> $nfname,
+                    type    => $type,
+                    data    => $data,
+                    );
+        $self->{cache}->{$basewebpath . $fname} = \%entry; # Store under full name
+        $fcount++;
+    }
+    closedir($dfh);
+    return $fcount;
+}
+
+sub register {
+    my $self = shift;
+    $self->register_webpath($self->{webpath}, "get");
+}
+
+sub get {
+    my ($self, $cgi) = @_;
+    
+    my $name = $cgi->path_info();
+    
+    return (status  =>  404) unless defined($self->{cache}->{$name});
+    return (status          =>  200,
+            type            => $self->{cache}->{$name}->{type},
+            data            => $self->{cache}->{$name}->{data},
+            expires         => $self->{expires},
+            cache_control   =>  $self->{cache_control},
+            );
+}
+
+1;
+__END__
+
+=head1 NAME
+
+Maplat::Web::StaticCache - provide static files to browser
+
+=head1 SYNOPSIS
+
+This module provides RAM caching of static files.
+
+=head1 DESCRIPTION
+
+During the reload() calls, this modules recursively loads all files in the configured directory
+into RAM and delivers them to the browser very fast.
+
+It also sets chache_control and expires header to further reduce the load on the server. For multiple
+base directories (for example images, sounds, ...) you can use this module multiple times.
+
+=head1 Configuration
+
+        <module>
+                <modname>images</modname>
+                <pm>StaticCache</pm>
+                <options>
+                        <path>MaplatWeb/Images</path>
+                        <webpath>/pics/</webpath>
+                        <cache_control>max-age=3600, must-revalidate</cache_control>
+                        <expires>+1h</expires>
+                </options>
+        </module>
+
+
+=head1 Dependencies
+
+This module is a basic web module and does not depend on other web modules.
+
+=head1 SEE ALSO
+
+Maplat::Web
+
+=head1 AUTHOR
+
+Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2009 by Rene Schickbauer
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

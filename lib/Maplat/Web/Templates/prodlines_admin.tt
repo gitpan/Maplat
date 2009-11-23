@@ -1,0 +1,50 @@
+<p align="center">
+	<form name="prodlines" method="post" action="[% webpath %]">
+    <table class="data" id="MainDataTable">
+		<tr class="tabheader">
+				<th>Line ID</th>
+				<th>Access</th>
+				<th>Parser</th>
+				<th>Last Access</th>
+				<th>Description</th>
+				<th>URLs</th>
+				<th>Active</th>
+		</tr>
+		[% FOREACH line IN lines %]
+		<tr>
+				<td>[% line.line_id %]<input type="hidden" name="line_name" value="[% line.line_id %]"></td>
+				<td align="center"><img src="/pics/led_[% line.status_access %].gif" alt="[% line.status_access %]"</td>
+				<td align="center">
+				    [% IF line.status_access=="OK" %]
+						<img src="/pics/led_[% line.status_parser %].gif" alt="[% line.status_parser %]"
+				    [% ELSE %]
+						&nbsp;
+				    [% END %]
+				</td>
+				<td>[% line.status_lastaccess %]</td>
+				<td><input type="text" size="30" maxlength="60" name="desc_[% line.line_id %]" value="[% line.description %]"></td>
+				<td>
+				&nbsp;<br>
+				[% FOREACH url IN line.urls %]
+				<input type="text" size="50" maxlength="100" name="url_[% line.line_id %][[% url.count %]]" value="[% url.link %]"><br>
+				[% END %]
+				<input type="hidden" name="urlcount_[% line.line_id %]" value="[% line.urlcount %]">
+				&nbsp;
+				</td>
+				<td><input type="checkbox" name="status_[% line.line_id %]"
+				[% IF line.is_active %]
+				checked
+				[% END %]
+				></td>
+		</tr>
+		[% END %]
+		<tr>
+			<td colspan="7" align="center">
+				<input type="submit" value="Save">
+				<input type="submit" value="Reset">
+			</td>
+		</tr>
+    </table>
+	<input type="hidden" name="submitform" value="1">
+    </form>
+</p>

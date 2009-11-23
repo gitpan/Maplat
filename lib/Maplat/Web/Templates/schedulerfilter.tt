@@ -1,0 +1,204 @@
+<form name="orders" method="post" action="[% webpath %]">
+<p align="center">
+	<table border="0" cellpadding="30">
+		<tr valign="top">
+			<td>
+				<table class="data" id="HelperTable1">
+					<tr class="tabheader">
+							<th colspan="3">Signal types</th>
+					</tr>
+					<tr>
+						<td align="right">New</td>
+							<td>
+							<input type="checkbox" name="new_orders"
+							[% IF filter.new_orders == 1 %]
+								checked
+							[% END %]
+							/>
+						</td>
+						<td>&nbsp</td>
+					</tr>
+					<tr>
+						<td align="right">Active</td>
+						<td>
+							<input type="checkbox" name="active_orders"
+							[% IF filter.active_orders == 1 %]
+								checked
+							[% END %]
+							/>
+						</td>
+						<td>&nbsp</td>
+					</tr>
+			
+				
+					<tr>
+						<td align="right">Complete</td>
+						<td>
+							<input type="checkbox" name="complete_orders"
+							[% IF filter.complete_orders == 1 %]
+								checked
+							[% END %]
+							/>
+						</td>
+						<td>Max Age:
+						<select name="complete_maxage">
+							<option value="2 days"
+							[% IF filter.complete_maxage == "2 days" %]
+							selected="selected"
+							[% END %]
+							>2 days</option>
+							<option value="1 week"
+							[% IF filter.complete_maxage == "1 week" %]
+							selected="selected"
+							[% END %]
+							>1 Week</option>
+							<option value="2 weeks"
+							[% IF filter.complete_maxage == "2 weeks" %]
+							selected="selected"
+							[% END %]
+							>2 Weeks</option>
+							<option value="all"
+							[% IF filter.complete_maxage == "all" %]
+							selected="selected"
+							[% END %]
+							>All</option>
+						</select>
+						</td>
+					</tr>
+					
+					<tr>
+						<td align="right">Aborted</td>
+						<td>
+							<input type="checkbox" name="aborted_orders"
+							[% IF filter.aborted_orders == 1 %]
+								checked
+							[% END %]
+							/>
+						</td>
+						<td>Max Age:
+						<select name="aborted_maxage">
+							<option value="2 days"
+							[% IF filter.aborted_maxage == "2 days" %]
+							selected="selected"
+							[% END %]
+							>2 days</option>			
+							<option value="1 week"
+							[% IF filter.aborted_maxage == "1 week" %]
+							selected="selected"
+							[% END %]
+							>1 Week</option>
+							<option value="2 weeks"
+							[% IF filter.aborted_maxage == "2 weeks" %]
+							selected="selected"
+							[% END %]
+							>2 Weeks</option>
+							<option value="all"
+							[% IF filter.aborted_maxage == "all" %]
+							selected="selected"
+							[% END %]
+							>All</option>
+						</select>
+						</td>
+					</tr>
+				</table>
+			</td>
+			<td>
+				<table class="data" id="MainDataTable">
+					<tr class="tabheader">
+							<th colspan="2">Production Lines</th>
+					</tr>
+					
+					[% FOREACH line IN filter.prodlines %]
+					<tr>
+						<td align="right">[% line.name %]</td>
+						<td>
+							<input type="checkbox" name="line_[% line.name %]"
+							[% IF line.val == 1 %]
+								checked
+							[% END %]
+							/>
+						</td>
+					</tr>
+					[% END %]
+					
+				</table>
+			</td>
+			<td>
+				<table class="data" id="HelperTable2">
+					<tr class="tabheader">
+							<th colspan="2">Optional Columns</th>
+					</tr>
+					
+					[% FOREACH column IN filter.displaycolumns.values %]
+					<tr>
+						<td align="right">[% column.displayname %]</td>
+						<td>
+							<input type="checkbox" name="column_[% column.name %]"
+							[% IF column.val == 1 %]
+								checked
+							[% END %]
+							/>
+						</td>
+					</tr>
+					[% END %]
+					
+				</table>
+			</td>
+		</tr>
+        <tr>
+            <td colspan="3" align="center">
+                <input type="submit" value="Set Filter">&nbsp;
+                <input type="reset" value="Reset">
+				<input type="hidden" name="mode" value="setfilter">
+				<input type="hidden" name="submitform" value="1">
+            </td>
+        </tr>
+	</table>
+</p>
+</form>
+
+<p align="center">
+	<table class="data" id="HelperTable3">
+		<tr class="tabmasterheader">
+			<th colspan="3">Saved Filters</th>
+		</tr>
+		<tr class="tabheader">	
+			<th>Name</th>
+			<th colspan="2">Action</th>
+		</tr>
+
+		<form name="orders_save" method="post" action="[% webpath %]">
+		    <tr>
+				<td>
+					<input type="text" name="filtername" size="30" maxLength="60">
+				</td>
+				<td>
+					<input type="hidden" name="mode" value="savefilter">
+					<input type="hidden" name="submitform" value="1">
+					<input type="submit" value="Save">
+				</td>
+				<td>
+				</td>
+			</tr>
+		</form>
+		[% FOREACH loadfilter IN loadfilters %]
+		<form name="orders_load_[% loadfilter.name %]" method="post" action="[% webpath %]">
+				<tr>		
+					<td>
+						<input type="hidden" name="filtername" value="[% loadfilter.name %]">
+						[% loadfilter.name %]
+					</td>
+					<td>
+						<input type="hidden" name="mode" value="loadfilter" id="mode_[% loadfilter.name %]">
+						<input type="hidden" name="submitform" value="1">
+						<input type="submit" value="Load">
+					</td>
+					<td>
+						<input type="submit" value="Delete" onClick="return confirmDeleteFilter('mode_[% loadfilter.name %]');">
+					</td>
+				</tr>
+		    </form>
+		[% END %]
+
+	</table>
+</p>

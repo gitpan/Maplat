@@ -1,0 +1,44 @@
+--- #YAML:1.0
+name:               Maplat
+version:            0.9
+abstract:           The MAPLAT Web Framework
+author:
+    - Rene Schickbauer <rene.schickbauer@magnapowertrain.com>
+license:            unknown
+distribution_type:  module
+configure_requires:
+    ExtUtils::MakeMaker:  0
+build_requires:
+    ExtUtils::MakeMaker:  0
+requires:
+    CGI:                0
+    Data::Dumper:       0
+    Date::Manip:        0
+    Date::Simple:       0
+    DBD::Pg:            0
+    DBI:                0
+    Digest::MD5:        0
+    Digest::SHA1:       0
+    File::stat:         0
+    HTML::FormatText:   0
+    HTML::Parse:        0
+    IO::Handle:         0
+    Mail::Sendmail:     0
+    MIME::Base64:       0
+    MIME::QuotedPrint:  0
+    PDF::Report:        0
+    Storable:           0
+    String::CRC32:      0
+    Sys::Hostname:      0
+    Template:           0
+    Time::HiRes:        0
+    URI::Escape:        0
+    XML::Simple:        0
+no_index:
+    directory:
+        - t
+        - inc
+generated_by:       ExtUtils::MakeMaker version 6.54
+meta-spec:
+    url:      http://module-build.sourceforge.net/META-spec-v1.4.html
+    version:  1.4

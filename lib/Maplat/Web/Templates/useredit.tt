@@ -1,0 +1,117 @@
+[% IF statustext %]
+<p align="center">
+    <div class="[% statuscolor %]">[% statustext %]</div>
+</p>
+[% END %]
+<p align="center">
+    <form name="adduser" method="post" action="[% PostLink %]">
+        <table class="data" align="center" id="HelperTable1">
+            <tr class="tabheader">
+                <th colspan="2">
+                    <div class="infotext">New User</div>
+                </th>
+            </tr>
+            <tr>
+                <td align="right">Username</td>
+                <td align="left">
+                    <input type="text" name="adduser_username" value="[% adduser.username %]" maxLength=40 size=20>
+                </td>
+            </tr>
+            <tr>
+                <td align="right">New Password:</td>
+                <td align="left">
+                    <input type="password" name="adduser_pwnew" value="[% adduser.pwnew %]">
+                </td>
+            </tr>
+            <tr>
+                <td align="right">Email</td>
+                <td align="left">
+                    <input type="text" name="adduser_email" size="40" maxlength="60" value="[% adduser.email %]">
+                </td>
+            </tr>
+			<tr>
+                <td align="right">Rights</td>
+                <td>
+                    <table class="data" align="center" id="SubHelperTable1">
+						<tr>
+							[% FOREACH UserLevel IN UserLevels %]
+								<th>[% UserLevel.name %]</th>
+							[% END %]
+						</tr>
+						<tr>
+							[% FOREACH right IN adduser.rights %]
+								<td><input type="checkbox" name="adduser_[% right.id %]"
+									[% IF right.val %]
+									checked
+									[% END %]
+								></td>
+							[% END %]
+						</tr>
+					</table>
+				</td>
+			</tr>
+
+            <tr>
+                <td colspan="2">
+                    <table border="0" cellpadding="4" cellspacing="5" align="right">
+                        <td align="center"><input type="submit" value="Save"></td>
+                        <td align="center"><input type="reset" value="Reset"></td>
+                    </table>
+                </td>
+            </tr>
+        </table>
+        <input type="hidden" name="mode" value="adduser">
+    </form>
+</p>
+&nbsp;<br>
+<p align="center">
+    <table class="data" align="center" id="MainDataTable">
+        <tr class="tabheader">
+            <th>Username</th>
+            <th>Password</th>
+            <th>Email</th>
+			[% FOREACH UserLevel IN UserLevels %]
+				<th>[% UserLevel.name %]</th>
+			[% END %]
+            <th></th>
+            <th></th>
+        </tr>
+        [% FOREACH user IN users %]
+            <form name="changeuser_[% user.name %]" method="post" action="[% PostLink %]">
+				<tr>
+                    <td>
+                        <input type="hidden" name="username" value="[% user.username %]">
+                        [% user.username %]
+                    </td>
+                    <td>
+                        <input type="password" name="password" value="">
+                    </td>
+                    <td>
+                        <input type="text" name="email_addr" size="40" maxlength="60"  value="[% user.email_addr %]">
+                    </td>
+					
+					[% FOREACH right IN user.rights %]
+						<td>
+							<input type="checkbox" name="[% right.id %]"
+								[% IF right.val %]
+									checked
+								[% END %]
+							>
+						</td>
+					[% END %]
+                    <td>
+                        <input type="hidden" name="mode" value="changeuser">
+                        <input type="submit" value="Change" onClick="return confirmChangeUser();">
+                    </td>
+                </form>
+                <form name="deleteuser_[% user.name %]" method="post" action="[% PostLink %]">
+                    <td>
+                        <input type="hidden" name="username" value="[% user.username %]">
+                        <input type="hidden" name="mode" value="deleteuser">
+                        <input type="submit" value="Delete" onClick="return confirmDeleteUser();">
+                    </td>
+				</tr>
+			</form>
+        [% END %]
+    </table>
+</p>
