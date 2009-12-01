@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.91;
+our $VERSION = 0.92;
 
 use strict;
 use warnings;
@@ -23,11 +23,19 @@ sub new {
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
 
+    return $self;
+}
+
+sub checkDBH {
+	my ($self) = @_;
+
+	if($self->{mdbh}) {
+		return;
+	}
+
 	my $dbh = DBI->connect($self->{dburl}, $self->{dbuser}, $self->{dbpassword},
                                {AutoCommit => 0, RaiseError => 0}) or die($@);
 	$self->{mdbh} = $dbh;
-
-    return $self;
 }
 
 sub reload {
@@ -40,6 +48,18 @@ sub register {
 	#$self->{server}->{webpaths}->{$self->{webpath}} = $self;
 }
 
+sub endconfig {
+	my ($self) = @_;
+
+	if($self->{isForking}) {
+		# forking server: disconnect from database, generate new connection
+		# after the fork on demand
+		print "   *** Will fork, disconnect PostgreSQL server...\n";
+		$self->rollback;
+		$self->{mdbh}->disconnect;	
+		delete $self->{mdbh};
+	}
+}
 
 BEGIN {
 	# Auto-magically generate a number of similar functions without actually
@@ -52,19 +72,19 @@ BEGIN {
 	no strict 'refs';
 
 	for my $a (@simpleFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a(); };
+		*{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->$a(); };
 	}
 		
 	for my $a (@stdFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a($_[1]); };
+		*{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->$a($_[1]); };
 	}
 
 	for my $a (@varSetFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a} = $_[1]; };
+		*{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->{$a} = $_[1]; };
 	}
 	
 	for my $a (@varGetFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a}; };
+		*{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->{$a}; };
 	}
 
 }

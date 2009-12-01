@@ -43,6 +43,9 @@ Template
 Time::HiRes
 URI::Escape
 XML::Simple
+HTTP::Server::Simple::CGI
+Net::Server::PreFork
+IO::Socket::SSL
 
 
 COPYRIGHT AND LICENCE

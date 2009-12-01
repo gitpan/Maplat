@@ -1,6 +1,11 @@
 Revision history for Perl extension Maplat.
 
-0.91  Mon Dec 01 14:18:00 2010
+0.92  Mon Dec 01 18:20:00 2009
+	- Added (mostly untested) support for using Maplat::Web as preforking server
+	- Added (mostly untested) support for using SSL
+	- Removed Maplat::Server and switched back to HTTP::Server::Simple::CGI
+
+0.91  Mon Dec 01 14:18:00 2009
 	- Fixed some POD errors
 	- Fixed a template error (don't sessionrefresh on login/logout screens)
 	- StaticCache and TemplateCache now work even if only

@@ -35,10 +35,11 @@ my $config = XMLin($configfile,
 
 $APPNAME = $config->{appname};
 print "Changing application name to '$APPNAME'\n\n";
+my $isForking = $config->{server}->{forking} || 0;
 
 my @modlist = @{$config->{module}};
 my $webserver = new Maplat::Web($config->{server}->{port});
-$webserver->startconfig();
+$webserver->startconfig($config->{server});
 
 foreach my $module (@modlist) {
     $webserver->configure($module->{modname}, $module->{pm}, %{$module->{options}});
@@ -46,13 +47,9 @@ foreach my $module (@modlist) {
 
 
 $webserver->endconfig();
-$webserver->prepare();
 
 # Everything ready to run - notify user
-$webserver->print_banner;
-while(1) {
-    my $workCount = $webserver->run();
-    if(!$workCount) {
-        sleep(0.1);
-    }
-}
+#$webserver->print_banner;
+
+# And start the server
+$webserver->run();

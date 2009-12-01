@@ -3,18 +3,18 @@
 	<appname>Maplat WebGui</appname>
 	
 	<server>
-		<port>8080</port>
+		<port>443</port>
 		
 		<!-- do we want a forking server?
 			 This feature is still in beta, but it's
 			 much better whenever a client would otherwise
 			 block the server
 		-->
-		<forking>0</forking>
+		<forking>1</forking>
 
-		<usessl>0</usessl>
-		<sslcert>myssl.cert</sslcert>
-		<sslkey>myssl.key</sslkey>
+		<usessl>1</usessl>
+		<sslcert>ssl/server.cert</sslcert>
+		<sslkey>ssl/server.key</sslkey>
 	</server>
 
 	<!-- Template module -->

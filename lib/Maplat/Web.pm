@@ -1,5 +1,5 @@
 package Maplat::Web;
-use base qw(Maplat::Server::Simple::CGI);
+use base qw(HTTP::Server::Simple::CGI);
 
 # ------------------------------------------
 # MAPLAT - Magna ProdLan Administration Tool
@@ -7,7 +7,7 @@ use base qw(Maplat::Server::Simple::CGI);
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.9;
+our $VERSION = 0.92;
 
 use strict;
 use warnings;
@@ -17,6 +17,7 @@ use FileHandle;
 use Socket;
 use Data::Dumper;
 use Maplat::Helpers::Mascot;
+use IO::Socket::SSL;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Web::BrowserWorkarounds;
@@ -144,14 +145,49 @@ sub handle_request {
  
 }
 
-sub housekeeping {
-    my $self = shift;
-    #print "x\n";
-    return 0;
-}
-
 sub startconfig() {
-    my ($self) = @_;
+    my ($self, $maplatconfig) = @_;
+
+	$self->{maplat} = $maplatconfig;
+
+	if(defined($self->{maplat}->{forking}) && $self->{maplat}->{forking}) {
+		# Create new subroutine to tell HTTP::Server::Simple that we want
+		# to be a preforking server
+		no strict 'refs';
+		*{__PACKAGE__ . "::net_server"} = sub {
+			my $server = 'Net::Server::PreFork';
+			return $server;
+		};
+
+		$self->{maplat}->{forking} = 1;
+	} else {
+		$self->{maplat}->{forking} = 0;
+	}
+
+
+	if(defined($self->{maplat}->{usessl}) && $self->{maplat}->{usessl}) {
+		# Create subroutine to tell HTTP::Server::Simple that we want to use SSL
+		# with the certs defined in the config. This is done by creating an
+		# accept hook
+		no strict 'refs';
+		*{__PACKAGE__ . "::accept_hook"} = sub {
+			my $self = shift;
+			my $fh   = $self->stdio_handle;
+
+			$self->SUPER::accept_hook(@_);
+
+			my $newfh =
+			IO::Socket::SSL->start_SSL( $fh, 
+				SSL_server    => 1,
+				SSL_use_cert  => 1,
+				SSL_cert_file => $_[0]->{maplat}->{sslcert},
+				SSL_key_file  => $_[0]->{maplat}->{sslkey},
+			)
+			or warn "problem setting up SSL socket: " . IO::Socket::SSL::errstr();
+
+			$self->stdio_handle($newfh) if $newfh;
+		};
+	}
         
     # Clean up configuration
     my %tmpPaths;
@@ -188,9 +224,14 @@ sub endconfig() {
         print "  Loading data for $modname\n";
         $self->{modules}->{$modname}->reload;   # Reload module's data
     }
-    print "Data loaded!\n";
+    print "Data loaded - calling endconfig...\n";
+    foreach my $modname (keys %{$self->{modules}}) {
+   	    $self->{modules}->{$modname}->endconfig;   # Mostly used in preforking servers
+    }
+	print "Done.\n";
+		
     print "\n";
-    print "Startup configuration complete!\n";
+    print "Startup configuration complete! We're go for auto-sequence start.\n";
     print "Starting Maplat Server...\n";
     my $lines = Mascot();
     foreach my $line (@{$lines}) {
@@ -217,6 +258,10 @@ sub configure {
 
     # and its parent
     $config{server} = $self;
+
+	# also notify the module if it needs to take care of forking issues (database
+	# modules probably will)
+	$config{forking} = $self->{maplat}->{forking};
     
     $self->{modules}->{$modname} = $perlmodule->new(%config);
     $self->{modules}->{$modname}->register; # Register handlers provided by the module
@@ -231,28 +276,18 @@ sub reload {
     }
 }
 
-sub prepare {
+sub run_task {
     my ($self) = @_;
     
-    $self->{weblistener} = $self->SUPER::prepare();
-    return;
-}
-
-sub run {
-    my ($self) = @_;
-    
-    my $conCount = $self->{weblistener}->run;
     
     # only run tasks if there was no connection (there might be a browser just loading more files)
     my $taskCount = 0;
-    if(!$conCount) {
-        foreach my $task (@{$self->{tasks}}) {
-            my $module = $task->{Module};
-            my $funcname = $task->{Function};
-            $taskCount += $module->$funcname();
-        }
+    foreach my $task (@{$self->{tasks}}) {
+        my $module = $task->{Module};
+        my $funcname = $task->{Function};
+        $taskCount += $module->$funcname();
     }
-    return ($conCount + $taskCount);
+    return ($taskCount);
 }
 
 # Multi-Module calls: Called from one module to run multiple other module functions
@@ -375,7 +410,7 @@ calls and handles the browser requests.
   
   my @modlist = @{$config->{module}};
   my $webserver = MaplatWeb->new($config->{server}->{port});
-  $webserver->startconfig();
+  $webserver->startconfig($config->{server});
   
   foreach my $module (@modlist) {
       $webserver->configure($module->{modname}, $module->{pm}, %{$module->{options}});
@@ -383,16 +418,9 @@ calls and handles the browser requests.
   
   
   $webserver->endconfig();
-  $webserver->prepare();
   
   # Everything ready to run - notify user
-  $webserver->print_banner;
-  while(1) {
-      my $workCount = $webserver->run();
-      if(!$workCount) {
-          sleep(0.1);
-      }
-  }
+  $webserver->run();
 
 
 =head1 DESCRIPTION
@@ -401,10 +429,16 @@ This webgui is "the root of all evil". It loads and configures the rendering mod
 browser requests and callbacks/hooks and renders the occasional 404 error messages if no applicable
 module for the the browsers request is found.
 
+=head1 WARNING
+
+Warning! If you are upgrading from 0.91 or lower, beware: There are a few incompatible changes in the server
+initialization! Please see the Example in the tarball for details.
+
 =head1 Configuration and Startup
 
 Configuration is done in stages from the main application, after new(), the first thing to call is startconfig()
-to prepare the webserver for module configuration.
+to prepare the webserver for module configuration. It takes one argument, the maplat specific part of the webserver
+configuration.
 
 After that, for each module to load, configure() is called, during which the module is loaded and configured.
 
@@ -413,8 +447,6 @@ then automatically calls reload() to load all cached data).
 
 After a call to prepare() and an optional call to print_banner() (which the author strongly recommends *grin*) the webserver
 is ready to handle browser requests.
-
-This is done in a while loop or similar calling run().
 
 =head1 SEE ALSO
 

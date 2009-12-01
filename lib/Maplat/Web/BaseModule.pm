@@ -7,7 +7,7 @@ package Maplat::Web::BaseModule;
 use strict;
 use warnings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.92;
 
 use Carp;
 
@@ -28,8 +28,11 @@ sub register {
     confess("Required method 'register' not implemented!");
 }
 
-sub get_defaultwebdata {
-    confess("module registered 'get_defaultwebdata' but did not implement it!");
+sub endconfig {
+    # Called after everything is configured and the webserver is ready to serve data.
+    # This method is most likely only usefull in forking servers to dump any data
+    # that needs to be re-initialized after forking, for example database handles
+    # and memcached connections which are also in use before forking)
 }
 
 # Convenience functions for registering various callbacks

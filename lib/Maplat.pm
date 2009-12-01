@@ -8,7 +8,7 @@ require Exporter;
 
 our @ISA = qw(Exporter);
 
-our $VERSION = 0.91;
+our $VERSION = 0.92;
 
 
 
@@ -27,21 +27,17 @@ Maplat::Web. Please see these modules for more detailed information
 
 =head1 DESCRIPTION
 
-There are currently four parts of the Framework.
+There are currently three parts of the Framework.
 
 Maplat::Web is the WebGUI system, i.e. the part of the framework that
-helps you render the webbased graphical interface.
+helps you render the webbased graphical interface. Maplat::Web is based on
+HTTP::Server::Simple::CGI and has (alpha level) support for SSL and preforking.
 
 Maplat::Worker is the background system. All long-running tasks (more than a
 second or so) should be done with one or more background worker.
 
 Maplat::Helpers is a library of modules with various helper modules like special
 date parsing, sendmail-a-file and things like that.
-
-Maplat::Server is a fork a HTTP::Server::Simple. It has been adapted to the special
-needs of Maplat. Please don't rely on any specific features of Maplat::Server, our
-long-term plan is to support multiple integrated (perl-based) webservers via overloading.
-Only use Maplat::Web.
 
 =head1 SEE ALSO
 

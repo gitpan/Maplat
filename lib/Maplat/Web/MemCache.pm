@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 
-our $VERSION = 0.91;
+our $VERSION = 0.92;
 
 use strict;
 use warnings;
@@ -29,8 +29,10 @@ sub new {
 	# Decide which Memcached module we want to use
 	# First, we try the festest one, then the standard
 	# one and if everything fails we use our own
+	my $memdtype;
 	if(eval('require Cache::Memcached::Fast')) {
 		print "    Cache::Memcached::Fast available.\n";
+		$memdtype = "Cache::Memcached::Fast";
 		$memd = new Cache::Memcached::Fast {
 						servers   => [ $self->{service} ],
 						namespace => $self->{namespace} . "::",
@@ -39,6 +41,7 @@ sub new {
 		$memd_loaded = 1;
 	} elsif(eval('require Cache::Memcached')) {
 		print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
+		$memdtype = "Cache::Memcached";
 		$memd = new Cache::Memcached {
 						servers   => [ $self->{service} ],
 						namespace => $self->{namespace} . "::",
@@ -61,6 +64,7 @@ sub new {
 		if($memd_loaded) {
 			print "    Selected Memcached client lib is broken - falling back to Maplat::Helpers::Cache::Memcached\n";
 		}
+		$memdtype = "Maplat::Helpers::Cache::Memcached";
 		$memd = new Maplat::Helpers::Cache::Memcached {
 						servers   => [ $self->{service} ],
 						namespace => $self->{namespace} . "::",
@@ -69,15 +73,13 @@ sub new {
 		$memd->set($key, $val);
 		$newval = $memd->get($key);
 		if(!defined($newval) || $newval ne $val) {
-			die("Maplat Memcached client lib is also broken - giving up!"); 
+			die("Maplat Memcached client lib is also broken or memcached server is not running - giving up!"); 
 		} else {
 			$memd->delete($key);
 		}
 	} else {
 		$memd->delete($key);
 	}
-
-
 
 	print "    Selected Memcached library seems to be working. Good!\n";
 	$self->{memd} = $memd;
@@ -90,8 +92,23 @@ sub new {
 	$self->set("BUILD::" . $main::APPNAME, readBuildNum());
 
 	$self->{oldtime} = 0;
+	$self->{memdtype} = $memdtype;
 
     return $self;
+}
+
+sub endconfig {
+	my ($self) = @_;
+
+	if($self->{isForking}) {
+		# Disconnect all sockets prior to forking,
+		# as stated in the memcached documentation.
+		#
+		# Cache::Memcached::Fast says we should do this AFTER forking,
+		# but we should be all right if we kill the connections beforehand.
+		print "   *** Will fork, disconnect all memcache servers...\n";
+		$self->{memd}->disconnect_all;
+	}
 }
 
 sub reload {

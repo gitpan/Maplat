@@ -1,6 +1,7 @@
 Changes
 Example/configs/adminworker.xml
 Example/configs/webgui.xml
+Example/configs/webgui_fork_and_ssl.xml
 Example/configs/worker.xml
 Example/create_database_and_user.sql
 Example/create_tables.sql
@@ -23,6 +24,9 @@ Example/Maplat/Web/Logo/Layout/hello.tt
 Example/Maplat/Web/Logo/Layout/logout.tt
 Example/Maplat/Web/Templates/helloworld.tt
 Example/README
+Example/ssl/gen_ssl_key.sh
+Example/ssl/server.cert
+Example/ssl/server.key
 Example/webgui_cmd.pl
 Example/worker_cmd.pl
 lib/Maplat.pm
@@ -39,9 +43,6 @@ lib/Maplat/Helpers/Mascot.pm
 lib/Maplat/Helpers/Padding.pm
 lib/Maplat/Helpers/Strings.pm
 lib/Maplat/Helpers/TextLogger.pm
-lib/Maplat/Server/Simple.pm
-lib/Maplat/Server/Simple/CGI.pm
-lib/Maplat/Server/Simple/CGI/Environment.pm
 lib/Maplat/Web.pm
 lib/Maplat/Web/BaseModule.pm
 lib/Maplat/Web/BrowserWorkarounds.pm
