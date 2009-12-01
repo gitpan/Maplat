@@ -14,7 +14,7 @@ use warnings;
 use DBI;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.91;
 
 sub new {
     my ($proto, %config) = @_;
@@ -72,7 +72,7 @@ __END__
 
 =head1 NAME
 
-Maplat::Worker::PostgreSQL - Worker module for accessing PostgreSQL databases
+Maplat::Worker::PostgresDB - Worker module for accessing PostgreSQL databases
 
 =head1 SYNOPSIS
 

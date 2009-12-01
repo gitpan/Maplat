@@ -15,7 +15,7 @@ use warnings;
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.91;
 
 sub new {
     my ($proto, %config) = @_;
@@ -182,7 +182,7 @@ __END__
 
 =head1 NAME
 
-Maplat::Worker::Memcache - Module for access to memcached
+Maplat::Worker::MemCache - Module for access to memcached
 
 =head1 SYNOPSIS
 

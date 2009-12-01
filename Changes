@@ -1,5 +1,12 @@
 Revision history for Perl extension Maplat.
 
+0.91  Mon Dec 01 14:18:00 2010
+	- Fixed some POD errors
+	- Fixed a template error (don't sessionrefresh on login/logout screens)
+	- StaticCache and TemplateCache now work even if only
+	  serving default data (without the local dirs existing)
+	- LogoCache is still broken (can't use default data)
+
 0.90  Mon Nov 16 11:58:59 2009
 	- first public release on CPAN
 

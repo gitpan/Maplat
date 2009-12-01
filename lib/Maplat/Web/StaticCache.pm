@@ -50,7 +50,11 @@ sub reload {
 		}
 	}
 
-	$fcount += $self->load_dir($self->{path}, $self->{webpath});
+	if(-d $self->{path}) {
+		$fcount += $self->load_dir($self->{path}, $self->{webpath});
+	} else {
+		print "   **** WARNING: configured dir " . $self->{path} . " does not exist!\n";
+	}
     $fcount += 0; # Dummy for debug breakpoint
 
 }

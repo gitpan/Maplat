@@ -12,13 +12,13 @@ my %clean_env = %ENV;
 
 =head1 NAME
 
-HTTP::Server::Simple::CGI::Environment - a HTTP::Server::Simple mixin to provide the CGI protocol
+Maplat::Server::Simple::CGI::Environment - a Maplat::Server::Simple mixin to provide the CGI protocol
 
 =head1 DESCRIPTION
 
 This mixin abstracts the CGI protocol out from
-L<HTTP::Server::Simple::CGI> so that it's easier to provide your own
-CGI handlers with L<HTTP::Server::Simple> which B<don't> use CGI.pm
+L<Maplat::Server::Simple::CGI> so that it's easier to provide your own
+CGI handlers with L<Maplat::Server::Simple> which B<don't> use CGI.pm
 
 =head2 setup_environment
 
@@ -32,7 +32,7 @@ start-up state.
 sub setup_environment {
     %ENV = (
         %clean_env,
-        SERVER_SOFTWARE   => "HTTP::Server::Simple/$VERSION",
+        SERVER_SOFTWARE   => "Maplat::Server::Simple/$VERSION",
         GATEWAY_INTERFACE => 'CGI/1.1'
     );
 }
@@ -53,7 +53,7 @@ sub setup_server_url {
 This method sets up CGI environment variables based on various
 meta-headers, like the protocol, remote host name, request path, etc.
 
-See the docs in L<HTTP::Server::Simple> for more detail.
+See the docs in L<Maplat::Server::Simple> for more detail.
 
 =cut
 

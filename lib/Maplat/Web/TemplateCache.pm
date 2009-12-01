@@ -47,7 +47,11 @@ sub reload {
 		}
 	}
 
-	$self->load_dir($self->{path}, \%files);	
+	if(-d $self->{path}) {
+		$self->load_dir($self->{path}, \%files);	
+	} else {
+		print "   **** WARNING: configured dir " . $self->{path} . " does not exist!\n";
+	}
 
     $self->{cache} = \%files;  
 }

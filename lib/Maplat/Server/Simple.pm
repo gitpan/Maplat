@@ -8,27 +8,27 @@ use Carp;
 use URI::Escape;
 
 use vars qw($VERSION $bad_request_doc);
-$VERSION = '0.38';
+our $VERSION = 0.39;
 
 =head1 NAME
 
-HTTP::Server::Simple - Lightweight HTTP server
+Maplat::Server::Simple - Lightweight HTTP server
 
 =head1 SYNOPSIS
 
  use warnings;
  use strict;
  
- use HTTP::Server::Simple;
+ use Maplat::Server::Simple;
  
- my $server = HTTP::Server::Simple->new();
+ my $server = Maplat::Server::Simple->new();
  $server->run();
 
-However, normally you will sub-class the HTTP::Server::Simple::CGI
-module (see L<HTTP::Server::Simple::CGI>);
+However, normally you will sub-class the Maplat::Server::Simple::CGI
+module (see L<Maplat::Server::Simple::CGI>);
 
  package Your::Web::Server;
- use base qw(HTTP::Server::Simple::CGI);
+ use base qw(Maplat::Server::Simple::CGI);
  
  sub handle_request {
      my ($self, $cgi) = @_;
@@ -58,7 +58,7 @@ By default, the server traps a few signals:
 
 When you C<kill -HUP> the server, it lets the current request finish being
 processed, then uses the C<restart> method to re-exec itself. Please note that
-in order to provide restart-on-SIGHUP, HTTP::Server::Simple sets a SIGHUP
+in order to provide restart-on-SIGHUP, Maplat::Server::Simple sets a SIGHUP
 handler during initialisation. If your request handling code forks you need to
 make sure you reset this or unexpected things will happen if somebody sends a
 HUP to all running processes spawned by your app (e.g. by "kill -HUP <script>")
@@ -77,8 +77,8 @@ could kill the server.
  {
  package MyWebServer;
  
- use HTTP::Server::Simple::CGI;
- use base qw(HTTP::Server::Simple::CGI);
+ use Maplat::Server::Simple::CGI;
+ use base qw(Maplat::Server::Simple::CGI);
  
  my %dispatch = (
      '/hello' => \&resp_hello,
@@ -125,7 +125,7 @@ could kill the server.
 
 =head1 METHODS
 
-=head2 HTTP::Server::Simple->new($port)
+=head2 Maplat::Server::Simple->new($port)
 
 API call to start a new server.  Does not actually start listening
 until you call C<-E<gt>run()>.  If omitted, C<$port> defaults to 8080.
@@ -250,7 +250,7 @@ sub prepare {
         # clear the environment before every request
         require Maplat::Server::Simple::CGI;
         *{"$pkg\::post_accept"} = sub {
-            HTTP::Server::Simple::CGI::Environment->setup_environment;
+            Maplat::Server::Simple::CGI::Environment->setup_environment;
             # $self->SUPER::post_accept uses the wrong super package
             $server->can('post_accept')->(@_);
         };
@@ -296,7 +296,7 @@ sub _default_run {
 
             *STDIN  = $self->stdin_handle();
             *STDOUT = $self->stdout_handle();
-            select STDOUT;   # required for HTTP::Server::Simple::Recorder
+            select STDOUT;   # required for Maplat::Server::Simple::Recorder
                              # XXX TODO glasser: why?
             $pkg->process_request;
             close $remote;

@@ -8,10 +8,9 @@ require Exporter;
 
 our @ISA = qw(Exporter);
 
-our $VERSION = 0.90;
+our $VERSION = 0.91;
 
 
-# Preloaded methods go here.
 
 1;
 __END__

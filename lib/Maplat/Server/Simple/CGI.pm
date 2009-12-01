@@ -12,11 +12,11 @@ $VERSION = $Maplat::Server::Simple::VERSION;
 
 =head1 NAME
 
-HTTP::Server::Simple::CGI - CGI.pm-style version of HTTP::Server::Simple
+Maplat::Server::Simple::CGI - CGI.pm-style version of Maplat::Server::Simple
 
 =head1 DESCRIPTION
 
-HTTP::Server::Simple was already simple, but some smart-ass pointed
+Maplat::Server::Simple was already simple, but some smart-ass pointed
 out that there is no CGI in HTTP, and so this module was born to
 isolate the CGI.pm-related parts of this handler.
 
@@ -51,7 +51,7 @@ sub post_setup_hook {
 This method sets up CGI environment variables based on various
 meta-headers, like the protocol, remote host name, request path, etc.
 
-See the docs in L<HTTP::Server::Simple> for more detail.
+See the docs in L<Maplat::Server::Simple> for more detail.
 
 =cut
 
@@ -83,7 +83,7 @@ sub handle_request {
 
 =head2 handler
 
-Handler implemented as part of HTTP::Server::Simple API
+Handler implemented as part of Maplat::Server::Simple API
 
 =cut
 
@@ -107,11 +107,11 @@ __DATA__
   <body>
     <h1>Congratulations!</h1>
 
-    <p>You now have a functional HTTP::Server::Simple::CGI running.
+    <p>You now have a functional Maplat::Server::Simple::CGI running.
       </p>
 
     <p><i>(If you're seeing this page, it means you haven't subclassed
-      HTTP::Server::Simple::CGI, which you'll need to do to make it
+      Maplat::Server::Simple::CGI, which you'll need to do to make it
       useful.)</i>
       </p>
   </body>

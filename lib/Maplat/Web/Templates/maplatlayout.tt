@@ -262,12 +262,14 @@
 				<td>Doc. created</td>
 				<td colspan="2">[% CurrentTime %]</td>
 			</tr>
-			<tr>
-				<td>Sessionrefresh</td>
-				<td colspan="2">
-					<div id="lastsessionrefresh">[% CurrentTime %]</div>
-				</td>
-			</tr>
+			[% IF PageTitle != "Login" && PageTitle != "Logout" %]
+				<tr>
+					<td>Sessionrefresh</td>
+					<td colspan="2">
+						<div id="lastsessionrefresh">[% CurrentTime %]</div>
+					</td>
+				</tr>
+			[% END %]
 			<tr>
 				<td><img src="/pics/mascot_small.gif"></td>
 				<td colspan="2">
@@ -277,9 +279,11 @@
 				</td>
 			</tr>
 		</table>
-		<script>
-			startSessionRefresh('lastsessionrefresh', '/user/sessionrefresh');
-		</script>
+		[% IF PageTitle != "Login" && PageTitle != "Logout" %]
+			<script>
+				startSessionRefresh('lastsessionrefresh', '/user/sessionrefresh');
+			</script>
+		[% END %]
 		
 		[% IF BrowserData %]
 		<!-- BrowserWorkarounds activated for:

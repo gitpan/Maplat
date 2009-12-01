@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.9;
+our $VERSION = 0.91;
 
 use strict;
 use warnings;
@@ -135,7 +135,7 @@ __END__
 
 =head1 NAME
 
-Maplat::Web::UserSetting - save and load user/module specific data
+Maplat::Web::UserSettings - save and load user/module specific data
 
 =head1 SYNOPSIS
 

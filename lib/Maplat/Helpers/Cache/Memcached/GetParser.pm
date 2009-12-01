@@ -14,6 +14,8 @@ use constant OFFSET  => 5;  # offsets to read into buffers
 use constant FLAGS   => 6;
 use constant KEY     => 7;  # current key we're parsing (without the namespace prefix)
 
+our $VERSION = 0.9;
+
 sub new {
     my ($class, $dest, $nslen, $on_item) = @_;
     return bless [$dest, $nslen, $on_item, '', 0, 0], $class;
@@ -123,3 +125,15 @@ sub parse_buffer {
 }
 
 1;
+__END__
+
+=head1 NAME
+
+Maplat::Helpers::Cache::Memcached::GetParser - helper module
+
+=head1 SYNOPSIS
+
+This is a basic helper module for the workaround Cache::Memcached version in
+the Maplat Framework called Maplat::Helpers::Cache::Memcached
+
+=cut

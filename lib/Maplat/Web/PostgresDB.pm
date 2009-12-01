@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.91;
 
 use strict;
 use warnings;
@@ -82,7 +82,7 @@ __END__
 
 =head1 NAME
 
-Maplat::Web::PostgreSQL - Web module for accessing PostgreSQL databases
+Maplat::Web::PostgresDB - Web module for accessing PostgreSQL databases
 
 =head1 SYNOPSIS
 

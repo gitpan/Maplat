@@ -152,7 +152,7 @@ __END__
 
 =head1 NAME
 
-Maplat::Web::Variables - change some webgui variables online
+Maplat::Web::VariablesADM - change some webgui variables online
 
 =head1 SYNOPSIS
 
