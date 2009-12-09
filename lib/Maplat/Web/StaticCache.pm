@@ -8,7 +8,7 @@ package Maplat::Web::StaticCache;
 use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.9;
+our $VERSION = 0.93;
 
 use strict;
 use warnings;
@@ -40,7 +40,7 @@ sub reload {
 	} elsif($self->{path} =~ /Static/i) {
 		$extrabase = "/Maplat/Web/Static";
 	}
-	foreach my $bdir (@INC) {
+	foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
 		next if($bdir eq ".");
 		my $fulldir = $bdir . $extrabase;
 		print "   ** checking $fulldir \n";

@@ -3,6 +3,18 @@
 
 #########################
 
+# There is currently a problem under Windows with Date::Manip on
+# certain non-english installations of XP (and possible others).
+#
+# So we set our time zone to CET
+BEGIN {
+    if(!defined($ENV{TZ})) {
+        $ENV{TZ} = "CET";
+    }
+}
+
+#########################
+
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test::More tests => 1;

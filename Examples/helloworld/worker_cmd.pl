@@ -7,12 +7,18 @@
 use strict;
 use warnings;
 
+BEGIN {
+    if(!defined($ENV{TZ})) {
+        $ENV{TZ} = "CET";
+    }
+}
+
 use Maplat::Worker;
 use XML::Simple;
 
 use Maplat::Helpers::Logo;
 our $APPNAME = "Maplat Worker";
-our $VERSION = "2009-11-05";
+our $VERSION = "2009-12-09";
 MaplatLogo($APPNAME, $VERSION);
 
 our $isCompiled = 0;
@@ -46,7 +52,7 @@ if(!defined($config->{mincycletime})) {
 
 my @modlist = @{$config->{module}};
 
-$worker->startconfig();
+$worker->startconfig($isCompiled);
 
 foreach my $module (@modlist) {
     $worker->configure($module->{modname}, $module->{pm}, %{$module->{options}});

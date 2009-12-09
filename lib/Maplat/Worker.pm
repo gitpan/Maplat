@@ -1,8 +1,9 @@
 package Maplat::Worker;
 use strict;
 use warnings;
+use English;
 
-our $VERSION = 0.9;
+our $VERSION = 0.93;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Worker::AdminCommands;
@@ -25,7 +26,12 @@ sub new {
 }
 
 sub startconfig {
-    my ($self) = @_;
+    my ($self, $isCompiled) = @_;
+    
+    if(!defined($isCompiled)) {
+	$isCompiled = 0;
+    }
+    $self->{compiled} = $isCompiled;
     
     my @workers;
     $self->{workers} = \@workers;
@@ -44,8 +50,19 @@ sub configure {
 	my $perlmodule = "Maplat::Worker::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
 		# Local module - load it first
-		print "Dynamically loading $perlmodule...\n";
-		require "Maplat/Worker/" . $perlmodulename . ".pm";
+		my $requirestr;
+		if($self->{compiled} && $OSNAME eq 'MSWin32') {
+		    my $boundname = "Worker_" . $perlmodulename . ".pm";
+		    print "Dynamically loading bound file for $boundname...\n";
+		    my $modfilename = PerlApp::extract_bound_file($boundname);
+		    die("$perlmodule not bound to application") unless defined $modfilename;
+		    print "  Bound file name $modfilename\n";
+		    $requirestr = "require '" . $modfilename . "'";		    
+		} else {
+		    print "Dynamically loading $perlmodule...\n";
+		    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
+		}
+		eval $requirestr;
 	}
     $config{pmname} = $perlmodule;
     
@@ -61,6 +78,7 @@ sub configure {
 sub endconfig {
     # Nothing to do
     print "All modules loaded\n";
+    print "\nWe are go for auto-sequence start!\n\n";
 }
 
 sub run {

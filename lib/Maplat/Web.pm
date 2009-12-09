@@ -1,5 +1,6 @@
 package Maplat::Web;
 use base qw(HTTP::Server::Simple::CGI);
+use English;
 
 # ------------------------------------------
 # MAPLAT - Magna ProdLan Administration Tool
@@ -7,7 +8,7 @@ use base qw(HTTP::Server::Simple::CGI);
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.92;
+our $VERSION = 0.93;
 
 use strict;
 use warnings;
@@ -146,7 +147,12 @@ sub handle_request {
 }
 
 sub startconfig() {
-    my ($self, $maplatconfig) = @_;
+    my ($self, $maplatconfig, $isCompiled) = @_;
+    
+    if(!defined($isCompiled)) {
+	$isCompiled = 0;
+    }
+    $self->{compiled} = $isCompiled;
 
 	$self->{maplat} = $maplatconfig;
 
@@ -251,8 +257,19 @@ sub configure {
 	my $perlmodule = "Maplat::Web::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
 		# Local module - load it first
-		print "Dynamically loading $perlmodule...\n";
-		require "Maplat/Web/" . $perlmodulename . ".pm";
+		my $requirestr;
+		if($self->{compiled} && $OSNAME eq 'MSWin32') {
+		    my $boundname = "Web_" . $perlmodulename . ".pm";
+		    print "Dynamically loading bound file for $boundname...\n";
+		    my $modfilename = PerlApp::extract_bound_file($boundname);
+		    die("$perlmodule not bound to application") unless defined $modfilename;
+		    print "  Bound file name $modfilename\n";
+		    $requirestr = "require '" . $modfilename . "'";		    
+		} else {
+		    print "Dynamically loading $perlmodule...\n";
+		    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
+		}
+		eval $requirestr;
 	}
     $config{pmname} = $perlmodule;
 

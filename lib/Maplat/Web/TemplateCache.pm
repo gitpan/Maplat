@@ -9,7 +9,7 @@ use Template;
 use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.9;
+our $VERSION = 0.93;
 
 use strict;
 use warnings;
@@ -37,7 +37,7 @@ sub reload {
 
     my %files;
 
-	foreach my $bdir (@INC) {
+	foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
 		next if($bdir eq ".");
 		my $fulldir = $bdir . "/Maplat/Web/Templates";
 		print "   ** checking $fulldir \n";
