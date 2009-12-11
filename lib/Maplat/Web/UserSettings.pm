@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.91;
+our $VERSION = 0.94;
 
 use strict;
 use warnings;
@@ -57,7 +57,7 @@ sub get {
 	}
 	
 	if((my @row = $sth->fetchrow_array)) {
-		$settingref = DBSerialize::dbthaw($row[0]);
+		$settingref = Maplat::Helpers::DBSerialize::dbthaw($row[0]);
 		$memh->set($memhname, $settingref);
 	}
 	$sth->finish;
@@ -78,7 +78,7 @@ sub set {
 	
 	my $sth = $dbh->prepare_cached("SELECT merge_users_settings(?, ?, ?)")
 			or return;
-	if(!$sth->execute($username, $settingname, DBSerialize::dbfreeze($settingref))) {
+	if(!$sth->execute($username, $settingname, Maplat::Helpers::DBSerialize::dbfreeze($settingref))) {
 		return;
 	}
 	$sth->finish;

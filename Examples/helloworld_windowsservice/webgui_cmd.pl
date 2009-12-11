@@ -21,6 +21,7 @@ use Maplat::Helpers::Logo;
 our $APPNAME = "Maplat Webgui";
 our $VERSION = "2009-12-09";
 MaplatLogo($APPNAME, $VERSION);
+use English;
 
 our $isCompiled = 0;
 if(defined($PerlApp::VERSION)) {
@@ -67,4 +68,8 @@ foreach my $module (@modlist) {
 $webserver->endconfig();
 
 # Everything ready to run
-$webserver->run();
+if($isForking && $OSNAME eq 'MSWin32') {
+    $webserver->run(lock_file => 'C:\Temp\webgui.lock');
+} else {
+    $webserver->run();
+}

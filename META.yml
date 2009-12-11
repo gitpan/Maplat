@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Maplat
-version:            0.93
+version:            0.94
 abstract:           The MAPLAT Web Framework
 author:
     - Rene Schickbauer <rene.schickbauer@magnapowertrain.com>

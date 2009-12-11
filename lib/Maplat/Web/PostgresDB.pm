@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.92;
+our $VERSION = 0.94;
 
 use strict;
 use warnings;
@@ -51,7 +51,7 @@ sub register {
 sub endconfig {
 	my ($self) = @_;
 
-	if($self->{isForking}) {
+	if($self->{forking}) {
 		# forking server: disconnect from database, generate new connection
 		# after the fork on demand
 		print "   *** Will fork, disconnect PostgreSQL server...\n";

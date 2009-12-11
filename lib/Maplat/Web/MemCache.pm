@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 
-our $VERSION = 0.92;
+our $VERSION = 0.94;
 
 use strict;
 use warnings;
@@ -39,6 +39,7 @@ sub new {
 						connect_timeout  => 0,
 					};
 		$memd_loaded = 1;
+		$self->{mctype} = "fast";
 	} elsif(eval('require Cache::Memcached')) {
 		print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
 		$memdtype = "Cache::Memcached";
@@ -48,6 +49,7 @@ sub new {
 						connect_timeout  => 0,
 					};
 		$memd_loaded = 1;
+		$self->{mctype} = "slow";
 	} else {
 		print "    No Cache::Memcached* available ... will try to use Maplat::Helpers::Cache::Memcached\n";
 	}
@@ -82,6 +84,7 @@ sub new {
 	}
 
 	print "    Selected Memcached library seems to be working. Good!\n";
+	$self->{mctype} = "maplat";
 	$self->{memd} = $memd;
 	
 	# Add version information about our to the memcached storage
@@ -97,23 +100,54 @@ sub new {
     return $self;
 }
 
+sub afterfork {
+	my ($self) = @_;
+	
+	my $memd;
+	if($self->{mctype} eq "fast") {
+		$memd = new Maplat::Helpers::Cache::Memcached {
+				servers   => [ $self->{service} ],
+				namespace => $self->{namespace} . "::",
+				connect_timeout  => 0,
+			};
+	} elsif($self->{mctype} eq "slow") {
+		$memd = new Cache::Memcached {
+						servers   => [ $self->{service} ],
+						namespace => $self->{namespace} . "::",
+						connect_timeout  => 0,
+					};		
+	} elsif($self->{mctype} eq "maplat") {
+		$memd = new Maplat::Helpers::Cache::Memcached {
+				servers   => [ $self->{service} ],
+				namespace => $self->{namespace} . "::",
+				connect_timeout  => 0,
+			};
+	} else {
+		die("Internal error, mctype " . $self->{mctype} . " unknown");
+	}
+	
+	$self->{memd} = $memd;
+	$self->{forked} = 0;
+}
+
 sub endconfig {
 	my ($self) = @_;
 
-	if($self->{isForking}) {
+	if($self->{forking}) {
 		# Disconnect all sockets prior to forking,
 		# as stated in the memcached documentation.
 		#
 		# Cache::Memcached::Fast says we should do this AFTER forking,
 		# but we should be all right if we kill the connections beforehand.
 		print "   *** Will fork, disconnect all memcache servers...\n";
+		$self->{forked} = 1;
 		$self->{memd}->disconnect_all;
+		delete $self->{memd};
 	}
 }
 
 sub reload {
     my ($self) = shift;
-
 }
 
 sub register {
@@ -141,6 +175,10 @@ sub refresh_lifetick {
 sub get {
 	my ($self, $key) = @_;
 	
+	if($self->{forked}) {
+		$self->afterfork();
+	}
+	
 	$key = $self->sanitize_key($key);
 	
 	return $self->{memd}->get($key);
@@ -148,6 +186,10 @@ sub get {
 
 sub set {
 	my ($self, $key, $data) = @_;
+
+	if($self->{forked}) {
+		$self->afterfork();
+	}
 	
 	$key = $self->sanitize_key($key);
 	
@@ -156,6 +198,10 @@ sub set {
 
 sub delete {
 	my ($self, $key) = @_;
+	
+	if($self->{forked}) {
+		$self->afterfork();
+	}
 	
 	$key = $self->sanitize_key($key);
 	
