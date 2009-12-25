@@ -8,7 +8,7 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.94;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -33,6 +33,7 @@ use Maplat::Web::Login;
 use Maplat::Web::LogoCache;
 use Maplat::Web::BaseModule;
 use Maplat::Web::MemCache;
+use Maplat::Web::MemCacheSim;
 use Maplat::Web::PathRedirection;
 use Maplat::Web::PostgresDB;
 use Maplat::Web::SendMail;
@@ -116,13 +117,15 @@ sub handle_request {
             $result{statustext} = "OK";
         } elsif($result{status} eq "404") {
             $result{statustext} = "Resource not found";
+        } elsif($result{status} eq "403") {
+            $result{statustext} = "Access denied due to insufficient user rights";
         } elsif($result{status} eq "307") {
             $result{statustext} = "See elsewhere";
         } else {
             # depending on resultcode, this may trigger the browser into
             # some confusion... If you see this, you where *too* lazy
             # programming your module
-            $result{statustext} = "OK but something weird happend";
+            $result{statustext} = "OK but something weird happend (" . $result{status} . ")";
         }
     }
        
@@ -464,6 +467,91 @@ then automatically calls reload() to load all cached data).
 
 After a call to prepare() and an optional call to print_banner() (which the author strongly recommends *grin*) the webserver
 is ready to handle browser requests.
+
+=head2 startconfig
+
+Prepare Maplat::Web for module configuration.
+
+=head2 configure
+
+Configure a Maplat::Web module.
+
+=head2 endconfig
+
+Finish up module configuration. Also close all open file handles, database and network connections
+in preparation of forking the webserver if applicable.
+
+=head2 handle_request
+
+Handle a web request (internal function).
+
+=head2 get_defaultwebdata
+
+Get the %defaultwebdata hash. Internally, this calls all the defaultwebdata callbacks and generates the hash step-by-step.
+
+=head2 prerender
+
+Call all registered prerender callbacks. Used by Maplat::Web::TemplateCache.
+
+=head2 reload
+
+Call reload() on all configured modules to reload their cached data. This function will not work as expected in a
+(pre)forking server.
+
+=head2 run_task
+
+Run all registered task callbacks. Running tasks in the webgui are deprecated, please use a worker for this
+functionality. In Maplat::Web, all work should be done on demand, e.g. whenever a page is requested by the
+client.
+
+=head2 sessionrefresh
+
+Run all registered sessionrefresh callbacks.
+
+=head2 user_login
+
+Calls all "on login" callbacks when a user is login in.
+
+=head2 user_logout
+
+Calls all "on logout" callbacks when a user logs out.
+
+=head2 add_defaultwebdata
+
+Add a defaultwebdata callback.
+
+=head2 add_loginitem
+
+Add a on login callback.
+
+=head2 add_logoutitem
+
+Add a on logout callback.
+
+=head2 add_postfilter
+
+Add a postfilter callback.
+
+=head2 add_prefilter
+
+Add a prefilter callback.
+
+=head2 add_prerender
+
+Add a prerender callback.
+
+=head2 add_sessionrefresh
+
+Add a sessionrefresh callback.
+
+=head2 add_task
+
+Add a task callback. DEPRECATED, use Maplat::Worker for tasks.
+
+=head2 add_webpath
+
+Register a webpath. The registered module/function is called whenever a corresponding path is used
+in a browser request.
 
 =head1 SEE ALSO
 

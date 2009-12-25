@@ -9,7 +9,7 @@ use Template;
 use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.93;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -147,7 +147,7 @@ of the page for every module.
 
 layout is the template name used in meta-rendering.
 
-=head1 get()
+=head2 get
 
 The one public function to call in this module is get(), in the form of:
 
@@ -158,6 +158,10 @@ $name if the name of the template file (without the .tt suffix)
 $uselayout is a boolean, indicating if meta-rendering with the configured layout.
 
 %webdata is a hash that is passed through to the template toolkit.
+
+=head2 load_dir
+
+Internal function.
 
 =head1 Dependencies
 

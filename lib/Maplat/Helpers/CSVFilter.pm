@@ -8,7 +8,7 @@ package Maplat::Helpers::CSVFilter;
 use strict;
 use warnings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($class, %config) = @_;
@@ -119,6 +119,14 @@ CSV files.
 This module is undocumented, because, frankly it is only
 used in a specific case. If you really want to use it, look at the
 source code...
+
+=head2 new
+
+Get a new filter instance.
+
+=head2 filter
+
+Do the filtering.
 
 =head1 AUTHOR
 

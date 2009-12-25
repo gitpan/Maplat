@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -221,6 +221,26 @@ This module must be configured AFTER the Login module, because it hooks into its
                         </views>
                 </options>
         </module>
+
+=head2 get
+
+Get Logo and descriptions.
+
+=head2 getDescription
+
+Return the rendered descriptions of LogoDays.
+
+=head2 getFile
+
+Internal function - read in a file in binary mode.
+
+=head2 reloadSingleTemplate
+
+Internal function - reload a single template file.
+
+=head2 reloadTemplates
+
+Internal function - dispatch reloads for all templates.
 
 =head1 Dependencies
 

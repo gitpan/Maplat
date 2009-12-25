@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -138,6 +138,9 @@ This module visualizes the errors table and lets the user delete errors.
                 </options>
         </module>
 
+=head2 get
+
+The Status form.
 
 =head1 Dependencies
 

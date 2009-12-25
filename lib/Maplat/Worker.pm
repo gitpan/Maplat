@@ -3,7 +3,7 @@ use strict;
 use warnings;
 use English;
 
-our $VERSION = 0.93;
+our $VERSION = 0.95;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Worker::AdminCommands;
@@ -178,9 +178,33 @@ Running is done in a while loop or similar calling run(). As most workers dont h
 range, it's a good idea to have some code in place to try to do cyclic calls in a configurable cycle time. See also the
 synopsis and the example included in the tarball.
 
+=head2 new
+
+Create a new instance of Maplat::Worker.
+
+=head2 startconfig
+
+Prepare the worker instance for module configuration.
+
+=head2 configure
+
+Configure a worker module.
+
+=head2 endconfig
+
+Finish up configuration and prepare for run().
+
+=head2 add_worker
+
+Add a worker callback. Called by the various worker modules.
+
+=head2 run
+
+Do a single run of all registered worker callbacks.
+
 =head1 SEE ALSO
 
-Maplat::Worker
+Maplat::Web Maplat::Worker::BaseModule
 
 Please also take a look in the example provided in the tarball available on CPAN.
 

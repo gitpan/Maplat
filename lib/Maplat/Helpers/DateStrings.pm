@@ -16,7 +16,7 @@ use Date::Manip qw(Date_Init UnixDate);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset);
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 our $lastUniqueDate = "";
 our $UniqueDateCounter = 0;
@@ -295,30 +295,30 @@ This module provides a host of date functions required in commercial environment
 Most of them return the current date in some form or other, while at least one of
 them (getUniqueFileDate) cheats when it has to.
 
-=head1 getISODate()
+=head2 getISODate
 
 Returns the current date and time in the short ISO format with space instead of "T"
 as delimeter betweeen date and time, e.g.
 
   "$year-$mon-$mday $hour:$min:$sec"
 
-=head1 getISODate_nDaysOffset($offset)
+=head2 getISODate_nDaysOffset
 
 Similar to getISODate, but offsets the date with the given number of days.
 
-=head1 getFileDate()
+=head2 getFileDate
 
 Returns the date and time in a format suiteable for filenames, e.g.:
 
   "$year$mon$mday$hour$min$sec"
 
-=head1 getShortFiledate()
+=head2 getShortFiledate
 
 Returns only the current date (without time) in a format suiteable for filenames, e.g.:
 
   "$year$mon$mday"
 
-=head1 getUniqueFileDate()
+=head2 getUniqueFileDate
 
 Returns the date and time in the same format as getFileDate, with one exception:
 It cheats. 
@@ -333,7 +333,7 @@ that expects the filename to start with a filedate string, which must be unique 
 if the seconds are valid. My software produced the data files in bursts with about 20-80 files
 per second. If you don't have similar requirements, you're better of using getFileDate() instead.
 
-=head1 getCurrentHour()
+=head2 getCurrentHour
 
 A bit of a misnomer. This function returns a date string thats exact to the hour, e.g.:
 
@@ -354,13 +354,13 @@ This is quite usefull to check if the hour changed since your last check, someth
 Checking the full string instead of only the hour value makes it possible to start correctly
 even if the program somehow skipped some 23 odd hours.
 
-=head1 getCurrentDay()
+=head2 getCurrentDay
 
 Very similar to getCurrentHour(), except it is only accurate to the day, e.g.:
 
   "$year$mon$mday"
 
-=head1 getDateAndTime()
+=head2 getDateAndTime
 
 Similar to getISODate, except it returns an array with two values, the date and time:
 
@@ -372,7 +372,7 @@ Altough you might prefer to use it in a proper list context in the first place:
 
   my ($date, $time) = getDateAndTime();
 
-=head1 parseNaturalDate($datetext)
+=head2 parseNaturalDate
 
 This function provides a bit of "magic date/time string parsing".
 
@@ -391,13 +391,17 @@ The values of morning, afternoon and evening are currently hardcoded to "06:00",
 and "22:00" respectively (the workshift model my employer uses). You can also add a "pre" 
 to the timestring which takes off 15 minutes, for example "premorning" meaning "05:45"
 
-=head1 fixDateField($datestring)
+=head2 fixDateField
 
 For easier handling, some Maplat tables have date fields ("timestamp without timezone" to
 be precise) that are NOT NULL and have a default of "1970-01-01 23:59:59".
 
 For display on the web interface, all dates get parsed through this function, default dates
 are replaced by empty strings. Also, the datestring is trimmed of unnessecary whitespace.
+
+=head2 updateTimeMap
+
+Internal function.
 
 =head1 AUTHOR
 

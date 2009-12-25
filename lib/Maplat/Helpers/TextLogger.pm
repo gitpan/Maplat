@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 use Maplat::Helpers::DateStrings;
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($class, %config) = @_;
@@ -65,7 +65,7 @@ Maplat::Helpers::TextLogger - log to STDOUT and a logfile
 This is a helper module to log to STDOUT as well as to a text file with the current date and time
 prefixed to the logline.
 
-=head1 new()
+=head2 new
 
   my $logger = new Maplat::Helpers::TextLogger(
                     appname    => "myApp",
@@ -75,11 +75,11 @@ prefixed to the logline.
 appname is the application name or some other unique identifier. logfile is the filename
 of the logfile we want to use.
 
-=head log()
+=head2 log
 
 Takes one argument, the text we want to log.
 
-=head1 alive()
+=head2 alive
 
 Log a "application_name is alive" log line. Use this if your program prints our log lines very
 infrequently to show that the application is still running. Every 5 to 10 minutes or so is a good rule

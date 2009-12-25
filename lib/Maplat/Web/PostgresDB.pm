@@ -9,11 +9,12 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.94;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
 use DBI;
+use English;
 use Carp;
 
 sub new {
@@ -29,14 +30,29 @@ sub new {
 sub checkDBH {
 	my ($self) = @_;
 
-	if($self->{mdbh}) {
+	if(defined($self->{mdbh})) {
 		return;
 	}
 
 	my $dbh = DBI->connect($self->{dburl}, $self->{dbuser}, $self->{dbpassword},
                                {AutoCommit => 0, RaiseError => 0}) or die($@);
 	$self->{mdbh} = $dbh;
+    print "DBI created for PID $PID\n";
 }
+
+sub DESTROY {
+    my ($self) = @_;
+
+	if(!defined($self->{mdbh})) {
+		return;
+	}
+
+    $self->{mdbh}->rollback;
+    $self->{mdbh}->disconnect;
+    delete $self->{mdbh};
+    print "DBI destroyed for PID $PID\n";
+}
+
 
 sub reload {
     my ($self) = shift;
@@ -127,6 +143,47 @@ declare multiple modules with different modnames).
 
 
 dburl is the DBI connection string, see DBD::Pg.
+
+=head2 AutoCommit
+
+Get/Set the DBD::Pg "AutoCommit" setting
+
+=head2 RaiseError
+
+Get/Set the DBD::Pg "RaiseError" setting
+
+=head2 errstr
+
+Get the DBI errorstring.
+
+=head2 do
+
+Execute a DBI statement with "do"
+
+=head2 prepare
+
+Prepare a (non-cached) Statement.
+
+=head2 prepare_cached
+
+Prepare a server cached statement (may fall back to non-cached transparently, see DBD::Pg and PostgreSQL documentation
+for details).
+
+=head2 quote
+
+Quote a variable for use in PostgreSQL statements.
+
+=head2 commit
+
+Commit transaction.
+
+=head2 rollback
+
+Rollback transaction.
+
+=head2 checkDBH
+
+Internal function. Checks if the database handle is valid and reconnects if needed.
 
 =head1 Dependencies
 

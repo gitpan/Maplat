@@ -7,7 +7,7 @@ package Maplat::Web::BaseModule;
 use strict;
 use warnings;
 
-our $VERSION = 0.92;
+our $VERSION = 0.95;
 
 use Carp;
 
@@ -89,18 +89,31 @@ When writing a new web module, use this module as a base:
   use Maplat::Web::BaseModule;
   @ISA = ('Maplat::Web::BaseModule');
 
-=head1 register()
+=head2 new
+
+This creates a new instance of this module. Do not call this function directly, use the "configure" call in
+Maplat::Web.
+
+=head2 register
 
 This function needs to be overloaded in every web module. This function is run during startup
 once some time after new(). Within this function (and ONLY within this function) you can call
 register_*() functions to register your callbacks/hooks.
 
-=head1 reload()
+=head2 reload
 
 This function is called some time after register() and may be called again while the webgui is running. Everytime
 reload() is called, you should empty all cached data in this application and reload it from the sources (if applicable).
 
-=head1 register_webpath()
+=head2 endconfig
+
+This is a callback, called when all modules are configured. During this callback, you should close all open
+filehandles, network ports and database connections. The cause of this requirement is, that the user may configure
+a forking webserver and filehandles/network connections should not be forked. In the case of network connections
+and database handles, this might confuse the protocol (and certainly will screw with database transactions). In the case
+of filehandles you will run into similar problems.
+
+=head2 register_webpath
 
 This function registers a function of its own module as a webpage. It takes two arguments, 
 the webpath and the function name.
@@ -130,7 +143,7 @@ It is possible to register multiple webpaths within the same web module.
 
 The function should return a fully rendered page in the above shown data structure.
 
-=head1 register_prefilter()
+=head2 register_prefilter
 
 This function registers a function of its own module as a prefilter (called before the actual rendering
 module is called to render the page). It takes one argument, the function name.
@@ -160,7 +173,7 @@ rendered page and the "real" rendering module is not called at all.
     return; # No redirection
   }
 
-=head1 register_postfilter()
+=head2 register_postfilter
 
 This function registers a function of its own module as a postfilter (called after the actual rendering
 module is called to render the page). It takes one argument, the function name.
@@ -185,7 +198,7 @@ page. The module can change $header and $result as it sees fit. It should return
       return;
   }
 
-=head1 register_defaultwebdata()
+=head2 register_defaultwebdata
 
 This function registers a function of its own module to add to the %defaultwebdata hash usually used by every
 module to start its own webpage hash. It takes one argument, the function name to call
@@ -208,7 +221,7 @@ should not delete any keys.
   }
 
 
-=head1 register_task()
+=head2 register_task
 
 This function registers a function of its own module as a cyclic worker function. It takes
 one argument, the name of the cyclic function, for example:
@@ -225,7 +238,7 @@ one argument, the name of the cyclic function, for example:
 
 It is possible to register multiple cyclic functions within the same web module.
 
-=head1 register_loginitem()
+=head2 register_loginitem
 
 This function registers a function of its own module as a hook for whenever a user logs in. It takes
 one argument, the function to call.
@@ -242,7 +255,7 @@ The function itself gets called with the username and sessionid.
     # do something
   }
 
-=head1 register_logoutitem()
+=head2 register_logoutitem
 
 This function registers a function of its own module as a hook for whenever a user logs out. It takes
 one argument, the function to call.
@@ -259,7 +272,7 @@ The function itself gets called with the sessionid.
     # do something
   }
 
-=head1 register_sessionrefresh()
+=head2 register_sessionrefresh
 
 This function registers a function of its own module as a hook for whenever a logged in user loads a page. It takes
 one argument, the function to call.
@@ -279,7 +292,7 @@ This is usefull to detect stale sessions.
   }
 
 
-=head1 register_prerender()
+=head2 register_prerender
 
 This function registers a function of its own module as a hook for everytime a page is ready to be rendered by the template engine
 (it gets triggered by the TemplateCache module).
@@ -302,7 +315,7 @@ generating the dynamic menus and views in module Login.
   }
 
 
-=head1 get_defaultwebdata()
+=head2 get_defaultwebdata
 
 See register_defaultwebdata()
 

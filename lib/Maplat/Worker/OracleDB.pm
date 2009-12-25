@@ -14,7 +14,7 @@ use warnings;
 use DBI;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($proto, %config) = @_;
@@ -99,6 +99,43 @@ declare multiple modules with different modnames).
         </module>
 
 dburl is the DBI connection string, see DBD::Oracle.
+
+=head2 AutoCommit
+
+Get/Set the DBD::Oracle "AutoCommit" setting
+
+=head2 RaiseError
+
+Get/Set the DBD::Oracle "RaiseError" setting
+
+=head2 errstr
+
+Get the DBI errorstring.
+
+=head2 do
+
+Execute a DBI statement with "do"
+
+=head2 prepare
+
+Prepare a (non-cached) Statement.
+
+=head2 prepare_cached
+
+Prepare a server cached statement (may fall back to non-cached transparently, see DBD::Oracle and Oracle documentation
+for details).
+
+=head2 quote
+
+Quote a variable for use in Oracle statements.
+
+=head2 commit
+
+Commit transaction.
+
+=head2 rollback
+
+Rollback transaction.
 
 =head1 Dependencies
 

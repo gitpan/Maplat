@@ -16,7 +16,7 @@ use Digest::MD5 qw(md5_hex);
 use Digest::SHA1 qw(sha1_hex);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 my $password_prefix = "CARNIVORE::";
 my $password_postfix = "# or 1984";
@@ -963,6 +963,54 @@ We're sorry for that!
                         </viewselect>
                 </options>
         </module>
+
+=head2 get
+
+Login/logout/user managment/password change/session refresh form dispatch.
+
+=head2 get_login
+
+Internal function.
+
+=head2 get_logout
+
+Internal function.
+
+=head2 get_pwchange
+
+Internal function.
+
+=head2 get_sessionid
+
+Internal function.
+
+=head2 get_sessionrefresh
+
+Internal function.
+
+=head2 get_useredit
+
+Internal function.
+
+=head2 get_viewselect
+
+Internal function.
+
+=head2 postfilter
+
+Internal function.
+
+=head2 prefilter
+
+Internal function.
+
+=head2 prerender
+
+Internal function. Blocks all unauthorized access.
+
+=head2 validateSessionID
+
+Internal function.
 
 =head1 TODO
 

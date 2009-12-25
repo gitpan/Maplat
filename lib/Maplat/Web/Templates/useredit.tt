@@ -77,7 +77,7 @@
             <th></th>
         </tr>
         [% FOREACH user IN users %]
-            <form name="changeuser_[% user.name %]" method="post" action="[% PostLink %]">
+            <form name="changeuser_[% user.username %]" method="post" action="[% PostLink %]">
 				<tr>
                     <td>
                         <input type="hidden" name="username" value="[% user.username %]">
@@ -104,7 +104,7 @@
                         <input type="submit" value="Change" onClick="return confirmChangeUser();">
                     </td>
                 </form>
-                <form name="deleteuser_[% user.name %]" method="post" action="[% PostLink %]">
+                <form name="deleteuser_[% user.username %]" method="post" action="[% PostLink %]">
                     <td>
                         <input type="hidden" name="username" value="[% user.username %]">
                         <input type="hidden" name="mode" value="deleteuser">

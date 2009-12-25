@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::Strings 'normalizeString';
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -145,6 +145,9 @@ Full text search is realized through the capabilities provided by PostgreSQL.
                 </options>
         </module>
 
+=head2 get
+
+Handle the documents search form.
 
 =head1 Dependencies
 

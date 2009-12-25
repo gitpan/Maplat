@@ -8,7 +8,7 @@ package Maplat::Web::PathRedirection;
 use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -104,6 +104,10 @@ and stale bookmarks.
 
 It is recommended to use this module as a "fallback", e.g. configure it after nearly all other modules. The only
 module that should follow is the BrowserWorkarounds module (mostly to fix redirects for broken browsers like firefox)
+
+=head2 prefilter
+
+Internal function.
 
 =head1 Dependencies
 

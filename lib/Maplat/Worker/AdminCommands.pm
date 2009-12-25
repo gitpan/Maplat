@@ -14,7 +14,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($proto, %config) = @_;
@@ -213,6 +213,43 @@ PostgreSQL admin commands scheduled from the WebGUI.
                         <reporting>reporting</reporting>
                 </options>
         </module>
+
+
+=head2 execute
+
+Run an admin command.
+
+=head2 do_analyze_table
+
+Internal functions.
+
+=head2 do_nop_fail
+
+Internal functions.
+
+=head2 do_nop_ok
+
+Internal functions.
+
+=head2 do_reindex_all_tables
+
+Internal functions.
+
+=head2 do_reindex_table
+
+Internal functions.
+
+=head2 do_vacuum_analyze
+
+Internal functions.
+
+=head2 do_vacuum_analyze_table
+
+Internal functions.
+
+=head2 do_vacuum_full
+
+Internal functions.
 
 =head1 Dependencies
 

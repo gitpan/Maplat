@@ -14,7 +14,7 @@ use Maplat::Helpers::Padding qw(doSpacePad);
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(tabsToTable normalizeString);
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub tabsToTable($@) {
     my $txt = shift;
@@ -59,7 +59,7 @@ Maplat::Helpers::Strings - special string handling functions
 This module is home to some specialized functions for modifying strings. Most people wont need this
 but i find them rather helpfull in some cases.
 
-=head1 tabsToTable()
+=head2 tabsToTable
 
 This function turns a tab delimated text string into a space-padded line suitable for printing ascii-art tables.
 
@@ -80,7 +80,7 @@ Prints out:
   007  Bond    James
   008  Doe     John
 
-=head normalizeString()
+=head2 normalizeString
 
 Removed unneeded whitespaces as well as all other non-word characters from a string.
 

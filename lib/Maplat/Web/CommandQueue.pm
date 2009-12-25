@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::CommandHelper;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -244,6 +244,10 @@ checks if the user is an admin and gives an extended view.
                         <memcache>memcache</memcache>
                 </options>
         </module>
+
+=head2 get
+
+The CommandQueue form
 
 =head1 Dependencies
 

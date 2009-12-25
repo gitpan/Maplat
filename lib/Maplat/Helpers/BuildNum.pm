@@ -15,7 +15,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(calcBuildNum readBuildNum);
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub calcBuildNum {
     my $hname = hostname;
@@ -77,12 +77,12 @@ It's very usefull when upgrading a server to know the build numbers (see below)
 of a compiled perl program. When used in a scripted environment, the build number
 is generated on the fly.
 
-=head1 calcbuildNum()
+=head2 calcbuildNum
 
 Calculates a build number, consisting of the build date and the hostname of the
 computer used.
 
-=head1 readBuildNum()
+=head2 readBuildNum
 
 Returns the build number.
 
@@ -103,6 +103,10 @@ The function takes two optional arguments, $filename and $iscompiled:
 This is used when compiled with the ActiveState PDK and must be set depending on your
 development environment. The $filename is the name of the bound file, consisting of one line,
 the build number.
+
+=head2 calcBuildNum
+
+Calculates a build number, see "Adding an automatic build number to your program"
 
 =head1 Adding an automatic build number to your program
 

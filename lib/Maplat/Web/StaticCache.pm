@@ -8,7 +8,7 @@ package Maplat::Web::StaticCache;
 use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.93;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -158,6 +158,13 @@ base directories (for example images, sounds, ...) you can use this module multi
                 </options>
         </module>
 
+=head2 get
+
+Deliver the static, chached files.
+
+=head2 load_dir
+
+Internal function.
 
 =head1 Dependencies
 

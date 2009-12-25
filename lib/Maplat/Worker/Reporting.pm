@@ -13,7 +13,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($proto, %config) = @_;
@@ -116,6 +116,14 @@ email (boolean) send errors logged by log() via email (via worker module Sendmai
 std_out (boolean) send debuglog() to stdout
 maxlines how many lines are copied to memcache
 worker name which is used in logging to memcache
+
+=head2 debuglog
+
+Log a information line to stdout and to memcached.
+
+=head2 log
+
+Log a line to database.
 
 =head1 Dependencies
 

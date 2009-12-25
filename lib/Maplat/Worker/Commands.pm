@@ -12,7 +12,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($proto, %config) = @_;
@@ -177,6 +177,14 @@ for this it relies on plugin modules like AdminCommands.
         </module>
 
 log_all is a boolean, setting if only failed commands or all executed commands are logged.
+
+=head2 register_extcommand
+
+Register an external command (command callback dispatch).
+
+=head2 work
+
+Internal function.
 
 =head1 Dependencies
 

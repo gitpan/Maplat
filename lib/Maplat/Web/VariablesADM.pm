@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 # WARNING: This uses mainly hardcoded stuff
 
@@ -178,6 +178,45 @@ reload() routine from the webgui, which may (or may not) work as expected.
                 </options>
         </module>
 
+=head2 del_HeaderInfo
+
+Internal function
+
+=head2 del_HeaderMessage
+
+Internal function
+
+=head2 del_LogoDate
+
+Internal function
+
+=head2 get
+
+Internal function
+
+=head2 get_HeaderInfo
+
+Internal function
+
+=head2 get_HeaderMessage
+
+Internal function
+
+=head2 get_LogoDate
+
+Internal function
+
+=head2 set_HeaderInfo
+
+Internal function
+
+=head2 set_HeaderMessage
+
+Internal function
+
+=head2 set_LogoDate
+
+Internal function
 
 =head1 Dependencies
 

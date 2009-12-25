@@ -14,7 +14,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT= qw(MaplatLogo);
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 our @lines;
 
@@ -53,7 +53,7 @@ Maplat::Helpers::Logo - print the Maplat logo as ASCII Art
 
 This Module provides an easy way to print out the Maplat Logo as ASCII art,
 
-=head1 MaplatLogo()
+=head2 MaplatLogo
 
 Takes two arguments, $appname and $version. $appname should be the application name or
 in the case where one executable functions as different programs depending on its

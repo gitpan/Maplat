@@ -1,6 +1,9 @@
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl Maplat.t'
 
+use strict;
+use warnings;
+
 #########################
 
 # There is currently a problem under Windows with Date::Manip on

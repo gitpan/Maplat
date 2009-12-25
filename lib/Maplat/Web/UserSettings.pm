@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.94;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -162,7 +162,7 @@ text field. This avoids having to play around with blobs.
         </module>
 
 
-=head1 set()
+=head2 set
 
 This function adds or updates a setting (data structure) in the database.
 
@@ -173,7 +173,7 @@ $settingref is a reference to the data structure you want to store, e.g.:
 
 It returns a boolean to indicate success or failure.
 
-=head1 get()
+=head2 get
 
 This function reads a setting from database and returns a reference to the data structure.
 
@@ -181,7 +181,7 @@ It takes two arguments, $username is the username and $settingname is the key na
 
   $settingref = $us->get($username, $settingname);
 
-=head1 delete()
+=head2 delete
 
 This function deletes a setting from database and returns a boolean to indicate success or failure.
 
@@ -189,7 +189,7 @@ It takes two arguments, $username is the username and $settingname is the key na
 
   $is_ok = $us->delete($username, $settingname);
 
-=head1 list()
+=head2 list
 
 This function lists all available settings for a username.
 

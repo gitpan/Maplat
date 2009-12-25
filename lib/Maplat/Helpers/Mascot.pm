@@ -14,7 +14,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT= qw(Mascot);
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 our @lines;
 
@@ -45,7 +45,7 @@ Maplat::Helpers::Mascot - print the Maplat mascot as ASCII Art
 This Module provides an easy way to print out the Maplat Mascot as ASCII art,
 which is a rabbit.
 
-=head1 MaplatMascot()
+=head2 Mascot
 
 This prints out a cute little rabbit, the mascot of the Maplat project.
 

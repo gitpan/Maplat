@@ -8,7 +8,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -129,6 +129,14 @@ Firefox is implemented.
 
 it is highly recommended to configure this module as the last module, so it can clean up after everything
 else is done.
+
+=head2 prefilter
+
+Internal function.
+
+=head2 postfilter
+
+Internal function.
 
 =head1 Dependencies
 

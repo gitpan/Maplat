@@ -8,7 +8,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -99,6 +99,10 @@ display the debuglog of more than one worker.
         </module>
 
 worker ... APPNAME of the worker to display
+
+=head2 get
+
+Display the worker debuglog.
 
 =head1 Dependencies
 

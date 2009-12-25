@@ -8,7 +8,7 @@ package Maplat::Web::SendMail;
 use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use Maplat::Helpers::DateStrings;
 use Mail::Sendmail;
@@ -166,6 +166,13 @@ send mails to some or all maplat users.
                 </options>
         </module>
 
+=head2 get
+
+The Sendmail form.
+
+=head2 send
+
+Internal function.
 
 =head1 Dependencies
 

@@ -14,7 +14,7 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(dbfreeze dbthaw);
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use Storable qw(freeze thaw);
 use MIME::Base64;
@@ -51,11 +51,11 @@ non-binary text strings in databases (like the "text" data type in PostgreSQL).
 
 Internally, it uses Storable and MIME::Base64 to do its job.
 
-=head1 dbfreeze()
+=head2 dbfreeze
 
 Takes one argument, the reference to the data structure to be encoded. Returns a text string.
 
-=head1 dbthaw()
+=head2 dbthaw
 
 Takes one argument, a text string encoded by dbfreeze(). Returns a reference to a data structure.
 

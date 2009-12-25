@@ -8,7 +8,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -95,6 +95,10 @@ module to visualize the result.
                         <memcache>memcache</memcache>
                 </options>
         </module>
+
+=head2 get
+
+The dircleaner form.
 
 =head1 Dependencies
 

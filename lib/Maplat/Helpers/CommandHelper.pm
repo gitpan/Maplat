@@ -13,7 +13,7 @@ use Maplat::Helpers::DateStrings;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(getCommandQueue);
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub getCommandQueue {
 	my ($dbh, $memh, $command) = @_;
@@ -82,7 +82,7 @@ This module is mostly an internal helper module to read out the command queue
 and Memcached, return a complex array of all commands in the queue, with
 the current active commands flagged.
 
-=head1 getCommandQueue()
+=head2 getCommandQueue
 
 Takes two or three arguments: The database handle, the memcached-module handle
 and (optionally) a command (database where clause snippet).

@@ -16,7 +16,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT= qw();
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use Maplat::Helpers::Strings qw(tabsToTable);
 use Maplat::Helpers::DateStrings;
@@ -278,7 +278,7 @@ Maplat::Helpers::MailLogger - Logger on steroids
 This Module provides an easy way log information and send it as multipart
 mail with with a text log, CSV log attachment and a color-coded PDF version.
 
-=head1 new()
+=head2 new
 
   my $logger = new Maplat::Helpers::MailLogger(
                 file        => "tempfilename",
@@ -295,27 +295,39 @@ $file is the base filename used for the logfiles.
 $debugdata is a boolean and determines, if debug() lines are included in the mailed
 report.
 
-=head1 debug()
+=head2 start
+
+Start logging.
+
+=head2 debug
 
 Takes one argument, a string. Logs this string with the level DEBUG.
 
-=head1 info()
+=head2 info
 
 Takes one argument, a string. Logs this string with the level INFO.
 
-=head1 warn()
+=head2 warn
 
 Takes one argument, a string. Logs this string with the level WARNING.
 
-=head1 error()
+=head2 error
 
 Takes one argument, a string. Logs this string with the level ERROR.
 
-=head1 finish()
+=head2 finish
 
 Finished up the report and sends it. It is prudent to discard the $logger object after
 a call to finish. Continuing to use the logger after a call to finish will not work and/or
 may have some undesired side effects.
+
+=head2 log
+
+Internal helper function.
+
+=head2 makePDF
+
+Internal helper function.
 
 =head1 AUTHOR
 

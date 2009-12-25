@@ -11,7 +11,7 @@ use Maplat::Helpers::DateStrings;
 use HTML::Parse;
 use HTML::FormatText;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -344,6 +344,22 @@ Full-text search is provided by DocsSearch.
                         <session>sessionsettings</session>
                 </options>
         </module>
+
+=head2 edit
+
+Webform for a single Spreadsheet.
+
+=head2 list
+
+"File" browser for all Spreadsheets.
+
+=head2 ajaxget
+
+Internal function.
+
+=head2 ajaxpost
+
+Internal function.
 
 =head1 Dependencies
 

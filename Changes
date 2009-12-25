@@ -1,5 +1,16 @@
 Revision history for Perl extension Maplat.
 
+0.95  Sun Dec 19 16:00:00 2009
+    - This is a bugfix and "more tests" release
+    - Added POD syntax test
+    - Added POD coverage test
+    - Fixed POD in all modules (but have mostly still minimal documentation)
+    - Added memcached tests
+    - Added static web tests
+    - Added database (DBD::Pg) tests and test database
+    - Added dynamic tests incl. Authentification and user managment
+    - Added simple stress test
+
 0.94  Fri Dec 11 14:00:00 2009
 	- This is a bugfix release
 	- Fixed multiple multi-threading/PreFork issues in Web::

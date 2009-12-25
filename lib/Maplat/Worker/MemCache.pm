@@ -15,7 +15,7 @@ use warnings;
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
 
-our $VERSION = 0.91;
+our $VERSION = 0.95;
 
 sub new {
     my ($proto, %config) = @_;
@@ -214,9 +214,6 @@ in the Maplat framework is also used for interprocess communication.
 
 maxage is the maximum age in days the files are allowed to reside in the directory
 
-limit denotes the limit of how many files to clean out in a single run. This option prevents
-the module of monopolizing harddisk IO.
-
 Further, the main script must declare the variables $VERSION and $APPNAME, because some functionality
 of the wrapper needs those. This values are set in memcached and can be read out by the WebGUI as a central
 point of determing which versions and build of which program are running on the server. So, the variables
@@ -226,39 +223,51 @@ point of determing which versions and build of which program are running on the 
 
 must be accesible and hold reasonable values.
 
-=head1 refresh_lifetick()
+=head2 refresh_lifetick
 
 Refresh the lifetick variable for this application in memcached.
 
-=head1 disable_lifetick()
+=head2 disable_lifetick
 
 Temporarly disables lifetick handling for this application. To resume, just call refresh_lifetick once more.
 
-=head1 set()
+=head2 set
 
 Save data in memcached.
 
 Takes two arguments, a key name and a reference to the data to be stored in memcached. Returns a boolean
 to indicate success or failure.
 
-=head1 get()
+=head2 get
 
 Read data from memcached. Takes one argument, the key name, returns a reference to the data from memcached
 or undef.
 
-=head1 delete()
+=head2 delete
 
 Delete a key from memcached. Takes one argument, the key name, returns a boolean indicating success or failure.
 
-=head1 set_activecommand()
+=head2 set_activecommand
 
 Sets the command currently processed by this application (or 0 to indicate no active command). Takes one argument,
 the id of the currently active command. Returns a boolean indicating success or failure.
 
+=head2 sanitize_key
+
+Internal function to sanitize (clean up and re-encode) the memcached key string. Memcached has some limitations
+how the keys can be named, this functions is used on every access to memcached to make sure the keys adhere
+to this restrictions.
 
 =head1 Dependencies
 
 This module is a basic module which does not depend on other worker modules.
+
+=head1 A note of warning
+
+Memcache caches data between runs of Maplat. If you're upgrading Maplat or changing some data
+structures you want to save/retrieve with Memcache, you should restart your memcached daemon.
+
+Otherwise, expect some unexpected results (aka the "WTF is going on" effect).
 
 =head1 SEE ALSO
 

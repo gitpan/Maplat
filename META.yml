@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Maplat
-version:            0.94
+version:            0.95
 abstract:           The MAPLAT Web Framework
 author:
     - Rene Schickbauer <rene.schickbauer@magnapowertrain.com>
@@ -12,17 +12,20 @@ build_requires:
     ExtUtils::MakeMaker:  0
 requires:
     CGI:                  0
-    Data::Dumper:         0
     Date::Manip:          0
     Date::Simple:         0
     DBD::Pg:              0
     DBI:                  0
     Digest::MD5:          0
     Digest::SHA1:         0
+    English:              0
+    File::Spec:           0
     File::stat:           0
+    File::Temp:           0
+    FileHandle:           0
+    Getopt::Long:         0
     HTML::FormatText:     0
     HTML::Parse:          0
-    HTTP::Server::Simple::CGI:  0
     IO::Handle:           0
     IO::Socket::SSL:      0
     Mail::Sendmail:       0
@@ -30,12 +33,13 @@ requires:
     MIME::QuotedPrint:    0
     Net::Server::PreFork:  0
     PDF::Report:          0
+    Socket:               0
     Storable:             0
     String::CRC32:        0
     Sys::Hostname:        0
     Template:             0
+    Test::More:           0
     Time::HiRes:          0
-    URI::Escape:          0
     XML::Simple:          0
 no_index:
     directory:

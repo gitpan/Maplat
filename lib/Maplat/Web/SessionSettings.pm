@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.91;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -254,7 +254,7 @@ user logout)
                 </options>
         </module>
 
-=head1 set()
+=head2 set
 
 This function adds or updates a setting (data structure) in memcache.
 
@@ -265,7 +265,7 @@ $settingref is a reference to the data structure you want to store, e.g.:
 
 It returns a boolean to indicate success or failure.
 
-=head1 get()
+=head2 get
 
 This function reads a setting from memcached and returns a reference to the data structure.
 
@@ -273,7 +273,7 @@ It takes one arguments, $settingname is the key name of the setting.
 
   $settingref = $us->get($settingname);
 
-=head1 delete()
+=head2 delete
 
 This function deletes a setting from database and returns a boolean to indicate success or failure.
 
@@ -281,11 +281,23 @@ It takes one arguments, $settingname is the key name of the setting.
 
   $is_ok = $us->delete($settingname);
 
-=head1 list()
+=head2 list
 
 This function lists all available settings for a session.
 
   @settingnames = $us->list();
+
+=head2 on_login
+
+Internal function.
+
+=head2 on_logout
+
+Internal function.
+
+=head2 on_refresh
+
+Internal function.
 
 =head1 Dependencies
 

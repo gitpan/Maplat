@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($proto, %config) = @_;
@@ -201,6 +201,14 @@ maxage is the maximum age in days the files are allowed to reside in the directo
 
 limit denotes the limit of how many files to clean out in a single run. This option prevents
 the module of monopolizing harddisk IO.
+
+=head2 work
+
+Internal function.
+
+=head2 clean
+
+Internal function.
 
 =head1 Dependencies
 

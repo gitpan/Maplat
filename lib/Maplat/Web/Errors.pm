@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use strict;
 use warnings;
@@ -141,6 +141,9 @@ This deprecated module is in use by some older projects. You should use the "Sta
                 </options>
         </module>
 
+=head2 get
+
+Handle the errors webmask.
 
 =head1 Dependencies
 

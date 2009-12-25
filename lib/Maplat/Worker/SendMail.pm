@@ -17,7 +17,7 @@ use strict;
 use warnings;
 use Carp;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub new {
     my ($proto, %config) = @_;
@@ -139,6 +139,14 @@ via the Mail::Sendmail module.
                         <subject_prefix>[FooBar]</subject_prefix>
                 </options>
         </module>
+
+=head2 send
+
+Send an email.
+
+=head2 sendFiles
+
+Send an email with file attachments.
 
 =head1 Dependencies
 

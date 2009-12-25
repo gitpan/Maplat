@@ -7,7 +7,7 @@ package Maplat::Worker::BaseModule;
 use strict;
 use warnings;
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 use Carp;
 
@@ -52,18 +52,23 @@ When writing a new worker module, use this module as a base:
   use Maplat::Worker::BaseModule;
   @ISA = ('Maplat::Worker::BaseModule');
 
-=head1 register()
+=head2 new
+
+This creates a new instance of this module. Do not call this function directly, use the "configure" call in
+Maplat::Worker.
+
+=head2 register
 
 This function needs to be overloaded in every worker module. This function is run during startup
 once some time after new(). Within this function (and ONLY within this function) you can call
 register_worker() to register cyclic functions.
 
-=head1 reload()
+=head2 reload
 
 This function is called some time after register() and may be called again while the worker is running. Everytime
 reload() is called, you should empty all cached data in this worker and reload it from the sources (if applicable).
 
-=head1 register_worker()
+=head2 register_worker
 
 This function registers a function of its own module as a cyclic worker function. It takes
 one argument, the name of the cyclic function, for example:

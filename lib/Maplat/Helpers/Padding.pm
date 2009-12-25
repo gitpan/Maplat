@@ -12,7 +12,7 @@ use warnings;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(doFPad doSpacePad trim);
 
-our $VERSION = 0.9;
+our $VERSION = 0.95;
 
 sub doFPad($$) {
     my ($val, $len) = @_;
@@ -63,7 +63,7 @@ Maplat::Helpers::Padding - string padding/trimming helpers
 This module provides a few string padding and trimming helpers, used
 throughout the MAPLAT framework.
 
-=head1 doFPad()
+=head2 doFPad
 
 Takes two arguments, $text and $length and returns the padded string.
 
@@ -71,7 +71,7 @@ $text is the string to be padded to the desired $length with zeroes in front.
 
   my $padded = doFPad("100", 5); # returns "00100"
 
-=head1 doSpacePad()
+=head2 doSpacePad
 
 Takes two arguments, $text and $length and returns the padded string.
 
@@ -79,7 +79,7 @@ $text is the string to be padded to the desired $length with spaces at the end.
 
   my $padded = doSpacePad("100", 5); # returns "100  "
 
-=head1 trim()
+=head2 trim
 
 Takes one argument, the string to be trimmed. Returns the string with whitespace remoned from
 start and end of that string.
