@@ -24,6 +24,7 @@ BEGIN {
     my $daemon_status = connect_memcached();
     if($daemon_status ne "OK") {
         plan skip_all => "no memchached running - wont stress-test";
+	exit(0);
     } else {
         plan tests => 1305;
     }

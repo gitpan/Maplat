@@ -15,6 +15,7 @@ BEGIN {
     my $daemon_status = connect_memcached();
     if($daemon_status ne "OK") {
         plan skip_all => "Skipping - no memchached running - OTHER TEST RESULTS MAY BE WRONG (USING A MEMCACHE SIMULATION)";
+	exit(0);
     } else {
         plan tests => 2;
         use_ok('Maplat::Web::MemCache')

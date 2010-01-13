@@ -1,5 +1,6 @@
 use strict;
 use warnings;
+use Socket;
 
 #########################
 
@@ -18,12 +19,23 @@ BEGIN {
 # change 'tests => 1' to 'tests => last_test_to_print';
 
 use Test::More;
+my $hasMemcached;
 BEGIN { 
-    plan tests => 9;
+    plan tests => 10;
     use_ok('Maplat::Web');
     use_ok('Time::HiRes', qw(sleep usleep));
     use_ok('XML::Simple');
     use_ok('WWW::Mechanize');
+    use_ok('Maplat::Web::MemCacheSim');
+
+    require("t/testhelpers.pm");
+    my $daemon_status = connect_memcached();
+    if($daemon_status ne "OK") {
+        warn("No running memcached - using SIM\n");
+        $hasMemcached = 0;
+    } else {
+        $hasMemcached = 1;
+    }
 };
 
 our $APPNAME = "Maplat Webtest";
@@ -48,6 +60,9 @@ my $webserver = new Maplat::Web($config->{server}->{port});
 $webserver->startconfig($config->{server}, 0);
 
 foreach my $module (@modlist) {
+    if($module->{pm} eq "MemCache" && !$hasMemcached) {
+        $module->{pm} = "MemCacheSim";  # Just change the perl module to use
+    }
     $webserver->configure($module->{modname}, $module->{pm}, %{$module->{options}});
 }
 

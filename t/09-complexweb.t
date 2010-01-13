@@ -21,15 +21,16 @@ use Test::More;
 use Socket;
 my $hasMemcached;
 BEGIN { 
-    plan tests => 46;
+    plan tests => 47;
     use_ok('Maplat::Web');
     use_ok('Time::HiRes', qw(sleep usleep));
     use_ok('XML::Simple');
     use_ok('WWW::Mechanize');
+    use_ok('Maplat::Web::MemCacheSim');
     require("t/testhelpers.pm");
     my $daemon_status = connect_memcached();
     if($daemon_status ne "OK") {
-        warn("No running memcached - using SIM: $daemon_status\n");
+        warn("No running memcached - using SIM\n");
         $hasMemcached = 0;
     } else {
         $hasMemcached = 1;
