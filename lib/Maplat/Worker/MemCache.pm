@@ -15,7 +15,7 @@ use warnings;
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 sub new {
     my ($proto, %config) = @_;

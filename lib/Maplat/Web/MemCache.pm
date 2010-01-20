@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use strict;
 use warnings;
@@ -96,6 +96,7 @@ sub new {
 
 	$self->{oldtime} = 0;
 	$self->{memdtype} = $memdtype;
+	$self->{forked} = 0;
 
     return $self;
 }
@@ -126,6 +127,21 @@ sub afterfork {
 		die("Internal error, mctype " . $self->{mctype} . " unknown");
 	}
 	
+	if(defined($memd)) {
+		my $key = "test_" . int(rand(10000)) . "_" . int(rand(10000));
+		my $val = "test_" . int(rand(10000)) . "_" . int(rand(10000));
+
+		$memd->set($key, $val);
+		my $newval = $memd->get($key);
+		if(!defined($newval) || $newval ne $val) {
+			die("memd doesn't work in afterfork()"); 
+		} else {
+			$memd->delete($key);
+		}
+	} else {
+		die("Can't get memd in afterfork()");
+	}
+
 	$self->{memd} = $memd;
 	$self->{forked} = 0;
 }

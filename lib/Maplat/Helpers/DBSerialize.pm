@@ -14,7 +14,7 @@ use warnings;
 require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(dbfreeze dbthaw);
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use Storable qw(freeze thaw);
 use MIME::Base64;

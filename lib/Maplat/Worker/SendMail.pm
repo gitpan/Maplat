@@ -12,12 +12,13 @@ use Maplat::Helpers::DateStrings;
 use Mail::Sendmail;
 use MIME::QuotedPrint;
 use MIME::Base64;
+use Archive::Zip qw( :ERROR_CODES :CONSTANTS);
 
 use strict;
 use warnings;
 use Carp;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 sub new {
     my ($proto, %config) = @_;
@@ -68,7 +69,7 @@ sub send {
 }
 
 sub sendFiles{
-	my ($self, $reciever, $subject, $body, @files) = @_;
+	my ($self, $reciever, $subject, $body, $zipFile, @files) = @_;
 	
 	my $boundary = "====" . time() . "====";
 	my $contenttype = "multipart/mixed; boundary=\"$boundary\"";
@@ -78,17 +79,28 @@ sub sendFiles{
                 "\n" .
                 encode_qp($body) . "\n" .
                 "\n";
-				
+
+	my $zip = new Archive::Zip();
 	foreach my $file (@files) {
+		my $filemember = $zip->addFile($file);
+		$filemember->desiredCompressionMethod( COMPRESSION_DEFLATED );
+		$filemember->desiredCompressionLevel( COMPRESSION_LEVEL_BEST_COMPRESSION );
+	}
+	$zip->writeToFileNamed($zipFile);
+				
+	foreach my $file ($zipFile) {
 		my $fdata = "";
-		open(my $ifh, "<", $file) or return(0, "Can't read file $file");
-		while((my $fline = <$ifh>)) {
-			$fdata .= $fline;
-		}
+		open(my $ifh, "<", $file) or return(0, "Can't read file $file");		
+		my $holdTerminator = $/;
+        undef $/;
+        binmode($ifh);
+        $fdata = <$ifh>;
+        $/ = $holdTerminator;		
 		close $ifh;
 		$fdata = encode_base64($fdata);
-		$file =~ /.*\/([^\/]*)$/o;
-		my $shortname = $1;
+		my $shortname = $file;
+		$shortname =~ s/^.*\///go;
+		$shortname =~ s/^.*\\//go;
 		$file =~ /\.([^\.]*)$/o;
 		my $type = lc $1;
 		my $longtype = "text/plain";
@@ -99,7 +111,7 @@ sub sendFiles{
 		}
 		
         $message .= "--$boundary\n" .
-					"Content-Type: text/csv; name=\"$shortname\"\n" .
+					"Content-Type: application/zip; name=\"$shortname\"\n" .
 					"Content-Transfer-Encoding: base64\n" .
 					"Content-Disposition: attachment; filename=\"$shortname\"\n" .
 					"\n" .

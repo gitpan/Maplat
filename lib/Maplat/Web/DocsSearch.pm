@@ -10,7 +10,7 @@ use Maplat::Web::BaseModule;
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::Strings 'normalizeString';
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use strict;
 use warnings;

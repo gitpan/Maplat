@@ -21,18 +21,21 @@ use Test::More;
 use Socket;
 my $hasMemcached;
 BEGIN { 
+	# Disable preforking for now
     plan skip_all => "PreForking not yet stable";
+	exit(0);
 
-    plan tests => 46;
     use_ok('Maplat::Web');
     use_ok('Time::HiRes', qw(sleep usleep));
     use_ok('XML::Simple');
     use_ok('WWW::Mechanize');
+    use_ok('HTTP::Cookies');
     require("t/testhelpers.pm");
     my $daemon_status = connect_memcached();
     if($daemon_status ne "OK") {
-        warn("No running memcached - using SIM: $daemon_status\n");
-        $hasMemcached = 0;
+        warn("No running memcached - Skipping prefork test");
+		done_testing();
+	exit(0);
     } else {
         $hasMemcached = 1;
     }
@@ -93,16 +96,20 @@ $webserver->endconfig();
 
 # Everything ready to run
 my $pid = $webserver->background();
-eval {
+#eval {
 
     warn "Waiting for webserver to start up\n";
     sleep(5);
-    print "Hello\n";
-    my $mech = new WWW::Mechanize();
+    warn "Hello\n";
+	my $jar = new HTTP::Cookies(file => "cookies.dat", autosave=>1);
+    my $mech = new WWW::Mechanize(cookie_jar => $jar);
 
     # Test login
+	warn "AAAA\n";
     my $result = $mech->get("http://localhost:9500/user/login");
+	warn "BBBB\n";
     runchecks($result, "Login mask", ["Authentification", "Login", "Make me an application"], []);
+	warn "CCCC\n";
     $result = $mech->submit_form(
         form_name => 'login',
         fields      => {
@@ -181,17 +188,19 @@ eval {
     $result = $mech->get("http://localhost:9500/user/logout");
     runchecks($result, "Log out", ["logged out"], []);
 
-};
+#};
 
 # Finish up
 print "***** $pid *******\n";
 is(kill(15,$pid),1,'Signaled 1 process successfully');
 wait or die "counldn't wait for sub-process completion";
 
+unlink "cookies.dat";
 done_testing();
 
 sub runchecks {
     my ($result, $name, $has, $hasnot) = @_;
+	warn("Test $name\n");
     if($result->is_success) {
         pass($name);
     } else {

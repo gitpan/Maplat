@@ -8,7 +8,7 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use strict;
 use warnings;

@@ -8,7 +8,7 @@ package Maplat::Helpers::CSVFilter;
 use strict;
 use warnings;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 sub new {
     my ($class, %config) = @_;
@@ -94,7 +94,9 @@ sub filter {
         print $ofh "$outline\n";
     }
     $self->{logger}->debuglog("Closing output file");
-    close $ofh;
+    if(defined($ofh)) {
+        close $ofh;
+    }
 }
 
 1;

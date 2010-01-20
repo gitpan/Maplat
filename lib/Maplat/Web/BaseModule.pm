@@ -7,7 +7,7 @@ package Maplat::Web::BaseModule;
 use strict;
 use warnings;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use Carp;
 

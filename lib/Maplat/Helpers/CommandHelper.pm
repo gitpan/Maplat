@@ -13,7 +13,7 @@ use Maplat::Helpers::DateStrings;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(getCommandQueue);
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 sub getCommandQueue {
 	my ($dbh, $memh, $command) = @_;

@@ -1,4 +1,5 @@
 Changes
+devscripts/setversion.pl
 Examples/helloworld/configs/adminworker.xml
 Examples/helloworld/configs/webgui.xml
 Examples/helloworld/configs/webgui_fork_and_ssl.xml

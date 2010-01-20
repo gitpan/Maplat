@@ -16,7 +16,7 @@ use Digest::MD5 qw(md5_hex);
 use Digest::SHA1 qw(sha1_hex);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 my $password_prefix = "CARNIVORE::";
 my $password_postfix = "# or 1984";
@@ -625,6 +625,7 @@ sub prefilter {
     my ($self, $cgi) = @_;
     
     my $webpath = $cgi->path_info();
+	#warn "User requested path $webpath\n";
 
     $self->{cookie} = 0;
     $self->{currentData} = undef;
@@ -653,6 +654,7 @@ sub prefilter {
             foreach my $ur (@{$self->{userlevels}->{userlevel}}) {
                 my $checkpath = "^" .  $ur->{path};
                 if(($webpath =~ /$checkpath/ && !$user->{$ur->{db}})) {
+		    #warn "Forbidden path $webpath\n";
                     my %deniedwebdata = (
                         $self->{server}->get_defaultwebdata(),
                         PageTitle   =>  $self->{pagetitle},
@@ -681,7 +683,11 @@ sub prefilter {
                 $currentData{$ur->{db}} = $user->{$ur->{db}};
             }
             $self->{currentData} = \%currentData;
-        }
+        } else {
+	    #warn "No user session data for $session\n";
+	}
+    } else {
+	#warn "Invalid session cookie\n";
     }
     
     if($self->{cookie}) {
@@ -831,6 +837,7 @@ sub validateSessionID {
     my ($self, $session, $cgi) = @_;
     
     if(!defined($session) || $session eq "NONE") {
+	#warn "No session cookie: $session\n";
 	return 0; # Invalid session
     }
     
@@ -838,6 +845,7 @@ sub validateSessionID {
     if($session =~ /\-of\-(.*)/) {
 	$client_checksum = $1;
     } else {
+	#warn "Session ID missing from cookie: $session\n";
 	return 0; # Session ID missing Client IP checksum
     }
     
@@ -846,6 +854,7 @@ sub validateSessionID {
     if($host_checksum eq $client_checksum) {
 	return 1; # Client-IP checks out
     } else {
+	#warn "Cookie checksum wrong: my $host_checksum your $client_checksum your ip: $host_addr\n";
 	return 0; # Burn in hell for faking the client IP checksum
     }
 }

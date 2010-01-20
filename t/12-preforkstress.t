@@ -20,12 +20,15 @@ use warnings;
 use Test::More;
 use Socket;
 BEGIN { 
+	# Disable preforking for now
     plan skip_all => "PreForking not yet stable";
+	exit(0);
 
     require("t/testhelpers.pm");
     my $daemon_status = connect_memcached();
     if($daemon_status ne "OK") {
         plan skip_all => "no memchached running - wont stress-test";
+		done_testing();
     } else {
         #plan tests => 1305;
     }
@@ -33,6 +36,7 @@ BEGIN {
     use_ok('Time::HiRes', qw(sleep usleep));
     use_ok('XML::Simple');
     use_ok('WWW::Mechanize');
+    use_ok('HTTP::Cookies');
 
 };
 use DBI     ':sql_types';
@@ -92,7 +96,8 @@ warn "Waiting for webserver to start up\n";
 sleep(5);
 eval {
 
-    my $mech = new WWW::Mechanize();
+	my $jar = new HTTP::Cookies(file => "cookies.dat", autosave=>1);
+    my $mech = new WWW::Mechanize(cookie_jar => \$jar);
 
     for(1..50) {
         # Log in...
@@ -118,6 +123,7 @@ eval {
 is(kill(15,$pid),1,'Signaled 1 process successfully');
 wait or die "counldn't wait for sub-process completion";
 
+unlink "cookies.dat";
 done_testing();
 
 sub runchecks {

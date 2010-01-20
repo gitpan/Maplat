@@ -8,7 +8,7 @@ use strict;
 use warnings;
 
 use Maplat::Helpers::DateStrings;
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 sub new {
     my ($class, %config) = @_;

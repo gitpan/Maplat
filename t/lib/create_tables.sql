@@ -1,43 +1,4 @@
-CREATE SCHEMA enum;
 CREATE PROCEDURAL LANGUAGE plpgsql;
-
-
-
-SET search_path = public, pg_catalog;
-
-
-
-CREATE TYPE commands_enum AS ENUM (
-    'VACUUM_ANALYZE',
-    'VACUUM_FULL',
-    'ANALYZE_TABLE',
-    'REINDEX_TABLE',
-    'REINDEX_ALL_TABLES',
-    'BACKUP',
-    'CALCULATE_STATS',
-    'NOP_OK',
-    'NOP_FAIL',
-    'VACUUM_ANALYZE_TABLE'
-);
-
-
-
-
-CREATE TYPE doctype_enum AS ENUM (
-    'Word',
-    'Spreadsheet'
-);
-
-
-
-
-CREATE TYPE errors_enum AS ENUM (
-    'COMMAND',
-    'CONFIGURATION',
-    'OTHER',
-    'DIR_CLEANER'
-);
-
 
 
 
@@ -46,7 +7,7 @@ SET search_path = public, pg_catalog;
 
 CREATE TABLE commandqueue (
     id integer NOT NULL,
-    command commands_enum NOT NULL,
+    command text NOT NULL,
     arguments text[],
     queuetime timestamp without time zone DEFAULT now() NOT NULL,
     starttime timestamp without time zone DEFAULT now() NOT NULL
@@ -71,7 +32,7 @@ ALTER SEQUENCE commandqueue_id_seq OWNED BY commandqueue.id;
 
 CREATE TABLE documents (
     id integer NOT NULL,
-    doctype doctype_enum NOT NULL,
+    doctype text NOT NULL,
     created timestamp without time zone DEFAULT now() NOT NULL,
     updated timestamp without time zone DEFAULT now() NOT NULL,
     filename text NOT NULL,
@@ -103,7 +64,7 @@ ALTER SEQUENCE documents_id_seq OWNED BY documents.id;
 CREATE TABLE errors (
     error_id integer NOT NULL,
     reporttime timestamp without time zone DEFAULT now() NOT NULL,
-    error_type errors_enum NOT NULL,
+    error_type text NOT NULL,
     description text NOT NULL
 );
 

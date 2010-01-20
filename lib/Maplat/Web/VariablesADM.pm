@@ -9,7 +9,7 @@ use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 # WARNING: This uses mainly hardcoded stuff
 

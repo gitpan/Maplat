@@ -14,7 +14,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT= qw(MaplatLogo);
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 our @lines;
 

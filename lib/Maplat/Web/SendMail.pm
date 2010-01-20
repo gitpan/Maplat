@@ -8,7 +8,7 @@ package Maplat::Web::SendMail;
 use Maplat::Web::BaseModule;
 @ISA = ('Maplat::Web::BaseModule');
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use Maplat::Helpers::DateStrings;
 use Mail::Sendmail;

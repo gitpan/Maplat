@@ -1,6 +1,11 @@
 Revision history for Perl extension Maplat.
 
-0.96  Mon Jan 13 10:00:00 2010
+0.970 Wed Jan 20 15:20:00 2010
+	- Fixed tests to also work on PostgreSQL 7.x (without enums)
+	- more internal testing for upcoming prefork version (currently WWW::Mechanize seems to be buggy)
+	- some changes on how a mail with multiple files is send (now creating a ZIP-File on the fly)
+
+0.96  Wed Jan 13 10:00:00 2010
 	- This is a bugfix release
 	- Add missing requirements to Makefile.PL
 	- Fixed some tests (tests were broken, not the modules)

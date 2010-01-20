@@ -11,7 +11,7 @@ use Maplat::Helpers::DateStrings;
 use HTML::Parse;
 use HTML::FormatText;
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use strict;
 use warnings;

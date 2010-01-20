@@ -16,7 +16,7 @@ use Date::Manip qw(Date_Init UnixDate);
 our @ISA = qw(Exporter);
 our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset);
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 our $lastUniqueDate = "";
 our $UniqueDateCounter = 0;

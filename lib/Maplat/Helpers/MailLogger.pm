@@ -16,7 +16,7 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT= qw();
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 use Maplat::Helpers::Strings qw(tabsToTable);
 use Maplat::Helpers::DateStrings;

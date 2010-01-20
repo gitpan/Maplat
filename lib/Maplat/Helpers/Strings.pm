@@ -14,7 +14,7 @@ use Maplat::Helpers::Padding qw(doSpacePad);
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(tabsToTable normalizeString);
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 sub tabsToTable($@) {
     my $txt = shift;

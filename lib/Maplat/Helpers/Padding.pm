@@ -12,7 +12,7 @@ use warnings;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(doFPad doSpacePad trim);
 
-our $VERSION = 0.95;
+our $VERSION = 0.970;
 
 sub doFPad($$) {
     my ($val, $len) = @_;
