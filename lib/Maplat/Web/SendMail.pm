@@ -1,21 +1,18 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::SendMail;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
+use strict;
+use warnings;
 
-our $VERSION = 0.970;
+use base qw(Maplat::Web::BaseModule);
+
+our $VERSION = 0.98;
 
 use Maplat::Helpers::DateStrings;
 use Mail::Sendmail;
 use MIME::QuotedPrint;
 
-use strict;
-use warnings;
 use Carp;
 
 sub new {
@@ -31,17 +28,19 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
-	$self->register_webpath($self->{webpath}, "get");
+    $self->register_webpath($self->{webpath}, "get");
+    return;
 }
 
 sub get {
     my ($self, $cgi) = @_;
     
-	my @recievers = $cgi->param("reciever[]");
+    my @recievers = $cgi->param("reciever[]");
     my $subject = $cgi->param("subject") || "";
     my $mailtext = $cgi->param("mailtext") || "";
     my $mustupdate = $cgi->param("submitform") || "0";
@@ -49,28 +48,28 @@ sub get {
     my %webdata = (
         $self->{server}->get_defaultwebdata(),
         PageTitle   =>  $self->{pagetitle},
-        webpath	    =>  $self->{admin}->{webpath},
+        webpath        =>  $self->{admin}->{webpath},
         subject     =>  $subject,
         mailtext   =>  $mailtext,
     );
     
     if($webdata{userData}->{type} ne "admin") {
-		return (status  =>  404);
-	}
+        return (status  =>  404);
+    }
     
     if($mustupdate) {
-		my $ok = 1;
-		my $statustext = "";
-		foreach my $reciever (@recievers) {
-			my ($tmpok, $tmpstatustext) = $self->send($reciever, $subject, $mailtext, "text/plain");
-			if(!$tmpok) {
-				$ok = 0;
-				$statustext .= $tmpstatustext . "<br>";
-			}
-		}
-		if($ok) {
-			$statustext = "All send!";
-		}
+        my $ok = 1;
+        my $statustext = "";
+        foreach my $reciever (@recievers) {
+            my ($tmpok, $tmpstatustext) = $self->sendMail($reciever, $subject, $mailtext, "text/plain");
+            if(!$tmpok) {
+                $ok = 0;
+                $statustext .= $tmpstatustext . "<br>";
+            }
+        }
+        if($ok) {
+            $statustext = "All send!";
+        }
         $webdata{statustext} = $statustext;
         if($ok) {
             $webdata{statuscolor} = "oktext";
@@ -78,23 +77,23 @@ sub get {
             $webdata{statuscolor} = "errortext";
         }
     }
-	
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
-	my $sth = $dbh->prepare_cached("SELECT username, email_addr
-									  FROM users
-									  ORDER BY username")
-				or die($dbh->errstr);
-	$sth->execute or die($dbh->errstr);
-	my @users;
-	while((my $user = $sth->fetchrow_hashref)) {
-		if (grep {$_ eq $user->{email_addr}} @recievers) {
-			$user->{checked} = 1;
-		}
+    
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $sth = $dbh->prepare_cached("SELECT username, email_addr
+                                      FROM users
+                                      ORDER BY username")
+                or croak($dbh->errstr);
+    $sth->execute or croak($dbh->errstr);
+    my @users;
+    while((my $user = $sth->fetchrow_hashref)) {
+        if (grep {$_ eq $user->{email_addr}} @recievers) {
+            $user->{checked} = 1;
+        }
 
-		push @users, $user;
-	}
-	$webdata{users} = \@users;
-	
+        push @users, $user;
+    }
+    $webdata{users} = \@users;
+    
     
     my $template = $self->{server}->{modules}->{templates}->get("sendmail", 1, %webdata);
     return (status  =>  404) unless $template;
@@ -104,10 +103,10 @@ sub get {
 }
 
 
-sub send {
-	my ($self, $reciever, $subject, $message, $contenttype) = @_;
-	
-	    my %mail = (
+sub sendMail {
+    my ($self, $reciever, $subject, $message, $contenttype) = @_;
+    
+        my %mail = (
                 To              => $reciever,
                 From            => $self->{sender},
                 Subject         => $self->{subject_prefix} . " " . $subject,
@@ -159,8 +158,8 @@ send mails to some or all maplat users.
                         <mailserver>mail</mailserver>
                         <mailport>25</mailport>
                         <mailer_id>Maplat Notification System</mailer_id>
-                        <sender>noreply@magnapowertrain.com</sender>
-                        <!--<Cc>rene.schickbauer@magnapowertrain.com</Cc>-->
+                        <sender>noreply@gmail.com</sender>
+                        <!--<Cc>rene.schickbauer@gmail.com</Cc>-->
                         <subject_prefix>[Maplat]</subject_prefix>
                         <db>maindb</db>
                 </options>
@@ -170,7 +169,7 @@ send mails to some or all maplat users.
 
 The Sendmail form.
 
-=head2 send
+=head2 sendMail
 
 Internal function.
 
@@ -188,11 +187,11 @@ Maplat::Web::PostgresDB
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

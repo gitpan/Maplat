@@ -29,7 +29,9 @@ BEGIN {
     use_ok('Maplat::Web::MemCacheSim');
 
     require("t/testhelpers.pm");
+    require("t/Maplat/Web/HelloWorld.pm");
     my $daemon_status = connect_memcached();
+    
     if($daemon_status ne "OK") {
         warn("No running memcached - using SIM\n");
         $hasMemcached = 0;

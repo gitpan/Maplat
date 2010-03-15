@@ -1,19 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::SessionSettings;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
+use strict;
+use warnings;
+
+use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
-use strict;
-use warnings;
 
 sub new {
     my ($proto, %config) = @_;
@@ -28,13 +25,15 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
-	$self->register_loginitem("on_login");
-	$self->register_logoutitem("on_logout");
-	$self->register_sessionrefresh("on_refresh");
+    $self->register_loginitem("on_login");
+    $self->register_logoutitem("on_logout");
+    $self->register_sessionrefresh("on_refresh");
+    return;
 }
 
 # NOTE: We have TWO sets of data for each session:
@@ -45,182 +44,185 @@ sub register {
 # login module for timed-out sessions
 
 sub get {
-	my ($self, $settingname) = @_;
-	
-	my $settingref;
-		
-	my $loginh = $self->{server}->{modules}->{$self->{login}};
-	my $sessionid = $loginh->get_sessionid;
-	return 0 if(!defined($sessionid));
-	
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
-	
-	$settingref = $memh->get($keyname);
-	if(defined($settingref)) {
-		return (1, $settingref);
-	}
-	
-	return 0;
+    my ($self, $settingname) = @_;
+    
+    my $settingref;
+        
+    my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $sessionid = $loginh->get_sessionid;
+    return 0 if(!defined($sessionid));
+    
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
+    
+    $settingref = $memh->get($keyname);
+    if(defined($settingref)) {
+        return (1, $settingref);
+    }
+    
+    return 0;
 }
 
 sub set {
-	my ($self, $settingname, $settingref) = @_;
-	
-	my $loginh = $self->{server}->{modules}->{$self->{login}};
-	my $sessionid = $loginh->get_sessionid;
-	return 0 if(!defined($sessionid));
-	
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
-	my $listname = "SessionSettings::Sessions";
-	
-	my $list = $memh->get($listname);
-	if(!defined($list)) {
-		$list = {};
-	}
-	
-	if(defined($list->{$sessionid})) {
-		$list->{$sessionid}->{memkeys}->{$keyname} = 1;
-	}
+    my ($self, $settingname, $settingref) = @_;
+    
+    my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $sessionid = $loginh->get_sessionid;
+    return 0 if(!defined($sessionid));
+    
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
+    my $listname = "SessionSettings::Sessions";
+    
+    my $list = $memh->get($listname);
+    if(!defined($list)) {
+        $list = {};
+    }
+    
+    if(defined($list->{$sessionid})) {
+        $list->{$sessionid}->{memkeys}->{$keyname} = 1;
+    }
 
-	$memh->set($keyname, $settingref);
-	$memh->set($listname, $list);
-	
-	return 1;
+    $memh->set($keyname, $settingref);
+    $memh->set($listname, $list);
+    
+    return 1;
 }
 
-sub delete {
-	my ($self, $settingname) = @_;
-	
-	my $settingref;
+sub delete {## no critic(BuiltinHomonyms)
+    my ($self, $settingname) = @_;
+    
+    my $settingref;
 
-	my $loginh = $self->{server}->{modules}->{$self->{login}};
-	my $sessionid = $loginh->get_sessionid;
-	return 0 if(!defined($sessionid));
+    my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $sessionid = $loginh->get_sessionid;
+    return 0 if(!defined($sessionid));
 
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
-	my $listname = "SessionSettings::Sessions";
-	
-	my $list = $memh->get($listname);
-	if(!defined($list)) {
-		$list = {};
-	}
-	
-	if(defined($list->{$sessionid})) {
-		delete $list->{$sessionid}->{memkeys}->{$keyname};
-	}
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
+    my $listname = "SessionSettings::Sessions";
+    
+    my $list = $memh->get($listname);
+    if(!defined($list)) {
+        $list = {};
+    }
+    
+    if(defined($list->{$sessionid})) {
+        delete $list->{$sessionid}->{memkeys}->{$keyname};
+    }
 
-	$memh->delete($keyname);
-	$memh->set($listname, $list);
+    $memh->delete($keyname);
+    $memh->set($listname, $list);
 
-	
-	return 1;
+    
+    return 1;
 }
 
 sub list {
-	my ($self) = @_;
-	
-	my @settingnames = ();
-	
-	my $loginh = $self->{server}->{modules}->{$self->{login}};
-	my $sessionid = $loginh->get_sessionid;
-	return 0 if(!defined($sessionid));
+    my ($self) = @_;
+    
+    my @settingnames = ();
+    
+    my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $sessionid = $loginh->get_sessionid;
+    return 0 if(!defined($sessionid));
 
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $listname = "SessionSettings::Sessions";
-	my $keyrm = "SessionSettings::" . $sessionid . "::";
-	
-	my $list = $memh->get($listname);
-	if(!defined($list)) {
-		return 0;
-	}
-	
-	if(defined($list->{$sessionid}) && defined($list->{$sessionid}->{memkeys})) {
-		foreach my $memkey (sort keys %{$list->{$sessionid}->{memkeys}}) {
-			my $tmp = $memkey;
-			$tmp =~ s/$keyrm//g;
-			push @settingnames, $tmp;
-		}
-		return (1, @settingnames);
-	}
-	return (0, @settingnames);
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $listname = "SessionSettings::Sessions";
+    my $keyrm = "SessionSettings::" . $sessionid . "::";
+    
+    my $list = $memh->get($listname);
+    if(!defined($list)) {
+        return 0;
+    }
+    
+    if(defined($list->{$sessionid}) && defined($list->{$sessionid}->{memkeys})) {
+        foreach my $memkey (sort keys %{$list->{$sessionid}->{memkeys}}) {
+            my $tmp = $memkey;
+            $tmp =~ s/$keyrm//g;
+            push @settingnames, $tmp;
+        }
+        return (1, @settingnames);
+    }
+    return (0, @settingnames);
 }
 
 sub on_login {
-	my ($self, $username, $sessionid) = @_;
-	
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $listname = "SessionSettings::Sessions";
-	
-	my $list = $memh->get($listname);
-	if(!defined($list)) {
-		$list = {};
-	}
-	
-	$list->{$sessionid}->{lastUpdate} = time;
-	$list->{$sessionid}->{userName} = $username;
-	$list->{$sessionid}->{memkeys} = {};
-	
-	$memh->set($listname, $list);	
+    my ($self, $username, $sessionid) = @_;
+    
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $listname = "SessionSettings::Sessions";
+    
+    my $list = $memh->get($listname);
+    if(!defined($list)) {
+        $list = {};
+    }
+    
+    $list->{$sessionid}->{lastUpdate} = time;
+    $list->{$sessionid}->{userName} = $username;
+    $list->{$sessionid}->{memkeys} = {};
+    
+    $memh->set($listname, $list);    
+    return;
 }
 
 sub on_logout {
-	my ($self, $sessionid) = @_;
-	
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $listname = "SessionSettings::Sessions";
-	
-	my $list = $memh->get($listname);
-	if(!defined($list)) {
-		return;
-	}
-	
-	if(defined($list->{$sessionid}) && defined($list->{$sessionid}->{memkeys})) {
-		foreach my $key (keys %{$list->{$sessionid}->{memkeys}}) {
-			$memh->delete($key);
-		}
-		delete $list->{$sessionid};
-	}
-	
-	$memh->set($listname, $list);
+    my ($self, $sessionid) = @_;
+    
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $listname = "SessionSettings::Sessions";
+    
+    my $list = $memh->get($listname);
+    if(!defined($list)) {
+        return;
+    }
+    
+    if(defined($list->{$sessionid}) && defined($list->{$sessionid}->{memkeys})) {
+        foreach my $key (keys %{$list->{$sessionid}->{memkeys}}) {
+            $memh->delete($key);
+        }
+        delete $list->{$sessionid};
+    }
+    
+    $memh->set($listname, $list);
+    return;
 }
 
 sub on_refresh {
-	my ($self, $sessionid) = @_;
+    my ($self, $sessionid) = @_;
 
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $listname = "SessionSettings::Sessions";
-	
-	my $list = $memh->get($listname);
-	if(!defined($list)) {
-		return;
-	}
-	
-	# FIRST, delete all sessions that are over 2 hours old (Login uses 1 hour, so
-	# we should be on the save side)
-	my $currTime = time;
-	foreach my $session (keys %{$list}) {
-		my $oldTime = $list->{$sessionid}->{lastUpdate} || 0;
-		my $age = ($currTime - $oldTime) / 3600;
-		if($age > 2) {
-			# Ok, delete this session
-			if(defined($list->{$sessionid}) && defined($list->{$sessionid})->{memkeys}) {
-				foreach my $key (keys %{$list->{$sessionid}->{memkeys}}) {
-					$memh->delete($key);
-				}
-			}
-			delete $list->{$session};
-		}
-	}
-	
-	# Update sessions timestamp
-	if(defined($list->{$sessionid})) {
-		$list->{$sessionid}->{lastUpdate} = $currTime;
-	}
-	
-	$memh->set($listname, $list);
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $listname = "SessionSettings::Sessions";
+    
+    my $list = $memh->get($listname);
+    if(!defined($list)) {
+        return;
+    }
+    
+    # FIRST, delete all sessions that are over 2 hours old (Login uses 1 hour, so
+    # we should be on the save side)
+    my $currTime = time;
+    foreach my $session (keys %{$list}) {
+        my $oldTime = $list->{$sessionid}->{lastUpdate} || 0;
+        my $age = ($currTime - $oldTime) / 3600;
+        if($age > 2) {
+            # Ok, delete this session
+            if(defined($list->{$sessionid}) && defined($list->{$sessionid})->{memkeys}) {
+                foreach my $key (keys %{$list->{$sessionid}->{memkeys}}) {
+                    $memh->delete($key);
+                }
+            }
+            delete $list->{$session};
+        }
+    }
+    
+    # Update sessions timestamp
+    if(defined($list->{$sessionid})) {
+        $list->{$sessionid}->{lastUpdate} = $currTime;
+    }
+    
+    $memh->set($listname, $list);
+    return;
 }
 
 1;
@@ -315,11 +317,11 @@ Maplat::Web::Login
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -21,9 +21,13 @@ use Test::More;
 use Socket;
 my $hasMemcached;
 BEGIN { 
-	# Disable preforking for now
+    if ( not $ENV{TEST_PG} ) {
+        my $msg = 'DBI/DBD::PG test.  Set $ENV{TEST_PG} to a true value to run.';
+        plan( skip_all => $msg );
+    }
+    # Disable preforking for now
     plan skip_all => "PreForking not yet stable";
-	exit(0);
+    	exit(0);
 
     use_ok('Maplat::Web');
     use_ok('Time::HiRes', qw(sleep usleep));

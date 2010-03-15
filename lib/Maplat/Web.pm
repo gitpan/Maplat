@@ -1,4 +1,10 @@
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# Developed under Artistic license
+# for Magna Powertrain Ilz
+
 package Maplat::Web;
+use strict;
+use warnings;
 use base qw(HTTP::Server::Simple::CGI);
 use English;
 
@@ -8,10 +14,8 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
-use strict;
-use warnings;
 use Template;
 use Data::Dumper;
 use FileHandle;
@@ -21,6 +25,7 @@ use Maplat::Helpers::Mascot;
 use IO::Socket::SSL;
 
 #=!=START-AUTO-INCLUDES
+use Maplat::Web::BaseModule;
 use Maplat::Web::BrowserWorkarounds;
 use Maplat::Web::CommandQueue;
 use Maplat::Web::Debuglog;
@@ -31,9 +36,9 @@ use Maplat::Web::DocsWordProcessor;
 use Maplat::Web::Errors;
 use Maplat::Web::Login;
 use Maplat::Web::LogoCache;
-use Maplat::Web::BaseModule;
 use Maplat::Web::MemCache;
 use Maplat::Web::MemCacheSim;
+use Maplat::Web::OracleDB;
 use Maplat::Web::PathRedirection;
 use Maplat::Web::PostgresDB;
 use Maplat::Web::SendMail;
@@ -42,6 +47,7 @@ use Maplat::Web::StandardFields;
 use Maplat::Web::StaticCache;
 use Maplat::Web::Status;
 use Maplat::Web::TemplateCache;
+use Maplat::Web::Themes;
 use Maplat::Web::UserSettings;
 use Maplat::Web::VariablesADM;
 #=!=END-AUTO-INCLUDES
@@ -53,7 +59,7 @@ sub handle_request {
     my $webpath = $cgi->path_info();
     my %header = (  -system  =>  "MAPLAT Version $VERSION",
                     -creator => 'Rene \'cavac\' Schickbauer',
-                    -complaints_to   => 'rene.schickbauer@magnapowertrain.com',
+                    -complaints_to   => 'rene.schickbauer@gmail.com',
                     -expires => 'now',
                     -cache_control=>"no-cache, no-store, must-revalidate",
                     -charset => 'utf-8',
@@ -146,57 +152,57 @@ sub handle_request {
     
     print $cgi->header(%header);
     print $result{data};
- 
+    return; 
 }
 
-sub startconfig() {
+sub startconfig {
     my ($self, $maplatconfig, $isCompiled) = @_;
     
     if(!defined($isCompiled)) {
-	$isCompiled = 0;
+    $isCompiled = 0;
     }
     $self->{compiled} = $isCompiled;
 
-	$self->{maplat} = $maplatconfig;
+    $self->{maplat} = $maplatconfig;
 
-	if(defined($self->{maplat}->{forking}) && $self->{maplat}->{forking}) {
-		# Create new subroutine to tell HTTP::Server::Simple that we want
-		# to be a preforking server
-		no strict 'refs';
-		*{__PACKAGE__ . "::net_server"} = sub {
-			my $server = 'Net::Server::PreFork';
-			return $server;
-		};
+    if(defined($self->{maplat}->{forking}) && $self->{maplat}->{forking}) {
+        # Create new subroutine to tell HTTP::Server::Simple that we want
+        # to be a preforking server
+        no strict 'refs';
+        *{__PACKAGE__ . "::net_server"} = sub {
+            my $server = 'Net::Server::PreFork';
+            return $server;
+        };
 
-		$self->{maplat}->{forking} = 1;
-	} else {
-		$self->{maplat}->{forking} = 0;
-	}
+        $self->{maplat}->{forking} = 1;
+    } else {
+        $self->{maplat}->{forking} = 0;
+    }
 
 
-	if(defined($self->{maplat}->{usessl}) && $self->{maplat}->{usessl}) {
-		# Create subroutine to tell HTTP::Server::Simple that we want to use SSL
-		# with the certs defined in the config. This is done by creating an
-		# accept hook
-		no strict 'refs';
-		*{__PACKAGE__ . "::accept_hook"} = sub {
-			my $self = shift;
-			my $fh   = $self->stdio_handle;
+    if(defined($self->{maplat}->{usessl}) && $self->{maplat}->{usessl}) {
+        # Create subroutine to tell HTTP::Server::Simple that we want to use SSL
+        # with the certs defined in the config. This is done by creating an
+        # accept hook
+        no strict 'refs';
+        *{__PACKAGE__ . "::accept_hook"} = sub {
+            my $self = shift;
+            my $fh   = $self->stdio_handle;
 
-			$self->SUPER::accept_hook(@_);
+            $self->SUPER::accept_hook(@_);
 
-			my $newfh =
-			IO::Socket::SSL->start_SSL( $fh, 
-				SSL_server    => 1,
-				SSL_use_cert  => 1,
-				SSL_cert_file => $_[0]->{maplat}->{sslcert},
-				SSL_key_file  => $_[0]->{maplat}->{sslkey},
-			)
-			or warn "problem setting up SSL socket: " . IO::Socket::SSL::errstr();
+            my $newfh =
+            IO::Socket::SSL->start_SSL( $fh, 
+                SSL_server    => 1,
+                SSL_use_cert  => 1,
+                SSL_cert_file => $_[0]->{maplat}->{sslcert},
+                SSL_key_file  => $_[0]->{maplat}->{sslkey},
+            )
+            or carp "problem setting up SSL socket: " . IO::Socket::SSL::errstr();
 
-			$self->stdio_handle($newfh) if $newfh;
-		};
-	}
+            $self->stdio_handle($newfh) if $newfh;
+        };
+    }
         
     # Clean up configuration
     my %tmpPaths;
@@ -220,9 +226,10 @@ sub startconfig() {
     my @sessionrefresh;
     $self->{sessionrefresh} = \@sessionrefresh;
     
+    return; 
 }
 
-sub endconfig() {
+sub endconfig {
     my ($self) = @_;
     
     # TODO: IMPLEMENT SOME SANITY CHECKS HERE
@@ -235,10 +242,10 @@ sub endconfig() {
     }
     print "Data loaded - calling endconfig...\n";
     foreach my $modname (keys %{$self->{modules}}) {
-   	    $self->{modules}->{$modname}->endconfig;   # Mostly used in preforking servers
+           $self->{modules}->{$modname}->endconfig;   # Mostly used in preforking servers
     }
-	print "Done.\n";
-		
+    print "Done.\n";
+        
     print "\n";
     print "Startup configuration complete! We're go for auto-sequence start.\n";
     print "Starting Maplat Server...\n";
@@ -247,6 +254,7 @@ sub endconfig() {
         print "$line";
     }
     print "\n";
+    return; 
 
 }
 
@@ -257,35 +265,38 @@ sub configure {
     $config{modname} = $modname;
     
     # ...what perl module it's supposed to be...
-	my $perlmodule = "Maplat::Web::$perlmodulename";
+    my $perlmodule = "Maplat::Web::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
-		# Local module - load it first
-		my $requirestr;
-		if($self->{compiled} && $OSNAME eq 'MSWin32') {
-		    my $boundname = "Web_" . $perlmodulename . ".pm";
-		    print "Dynamically loading bound file for $boundname...\n";
-		    my $modfilename = PerlApp::extract_bound_file($boundname);
-		    die("$perlmodule not bound to application") unless defined $modfilename;
-		    print "  Bound file name $modfilename\n";
-		    $requirestr = "require '" . $modfilename . "'";		    
-		} else {
-		    print "Dynamically loading $perlmodule...\n";
-		    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
-		}
-		eval $requirestr;
-	}
+	croak("$perlmodule not loaded");
+
+        ## Local module - load it first
+        #my $requirestr;
+        #if($self->{compiled} && $OSNAME eq 'MSWin32') {
+        #    my $boundname = "Web_" . $perlmodulename . ".pm";
+        #    print "Dynamically loading bound file for $boundname...\n";
+        #    my $modfilename = PerlApp::extract_bound_file($boundname);
+        #    croak("$perlmodule not bound to application") unless defined $modfilename;
+        #    print "  Bound file name $modfilename\n";
+        #    $requirestr = "require '" . $modfilename . "'";            
+        #} else {
+        #    print "Dynamically loading $perlmodule...\n";
+        #    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
+        #}
+        #eval $requirestr;
+    }
     $config{pmname} = $perlmodule;
 
     # and its parent
     $config{server} = $self;
 
-	# also notify the module if it needs to take care of forking issues (database
-	# modules probably will)
-	$config{forking} = $self->{maplat}->{forking};
+    # also notify the module if it needs to take care of forking issues (database
+    # modules probably will)
+    $config{forking} = $self->{maplat}->{forking};
     
     $self->{modules}->{$modname} = $perlmodule->new(%config);
     $self->{modules}->{$modname}->register; # Register handlers provided by the module
     print "Module $modname ($perlmodule) configured.\n";
+    return; 
 }
 
 sub reload {
@@ -294,6 +305,7 @@ sub reload {
     foreach my $modname (keys %{$self->{modules}}) {
         $self->{modules}->{$modname}->reload;   # Reload module's data
     }
+    return; 
 }
 
 sub run_task {
@@ -335,6 +347,7 @@ sub prerender {
         my $funcname = $item->{Function};
         $module->$funcname($webdata);
     }
+    return; 
 }
 
 sub user_login {
@@ -345,6 +358,7 @@ sub user_login {
         my $funcname = $item->{Function};
         $module->$funcname($username, $sessionid);
     }
+    return; 
 }
 
 sub user_logout {
@@ -355,6 +369,7 @@ sub user_logout {
         my $funcname = $item->{Function};
         $module->$funcname($sessionid);
     }
+    return; 
 }
 
 sub sessionrefresh {
@@ -365,6 +380,7 @@ sub sessionrefresh {
         my $funcname = $item->{Function};
         $module->$funcname($sessionid);
     }
+    return; 
 }
 
 # TRIGGER REGISTRATION: Reserve calls from modules
@@ -377,14 +393,15 @@ sub add_webpath {
     );
     
     $self->{webpaths}->{$path} = \%conf;
+    return; 
 }
 
 BEGIN {
-	# Auto-magically generate a number of similar functions without actually
+    # Auto-magically generate a number of similar functions without actually
     # writing them down one-by-one. This makes consistent changes much easier, but
     # you need perl wizardry level +12 to understand how it works...
 
-	no strict 'refs';
+    no strict 'refs';
     
     # -- Deep magic begins here...
     my %varsubs = (
@@ -397,8 +414,8 @@ BEGIN {
         sessionrefresh  => "sessionrefresh",
         prerender       => "prerender",
     );
-	for my $a (keys %varsubs){
-		*{__PACKAGE__ . "::add_$a"} =
+    for my $a (keys %varsubs){
+        *{__PACKAGE__ . "::add_$a"} =
             sub {
                 my %conf = (
                     Module  => $_[1],
@@ -406,7 +423,7 @@ BEGIN {
                 );
                 push @{$_[0]->{$varsubs{$a}}}, \%conf;
             };
-	}
+    }
     # ... and ends here
 }
 
@@ -561,11 +578,11 @@ Please also take a look in the example provided in the tarball available on CPAN
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

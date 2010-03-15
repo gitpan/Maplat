@@ -14,7 +14,7 @@ use constant OFFSET  => 5;  # offsets to read into buffers
 use constant FLAGS   => 6;
 use constant KEY     => 7;  # current key we're parsing (without the namespace prefix)
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub new {
     my ($class, $dest, $nslen, $on_item) = @_;

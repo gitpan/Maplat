@@ -4,5 +4,10 @@
 
 <p class="footer" align="center">
 	LogoDay is an information campaign to celebrate
-	special events relevant INSERT PROJECT NAME HERE.
+	special events relevant to
+	[% IF ProjectName %]
+		[% ProjectName %].
+	[% ELSE %]
+		INSERT PROJECT NAME HERE.
+	[% END %]
 </p>

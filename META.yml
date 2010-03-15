@@ -1,9 +1,9 @@
 --- #YAML:1.0
 name:               Maplat
-version:            0.97
+version:            0.98
 abstract:           The MAPLAT Web Framework
 author:
-    - Rene Schickbauer <rene.schickbauer@magnapowertrain.com>
+    - Rene Schickbauer <rene.schickbauer@gmail.com>
 license:            unknown
 distribution_type:  module
 configure_requires:
@@ -11,14 +11,17 @@ configure_requires:
 build_requires:
     ExtUtils::MakeMaker:  0
 requires:
+    Archive::Zip:         0
+    Carp:                 0
     CGI:                  0
-    Date::Manip:          0
-    Date::Simple:         0
+    Data::Dumper:         0
+    Date::Manip:          Date::Simple
     DBD::Pg:              0
     DBI:                  0
     Digest::MD5:          0
     Digest::SHA1:         0
     English:              0
+    Errno:                0
     File::Spec:           0
     File::stat:           0
     File::Temp:           0

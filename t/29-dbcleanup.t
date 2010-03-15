@@ -7,8 +7,16 @@
 use 5.006;
 use strict;
 use warnings;
-use Test::More tests => 1;
+use Test::More;
 use lib 't','.';
+BEGIN {
+    if ( not $ENV{TEST_PG} ) {
+        my $msg = 'DBI/DBD::PG test.  Set $ENV{TEST_PG} to a true value to run.';
+        plan( skip_all => $msg );
+    } else {
+	plan(tests => 1);
+    }
+}
 require 'dbdpg_test_setup.pl';
 select(($|=1,select(STDERR),$|=1)[1]);
 

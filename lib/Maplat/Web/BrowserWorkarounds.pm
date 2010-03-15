@@ -1,17 +1,15 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
 package Maplat::Web::BrowserWorkarounds;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
-use Maplat::Helpers::DateStrings;
-
-our $VERSION = 0.970;
-
 use strict;
 use warnings;
+
+use base qw(Maplat::Web::BaseModule);
+use Maplat::Helpers::DateStrings;
+
+our $VERSION = 0.98;
+
 
 use Carp;
 
@@ -28,14 +26,16 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
-	
-	$self->register_prefilter("prefilter");
-	$self->register_postfilter("postfilter");
-	$self->register_defaultwebdata("get_defaultwebdata");
+    
+    $self->register_prefilter("prefilter");
+    $self->register_postfilter("postfilter");
+    $self->register_defaultwebdata("get_defaultwebdata");
+    return;
 }
 
 
@@ -43,53 +43,53 @@ sub prefilter {
     my ($self, $cgi) = @_;
     
     my $webpath = $cgi->path_info();
-	my $userAgent = $cgi->user_agent() || "Unknown";
-	
-	my $browser = "Unknown";
-	if($userAgent =~ /Firefox/) {
-		$browser = "Firefox";
-	}
-	
-	my %browserData = (
-		Browser		=>	$browser,
-		UserAgent	=>	$userAgent,
-	);
-	
-	$self->{BrowserData} = \%browserData;
-	
-	return;
-	
+    my $userAgent = $cgi->user_agent() || "Unknown";
+    
+    my $browser = "Unknown";
+    if($userAgent =~ /Firefox/) {
+        $browser = "Firefox";
+    }
+    
+    my %browserData = (
+        Browser        =>    $browser,
+        UserAgent    =>    $userAgent,
+    );
+    
+    $self->{BrowserData} = \%browserData;
+    
+    return;
+    
 }
 sub postfilter {
     my ($self, $cgi, $header, $result) = @_;
     
-	if(!defined($self->{BrowserData}->{Browser})) {
-		return;
-	} elsif($self->{BrowserData}->{Browser} eq "Firefox") {
-		# *** Workarounds for Firefox ***
-		if($result->{status} eq "307") {
-			# Firefox makes troubles with a 307 resulting
-			# from a POST (for example viewselect), it pops
-			# up a completly stupid extra YES/NO box.
-			# Soo... rewrite to a 200 and HTML-redirect the page
-			# instead
-			
-			my $location = $result->{location};
-			undef $result->{location};
-			$result->{status} = 200;
-			$result->{statustext} = "Using HTML redirect for broken Firefox";
-			
-			my %webdata = (
-				$self->{server}->get_defaultwebdata(),
-				PageTitle   		=>  "Redirect",
-				ExtraHEADElements	=> "<meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=$location\">",
-				NextLocation		=> $location,
-			);
-				
-			my $template = $self->{server}->{modules}->{templates}->get("browserworkarounds_redirect", 1, %webdata);
-			$result->{data} = $template;
-		}
-	}
+    if(!defined($self->{BrowserData}->{Browser})) {
+        return;
+    } elsif($self->{BrowserData}->{Browser} eq "Firefox") {
+        # *** Workarounds for Firefox ***
+        if($result->{status} eq "307") {
+            # Firefox makes troubles with a 307 resulting
+            # from a POST (for example viewselect), it pops
+            # up a completly stupid extra YES/NO box.
+            # Soo... rewrite to a 200 and HTML-redirect the page
+            # instead
+            
+            my $location = $result->{location};
+            undef $result->{location};
+            $result->{status} = 200;
+            $result->{statustext} = "Using HTML redirect for broken Firefox";
+            
+            my %webdata = (
+                $self->{server}->get_defaultwebdata(),
+                PageTitle           =>  "Redirect",
+                ExtraHEADElements    => "<meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=$location\">",
+                NextLocation        => $location,
+            );
+                
+            my $template = $self->{server}->{modules}->{templates}->get("browserworkarounds_redirect", 1, %webdata);
+            $result->{data} = $template;
+        }
+    }
     
     return;
 }
@@ -97,7 +97,8 @@ sub postfilter {
 sub get_defaultwebdata {
     my ($self, $webdata) = @_;
     
-	$webdata->{BrowserData} = $self->{BrowserData};
+    $webdata->{BrowserData} = $self->{BrowserData};
+    return;
 }
 
 1;
@@ -148,11 +149,11 @@ Maplat::Web
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

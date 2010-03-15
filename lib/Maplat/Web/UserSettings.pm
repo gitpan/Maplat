@@ -1,19 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::UserSettings;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
+use strict;
+use warnings;
+
+use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
-use strict;
-use warnings;
 
 sub new {
     my ($proto, %config) = @_;
@@ -28,106 +25,108 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
-	#nothing to register
+    #nothing to register
+    return;
 }
 
 sub get {
-	my ($self, $username, $settingname) = @_;
-	
-	my $settingref;
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $memhname = "UserSettings::" . $username . "::" . $settingname;
-	
-	$settingref = $memh->get($memhname);
-	if(defined($settingref)) {
-		return (1, $settingref);
-	}
-	
-	my $sth = $dbh->prepare_cached("SELECT encoded_data FROM users_settings " .
-							"WHERE username = ? AND name = ?")
-					or return 0;
-	
-	if(!$sth->execute($username, $settingname)) {
-		return 0;
-	}
-	
-	if((my @row = $sth->fetchrow_array)) {
-		$settingref = Maplat::Helpers::DBSerialize::dbthaw($row[0]);
-		$memh->set($memhname, $settingref);
-	}
-	$sth->finish;
-	
-	if(defined($settingref)) {
-		return (1, $settingref);
-	} else {
-		return 0;
-	}
+    my ($self, $username, $settingname) = @_;
+    
+    my $settingref;
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $memhname = "UserSettings::" . $username . "::" . $settingname;
+    
+    $settingref = $memh->get($memhname);
+    if(defined($settingref)) {
+        return (1, $settingref);
+    }
+    
+    my $sth = $dbh->prepare_cached("SELECT encoded_data FROM users_settings " .
+                            "WHERE username = ? AND name = ?")
+                    or return 0;
+    
+    if(!$sth->execute($username, $settingname)) {
+        return 0;
+    }
+    
+    if((my @row = $sth->fetchrow_array)) {
+        $settingref = Maplat::Helpers::DBSerialize::dbthaw($row[0]);
+        $memh->set($memhname, $settingref);
+    }
+    $sth->finish;
+    
+    if(defined($settingref)) {
+        return (1, $settingref);
+    } else {
+        return 0;
+    }
 }
 
 sub set {
-	my ($self, $username, $settingname, $settingref) = @_;
-	
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $memhname = "UserSettings::" . $username . "::" . $settingname;
-	
-	my $sth = $dbh->prepare_cached("SELECT merge_users_settings(?, ?, ?)")
-			or return;
-	if(!$sth->execute($username, $settingname, Maplat::Helpers::DBSerialize::dbfreeze($settingref))) {
-		return;
-	}
-	$sth->finish;
-	$memh->set($memhname, $settingref);
-	
-	return 1;
+    my ($self, $username, $settingname, $settingref) = @_;
+    
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $memhname = "UserSettings::" . $username . "::" . $settingname;
+    
+    my $sth = $dbh->prepare_cached("SELECT merge_users_settings(?, ?, ?)")
+            or return;
+    if(!$sth->execute($username, $settingname, Maplat::Helpers::DBSerialize::dbfreeze($settingref))) {
+        return;
+    }
+    $sth->finish;
+    $memh->set($memhname, $settingref);
+    
+    return 1;
 }
 
-sub delete {
-	my ($self, $username, $settingname) = @_;
-	
-	my $settingref;
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	my $memhname = "UserSettings::" . $username . "::" . $settingname;
+sub delete {## no critic(BuiltinHomonyms)
+    my ($self, $username, $settingname) = @_;
+    
+    my $settingref;
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $memhname = "UserSettings::" . $username . "::" . $settingname;
 
-	$memh->delete($memhname);
-	
-	my $sth = $dbh->prepare_cached("DELETE FROM users_settings " .
-							"WHERE username = ? AND name = ?")
-			or return;
-	if(!$sth->execute($username, $settingname)) {
-		return;
-	}
-	
-	$sth->finish;
-	
-	return 1;
+    $memh->delete($memhname);
+    
+    my $sth = $dbh->prepare_cached("DELETE FROM users_settings " .
+                            "WHERE username = ? AND name = ?")
+            or return;
+    if(!$sth->execute($username, $settingname)) {
+        return;
+    }
+    
+    $sth->finish;
+    
+    return 1;
 }
 
 sub list {
-	my ($self, $username) = @_;
-	
-	my @settingnames;
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
-	
-	my $sth = $dbh->prepare_cached("SELECT name FROM users_settings " .
-							"WHERE username = ? " .
-							"ORDER BY name")
-				or return 0;
-	if(!$sth->execute($username)) {
-		return 0;
-	}
-	while((my @row = $sth->fetchrow_array)) {
-		push @settingnames, $row[0]; 
-	}
-	$sth->finish;
-	
-	return (1, @settingnames);
+    my ($self, $username) = @_;
+    
+    my @settingnames;
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    
+    my $sth = $dbh->prepare_cached("SELECT name FROM users_settings " .
+                            "WHERE username = ? " .
+                            "ORDER BY name")
+                or return 0;
+    if(!$sth->execute($username)) {
+        return 0;
+    }
+    while((my @row = $sth->fetchrow_array)) {
+        push @settingnames, $row[0]; 
+    }
+    $sth->finish;
+    
+    return (1, @settingnames);
 }
 
 1;
@@ -207,11 +206,11 @@ Maplat::Web
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

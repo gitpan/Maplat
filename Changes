@@ -1,6 +1,24 @@
 Revision history for Perl extension Maplat.
 
-0.970 Wed Jan 20 15:20:00 2010
+0.98  Mon Mar 15 13:00:00 2010
+	- Changed DBI/DBD::Pg tests to author tests
+	- Added Author test for Perl::Critic
+	- Modules now pass through Perl::Critic level 5 "gentle" (with a few changes to account for local policy)
+	- Modules now pass through Perl::Critic level 4 "stern" (with a few changes to account for local policy)
+	- Added support for jQuery-UI
+	- Added basic support for themes
+	- Slightly changed the way additional modules are handled (better support for future plugins)
+	- Disabled dynamic module loading via eval/require. Too much trouble with that one 8-)
+	- Fixed contact email address
+	- calculated buildnum is now stable across multiple calls within the same program run (state variable)
+	- TemplateCache now supports multiple directories (warning: config format change!)
+	- Fixed some LogoCache bugs
+	- Fixed StandardFields XML parsing
+	- Fixed configurability of "INSERT PROJECT NAME HERE" via XML/StandardFields
+	- Use MemCacheSim on helloworld tests
+	- Disabled prompt for pg_config binary in Makefile.PL (cause database tests don't run except explicitly enabled)
+
+0.97  Wed Jan 20 15:20:00 2010
 	- Fixed tests to also work on PostgreSQL 7.x (without enums)
 	- more internal testing for upcoming prefork version (currently WWW::Mechanize seems to be buggy)
 	- some changes on how a mail with multiple files is send (now creating a ZIP-File on the fly)

@@ -1,7 +1,7 @@
 # MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-package Maplat::Web::PostgresDB;
+package Maplat::Web::OracleDB;
 use strict;
 use warnings;
 
@@ -71,7 +71,7 @@ sub endconfig {
     if($self->{forking}) {
         # forking server: disconnect from database, generate new connection
         # after the fork on demand
-        print "   *** Will fork, disconnect PostgreSQL server...\n";
+        print "   *** Will fork, disconnect Oracle server...\n";
         $self->rollback;
         $self->{mdbh}->disconnect;    
         delete $self->{mdbh};
@@ -120,11 +120,11 @@ __END__
 
 =head1 NAME
 
-Maplat::Web::PostgresDB - Web module for accessing PostgreSQL databases
+Maplat::Web::OracleDB - Web module for accessing Oracle databases
 
 =head1 SYNOPSIS
 
-This module is a wrapper around DBI/DBD::Pg.
+This module is a wrapper around DBI/DBD::Oracle.
 
 =head1 DESCRIPTION
 
@@ -135,24 +135,24 @@ declare multiple modules with different modnames).
 
         <module>
                 <modname>maindb</modname>
-                <pm>PostgresDB</pm>
+                <pm>OracleDB</pm>
                 <options>
-                        <dburl>dbi:Pg:dbname=Maplat_DB</dburl>
+                        <dburl>dbi:Oracle:dbname=Maplat_DB</dburl>
                         <dbuser>Maplat_Server</dbuser>
                         <dbpassword>SECRET</dbpassword>
                 </options>
         </module>
 
 
-dburl is the DBI connection string, see DBD::Pg.
+dburl is the DBI connection string, see DBD::Oracle.
 
 =head2 AutoCommit
 
-Get/Set the DBD::Pg "AutoCommit" setting
+Get/Set the DBD::Oracle "AutoCommit" setting
 
 =head2 RaiseError
 
-Get/Set the DBD::Pg "RaiseError" setting
+Get/Set the DBD::Oracle "RaiseError" setting
 
 =head2 errstr
 
@@ -168,12 +168,12 @@ Prepare a (non-cached) Statement.
 
 =head2 prepare_cached
 
-Prepare a server cached statement (may fall back to non-cached transparently, see DBD::Pg and PostgreSQL documentation
+Prepare a server cached statement (may fall back to non-cached transparently, see DBD::Oracle and Oracle documentation
 for details).
 
 =head2 quote
 
-Quote a variable for use in PostgreSQL statements.
+Quote a variable for use in Oracle statements.
 
 =head2 commit
 
@@ -194,7 +194,7 @@ This module is a basic module which does not depend on other web modules.
 =head1 SEE ALSO
 
 Maplat::Web
-DBD::Pg
+DBD::Oracle
 
 =head1 AUTHOR
 

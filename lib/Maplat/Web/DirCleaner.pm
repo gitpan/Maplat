@@ -1,17 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 
 package Maplat::Web::DirCleaner;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
-use Maplat::Helpers::DateStrings;
-
-our $VERSION = 0.970;
-
 use strict;
 use warnings;
+
+use base qw(Maplat::Web::BaseModule);
+use Maplat::Helpers::DateStrings;
+
+our $VERSION = 0.98;
+
 
 use Carp;
 
@@ -28,38 +27,40 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
     $self->register_webpath($self->{webpath}, "get");
+    return;
 }
 
 sub get {
     my ($self, $cgi) = @_;
     
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	
-	my %webdata = (
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    
+    my %webdata = (
         $self->{server}->get_defaultwebdata(),
         PageTitle   =>  $self->{pagetitle},
-        PostLink	    =>  $self->{webpath}
+        PostLink        =>  $self->{webpath}
     );
-	
-	my $dirstatus = $memh->get("dircleanstatus");
-	my @dirlines;
-	if($dirstatus) {
-		foreach my $dir (sort keys %{$dirstatus}) {
-			my %hline = (
-				path		=> $dir,
-				status		=> $dirstatus->{$dir}->{status},
-				maxage		=> $dirstatus->{$dir}->{maxage},
-			);
-			push @dirlines, \%hline;
-		}
-	}
-	$webdata{dirlines} = \@dirlines;
-	
+    
+    my $dirstatus = $memh->get("dircleanstatus");
+    my @dirlines;
+    if($dirstatus) {
+        foreach my $dir (sort keys %{$dirstatus}) {
+            my %hline = (
+                path        => $dir,
+                status        => $dirstatus->{$dir}->{status},
+                maxage        => $dirstatus->{$dir}->{maxage},
+            );
+            push @dirlines, \%hline;
+        }
+    }
+    $webdata{dirlines} = \@dirlines;
+    
     my $template = $self->{server}->{modules}->{templates}->get("dircleaner", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
@@ -114,11 +115,11 @@ Maplat::Worker::DirCleaner
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -1,17 +1,14 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::StaticCache;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
-
-our $VERSION = 0.970;
-
 use strict;
 use warnings;
+
+use base qw(Maplat::Web::BaseModule);
+
+our $VERSION = 0.98;
+
 
 use Carp;
 
@@ -34,28 +31,29 @@ sub reload {
 
     my $fcount = 0;
 
-	my $extrabase = "";
-	if($self->{path} =~ /Images/i) {
-		$extrabase = "/Maplat/Web/Images";
-	} elsif($self->{path} =~ /Static/i) {
-		$extrabase = "/Maplat/Web/Static";
-	}
-	foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
-		next if($bdir eq ".");
-		my $fulldir = $bdir . $extrabase;
-		print "   ** checking $fulldir \n";
-		if(-d $fulldir) {
-			print "   **** loading extra static files\n";
-			$fcount += $self->load_dir($fulldir, $self->{webpath});
-		}
-	}
+    my $extrabase = "";
+    if($self->{path} =~ /Images/i) {
+        $extrabase = "/Maplat/Web/Images";
+    } elsif($self->{path} =~ /Static/i) {
+        $extrabase = "/Maplat/Web/Static";
+    }
+    foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+        next if($bdir eq ".");
+        my $fulldir = $bdir . $extrabase;
+        print "   ** checking $fulldir \n";
+        if(-d $fulldir) {
+            #print "   **** loading extra static files\n";
+            $fcount += $self->load_dir($fulldir, $self->{webpath});
+        }
+    }
 
-	if(-d $self->{path}) {
-		$fcount += $self->load_dir($self->{path}, $self->{webpath});
-	} else {
-		print "   **** WARNING: configured dir " . $self->{path} . " does not exist!\n";
-	}
+    if(-d $self->{path}) {
+        $fcount += $self->load_dir($self->{path}, $self->{webpath});
+    } else {
+        #print "   **** WARNING: configured dir " . $self->{path} . " does not exist!\n";
+    }
     $fcount += 0; # Dummy for debug breakpoint
+    return;
 
 }
 
@@ -64,7 +62,7 @@ sub load_dir {
 
     my $fcount = 0;
 
-    opendir(my $dfh, $basedir) or die($!);
+    opendir(my $dfh, $basedir) or croak($!);
     while((my $fname = readdir($dfh))) {
         next if($fname =~ /^\./);
         my $nfname = $basedir . "/" . $fname;
@@ -89,11 +87,11 @@ sub load_dir {
         }
         
         open(my $fh, "<", $nfname) or confess($!);
-        my $holdTerminator = $/;
+        my $holdTerminator = $/; ## no critic
         undef $/;
         binmode($fh);
         my $data = <$fh>;
-        $/ = $holdTerminator;
+        $/ = $holdTerminator; ## no critic
         close($fh);
         my %entry = (name   => $kname,
                     fullname=> $nfname,
@@ -110,6 +108,7 @@ sub load_dir {
 sub register {
     my $self = shift;
     $self->register_webpath($self->{webpath}, "get");
+    return;
 }
 
 sub get {
@@ -176,11 +175,11 @@ Maplat::Web
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

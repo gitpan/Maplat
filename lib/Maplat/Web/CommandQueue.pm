@@ -1,19 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::CommandQueue;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
+use strict;
+use warnings;
+
+use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::CommandHelper;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
-use strict;
-use warnings;
 
 use Carp;
 
@@ -23,190 +20,194 @@ sub new {
     
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
-	
+    
     return $self;
 }
 
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
     $self->register_webpath($self->{webpath}, "get");
+    return;
 }
 
 sub get {
     my ($self, $cgi) = @_;
     
     my $webpath = $cgi->path_info();
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
 
-	my %webdata = 
-	(
-		$self->{server}->get_defaultwebdata(),
-	    PageTitle   	=>  $self->{pagetitle},
-	    LinkTitle		=>  $self->{linktitle},
-	    webpath			=>  $self->{webpath},
-	);
-	
-	my %allcommands = (
-		VACUUM_ANALYZE		=> 'simple',
-		VACUUM_FULL			=> 'simple',
-		ANALYZE_TABLE		=> 'table',
-		VACUUM_ANALYZE_TABLE=> 'table',
-		REINDEX_ALL_TABLES	=> 'simple',
-		REINDEX_TABLE		=> 'table',
-		BACKUP				=> 'simple',
-		CALCULATE_STATS		=> 'simple',
-		NOP_OK				=> 'simple',
-		NOP_FAIL			=> 'simple',
-		ACTIVATE_PRODLINE	=> 'prodline',
-		DEACTIVATE_PRODLINE	=> 'prodline',
-		ACTIVATE_ALL_LINES	=> 'alllines',
-		DEACTIVATE_ALL_LINES=> 'alllines',
-	);
-	my @commandorder = ('ANALYZE_TABLE', 'VACUUM_ANALYZE_TABLE', 'VACUUM_ANALYZE', 'VACUUM_FULL',
-						'REINDEX_TABLE', 'REINDEX_ALL_TABLES',
-						'ACTIVATE_PRODLINE', 'DEACTIVATE_PRODLINE',
-						'ACTIVATE_ALL_LINES', 'DEACTIVATE_ALL_LINES',
-						#'BACKUP', 'CALCULATE_STATS',
-						'NOP_OK', 'NOP_FAIL',
-						);
-	
-	# Read some extra data
-	my $prodlinesth = $dbh->prepare_cached("SELECT * " .
-										   "FROM prodlines " .
-										   "ORDER BY line_id")
-					or die($dbh->errstr);
-	my @prodlines;
-	#my @prodline_ids;
-	$prodlinesth->execute or die($dbh->errstr);
-	while((my $pline = $prodlinesth->fetchrow_hashref)) {
-		push @prodlines, $pline;
-		#push @prodline_ids, $pline
-	}
-	$prodlinesth->finish;
-	$webdata{Prodlines} = \@prodlines;
-	
-	my $rbstablessth = $dbh->prepare_cached("SELECT * " .
-											"FROM pg_tables " .
-											"WHERE tableowner = 'RBS_Server' " .
-											"ORDER BY tablename")
-					or die($dbh->errstr);
-	my @rbstables;
-	$rbstablessth->execute or die($dbh->errstr);
-	while((my $tabline = $rbstablessth->fetchrow_hashref)) {
-		push @rbstables, $tabline;
-	}
-	$rbstablessth->finish;
-	$webdata{Tables} = \@rbstables;
-	
-	
-	my $submitform = $cgi->param('submitform') || '';
-	if($submitform eq "1") {
-		my $command = $cgi->param('command') || '';
-		if($command ne "") {			
-			my $mode = $cgi->param('mode') || 'view';
-			
-			if($mode eq "schedulecommand") {
-				my $isodate = $cgi->param('starttime') || '';
-				if($isodate eq "") {
-					$isodate = getISODate();
-				} else {
-					# try to parse date as a "natural" date, e.g. like "tommorow morning" or "next sunday afternoon"
-					$isodate = parseNaturalDate($isodate);
-				}
-				my $sth = $dbh->prepare_cached("INSERT INTO commandqueue " .
-										 "(command, starttime, arguments) " .
-										 "VALUES (?, ?, ?)")
-								or die($dbh->errstr);
+    my %webdata = 
+    (
+        $self->{server}->get_defaultwebdata(),
+        PageTitle       =>  $self->{pagetitle},
+        LinkTitle        =>  $self->{linktitle},
+        webpath            =>  $self->{webpath},
+    );
+    
+    my %allcommands = (
+        VACUUM_ANALYZE        => 'simple',
+        VACUUM_FULL            => 'simple',
+        ANALYZE_TABLE        => 'table',
+        VACUUM_ANALYZE_TABLE=> 'table',
+        REINDEX_ALL_TABLES    => 'simple',
+        REINDEX_TABLE        => 'table',
+        BACKUP                => 'simple',
+        CALCULATE_STATS        => 'simple',
+        NOP_OK                => 'simple',
+        NOP_FAIL            => 'simple',
+        UPDATE_SIGNALS_TRIGGER        => 'simple',
+        ACTIVATE_PRODLINE    => 'prodline',
+        DEACTIVATE_PRODLINE    => 'prodline',
+        ACTIVATE_ALL_LINES    => 'alllines',
+        DEACTIVATE_ALL_LINES=> 'alllines',
+    );
+    my @commandorder = ('ANALYZE_TABLE', 'VACUUM_ANALYZE_TABLE', 'VACUUM_ANALYZE', 'VACUUM_FULL',
+                        'REINDEX_TABLE', 'REINDEX_ALL_TABLES',
+                        'ACTIVATE_PRODLINE', 'DEACTIVATE_PRODLINE',
+                        'ACTIVATE_ALL_LINES', 'DEACTIVATE_ALL_LINES',
+                        #'BACKUP', 'CALCULATE_STATS',
+                        'UPDATE_SIGNALS_TRIGGER',
+                        'NOP_OK', 'NOP_FAIL',
+                        );
+    
+    # Read some extra data
+    my $prodlinesth = $dbh->prepare_cached("SELECT * " .
+                                           "FROM prodlines " .
+                                           "ORDER BY line_id")
+                    or croak($dbh->errstr);
+    my @prodlines;
+    #my @prodline_ids;
+    $prodlinesth->execute or croak($dbh->errstr);
+    while((my $pline = $prodlinesth->fetchrow_hashref)) {
+        push @prodlines, $pline;
+        #push @prodline_ids, $pline
+    }
+    $prodlinesth->finish;
+    $webdata{Prodlines} = \@prodlines;
+    
+    my $rbstablessth = $dbh->prepare_cached("SELECT * " .
+                                            "FROM pg_tables " .
+                                            "WHERE tableowner = 'RBS_Server' " .
+                                            "ORDER BY tablename")
+                    or croak($dbh->errstr);
+    my @rbstables;
+    $rbstablessth->execute or croak($dbh->errstr);
+    while((my $tabline = $rbstablessth->fetchrow_hashref)) {
+        push @rbstables, $tabline;
+    }
+    $rbstablessth->finish;
+    $webdata{Tables} = \@rbstables;
+    
+    
+    my $submitform = $cgi->param('submitform') || '';
+    if($submitform eq "1") {
+        my $command = $cgi->param('command') || '';
+        if($command ne "") {            
+            my $mode = $cgi->param('mode') || 'view';
+            
+            if($mode eq "schedulecommand") {
+                my $isodate = $cgi->param('starttime') || '';
+                if($isodate eq "") {
+                    $isodate = getISODate();
+                } else {
+                    # try to parse date as a "natural" date, e.g. like "tommorow morning" or "next sunday afternoon"
+                    $isodate = parseNaturalDate($isodate);
+                }
+                my $sth = $dbh->prepare_cached("INSERT INTO commandqueue " .
+                                         "(command, starttime, arguments) " .
+                                         "VALUES (?, ?, ?)")
+                                or croak($dbh->errstr);
 
-				my @arglist = ();
-				
-				if($allcommands{$command} ne "alllines") {
-					if($allcommands{$command} eq "prodline") {
-						push @arglist, ($cgi->param('prodline') || '');
-					} elsif($allcommands{$command} eq "table") {
-						push @arglist, ($cgi->param('tablename') || '');
-					}
+                my @arglist = ();
+                
+                if($allcommands{$command} ne "alllines") {
+                    if($allcommands{$command} eq "prodline") {
+                        push @arglist, ($cgi->param('prodline') || '');
+                    } elsif($allcommands{$command} eq "table") {
+                        push @arglist, ($cgi->param('tablename') || '');
+                    }
 
-					if(!$sth->execute($command, $isodate, \@arglist)) {
-						my $errstr = $dbh->errstr;
-						$sth->finish;
-						$dbh->rollback;
-						$webdata{statustext} = "$errstr";
-						$webdata{statuscolor} = "errortext";
-					} else {
-						$sth->finish;
-						$dbh->commit;
-						$webdata{statustext} = "Command $command scheduled at $isodate";
-						$webdata{statuscolor} = "oktext";
-					}
-				} else {
-					my $ok = 1;
-					
-					my $statusstr;
-					my $xcommand;
-					if($command eq "DEACTIVATE_ALL_LINES") {
-						$xcommand = "DEACTIVATE_PRODLINE";
-					} else {
-						$xcommand = "ACTIVATE_PRODLINE";
-					}
-					foreach my $prodline (@prodlines) {
-						@arglist = ($prodline->{line_id});
-						if(!$sth->execute($xcommand, $isodate, \@arglist)) {
-							$statusstr .= $dbh->errstr . "<br>";
-							$sth->finish;
-							$dbh->rollback;
-							$ok = 0;
-						} else {
-							$dbh->commit;
-							$statusstr .= "Command $command scheduled at $isodate<br>";
-						}
-					}
-					$webdata{statustext} = $statusstr;
-					if($ok) {
-						$webdata{statuscolor} = "oktext";
-					} else {
-						$webdata{statuscolor} = "errortext";
-					}
-				}
+                    if(!$sth->execute($command, $isodate, \@arglist)) {
+                        my $errstr = $dbh->errstr;
+                        $sth->finish;
+                        $dbh->rollback;
+                        $webdata{statustext} = "$errstr";
+                        $webdata{statuscolor} = "errortext";
+                    } else {
+                        $sth->finish;
+                        $dbh->commit;
+                        $webdata{statustext} = "Command $command scheduled at $isodate";
+                        $webdata{statuscolor} = "oktext";
+                    }
+                } else {
+                    my $ok = 1;
+                    
+                    my $statusstr;
+                    my $xcommand;
+                    if($command eq "DEACTIVATE_ALL_LINES") {
+                        $xcommand = "DEACTIVATE_PRODLINE";
+                    } else {
+                        $xcommand = "ACTIVATE_PRODLINE";
+                    }
+                    foreach my $prodline (@prodlines) {
+                        @arglist = ($prodline->{line_id});
+                        if(!$sth->execute($xcommand, $isodate, \@arglist)) {
+                            $statusstr .= $dbh->errstr . "<br>";
+                            $sth->finish;
+                            $dbh->rollback;
+                            $ok = 0;
+                        } else {
+                            $dbh->commit;
+                            $statusstr .= "Command $command scheduled at $isodate<br>";
+                        }
+                    }
+                    $webdata{statustext} = $statusstr;
+                    if($ok) {
+                        $webdata{statuscolor} = "oktext";
+                    } else {
+                        $webdata{statuscolor} = "errortext";
+                    }
+                }
 
-			} elsif($mode eq "deletecommand") {
-				# $command is the command id (ID in database) in this case
-				my $sth = $dbh->prepare_cached("DELETE FROM commandqueue WHERE id = ?")
-						or die($dbh->errstr);
-				if(!$sth->execute($command)) {
-					my $errstr = $dbh->errstr;
-					$sth->finish;
-					$dbh->rollback;
-					$webdata{statustext} = "$errstr";
-					$webdata{statuscolor} = "errortext";
-				} else {
-					$dbh->commit;
-					$webdata{statustext} = "Command id $command deleted";
-					$webdata{statuscolor} = "oktext";
-				}
-			}
-		}
-	}
-	
-	$webdata{commands} = getCommandQueue($dbh, $memh);
-	
-	my @admincommands;
-	foreach my $admincommand (@commandorder) {
-		my %cmd = (
-			name	=> $admincommand,
-			type	=> $allcommands{$admincommand},
-		);
-		push @admincommands, \%cmd;
-	}
-	$webdata{admincommands} = \@admincommands;
-	
-	my $template = $self->{server}->{modules}->{templates}->get("commandqueue", 1, %webdata);
+            } elsif($mode eq "deletecommand") {
+                # $command is the command id (ID in database) in this case
+                my $sth = $dbh->prepare_cached("DELETE FROM commandqueue WHERE id = ?")
+                        or croak($dbh->errstr);
+                if(!$sth->execute($command)) {
+                    my $errstr = $dbh->errstr;
+                    $sth->finish;
+                    $dbh->rollback;
+                    $webdata{statustext} = "$errstr";
+                    $webdata{statuscolor} = "errortext";
+                } else {
+                    $dbh->commit;
+                    $webdata{statustext} = "Command id $command deleted";
+                    $webdata{statuscolor} = "oktext";
+                }
+            }
+        }
+    }
+    
+    $webdata{commands} = getCommandQueue($dbh, $memh);
+    
+    my @admincommands;
+    foreach my $admincommand (@commandorder) {
+        my %cmd = (
+            name    => $admincommand,
+            type    => $allcommands{$admincommand},
+        );
+        push @admincommands, \%cmd;
+    }
+    $webdata{admincommands} = \@admincommands;
+    
+    my $template = $self->{server}->{modules}->{templates}->get("commandqueue", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
             type    => "text/html",
@@ -263,11 +264,11 @@ Maplat::Web
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

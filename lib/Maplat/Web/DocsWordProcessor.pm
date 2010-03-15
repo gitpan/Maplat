@@ -1,20 +1,17 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::DocsWordProcessor;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
+use strict;
+use warnings;
+
+use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use HTML::Parse;
 use HTML::FormatText;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
-use strict;
-use warnings;
 
 use Carp;
 
@@ -31,107 +28,109 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
     $self->register_webpath($self->{open}->{webpath}, "edit");
-	$self->register_webpath($self->{list}->{webpath}, "list");
+    $self->register_webpath($self->{list}->{webpath}, "list");
+    return;
 }
 
 sub list {
     my ($self, $cgi) = @_;
 
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
-	
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    
     my %webdata = (
         $self->{server}->get_defaultwebdata(),
         PageTitle   =>  $self->{list}->{pagetitle},
-        PostLink	=>  $self->{list}->{webpath},
+        PostLink    =>  $self->{list}->{webpath},
     );
-	
-	my $mode = $cgi->param("mode") || "view";
-	my $filename = $cgi->param("filename") || "";
-	my $fileid = $cgi->param("fileid") || "";
-	if(($mode eq "edit" || $mode eq "create" || $mode eq "update" || $mode eq "delete")
-			&& $filename eq "") {
-		$mode = "view";
-		$webdata{statustext} = "Need a Filename!";
-		$webdata{statuscolor} = "errortext";
-	}
+    
+    my $mode = $cgi->param("mode") || "view";
+    my $filename = $cgi->param("filename") || "";
+    my $fileid = $cgi->param("fileid") || "";
+    if(($mode eq "edit" || $mode eq "create" || $mode eq "update" || $mode eq "delete")
+            && $filename eq "") {
+        $mode = "view";
+        $webdata{statustext} = "Need a Filename!";
+        $webdata{statuscolor} = "errortext";
+    }
 
-	if(($mode eq "edit" || $mode eq "viewuserform" || $mode eq "update" || $mode eq "delete")
-			&& $fileid eq "") {
-		$mode = "view";
-		$webdata{statustext} = "Internal error: No file id!";
-		$webdata{statuscolor} = "errortext";
-	}
+    if(($mode eq "edit" || $mode eq "viewuserform" || $mode eq "update" || $mode eq "delete")
+            && $fileid eq "") {
+        $mode = "view";
+        $webdata{statustext} = "Internal error: No file id!";
+        $webdata{statuscolor} = "errortext";
+    }
 
-	
-	if($mode eq "edit" || $mode eq "create" || $mode eq "viewuserform") {
-		return $self->edit($cgi);
-	}
-	
-	if($mode eq "update") {
-		my $ispublic = $cgi->param("is_public") || "";
-		if($ispublic eq "") {
-			$ispublic = "false";
-		} else {
-			$ispublic = "true";
-		}
-		my $upsth = $dbh->prepare_cached("UPDATE documents
-										 SET updated = now(),
-										 filename = ?,
-										 is_public = ?
-										 WHERE id = ?")
-				or die($dbh->errstr);
-		if(!$upsth->execute($filename, $ispublic, $fileid)) {
-			$dbh->rollback;
-			$webdata{statustext} = "Update failed!";
-			$webdata{statuscolor} = "errortext";
-		} else {
-			$dbh->commit;
-			$webdata{statustext} = "File settings updated";
-			$webdata{statuscolor} = "oktext";
-		}
-	} elsif($mode eq "delete") {
-		my $upsth = $dbh->prepare_cached("DELETE FROM documents
-										 WHERE id = ?")
-				or die($dbh->errstr);
-		if(!$upsth->execute($fileid)) {
-			$dbh->rollback;
-			$webdata{statustext} = "Delete failed!";
-			$webdata{statuscolor} = "errortext";
-		} else {
-			$dbh->commit;
-			$webdata{statustext} = "File deleted";
-			$webdata{statuscolor} = "oktext";
-		}
-	}
-	
-	my @files;
-	my $sth = $dbh->prepare_cached("SELECT id, username, created, updated,
-								   filename, is_public
-								   FROM documents
-								   WHERE doctype = 'Word'
-								   AND (is_public = 'true'
-										OR username = ?)
-								   ORDER BY created DESC")
-				or die($dbh->errstr);
-	if(!$sth->execute($webdata{userData}->{user})) {
-		$dbh->rollback;
-		$webdata{statustext} = "Failed to list the files!?!";
-		$webdata{statuscolor} = "errortext";
-	} else {
-		while((my $line = $sth->fetchrow_hashref)) {
-			$line->{updated} = fixDateField($line->{updated});
-			$line->{created} = fixDateField($line->{created});
-			push @files, $line;
-		}
-		$sth->finish;
-		$dbh->rollback;
-	}
-	$webdata{Files} = \@files;
+    
+    if($mode eq "edit" || $mode eq "create" || $mode eq "viewuserform") {
+        return $self->edit($cgi);
+    }
+    
+    if($mode eq "update") {
+        my $ispublic = $cgi->param("is_public") || "";
+        if($ispublic eq "") {
+            $ispublic = "false";
+        } else {
+            $ispublic = "true";
+        }
+        my $upsth = $dbh->prepare_cached("UPDATE documents
+                                         SET updated = now(),
+                                         filename = ?,
+                                         is_public = ?
+                                         WHERE id = ?")
+                or croak($dbh->errstr);
+        if(!$upsth->execute($filename, $ispublic, $fileid)) {
+            $dbh->rollback;
+            $webdata{statustext} = "Update failed!";
+            $webdata{statuscolor} = "errortext";
+        } else {
+            $dbh->commit;
+            $webdata{statustext} = "File settings updated";
+            $webdata{statuscolor} = "oktext";
+        }
+    } elsif($mode eq "delete") {
+        my $upsth = $dbh->prepare_cached("DELETE FROM documents
+                                         WHERE id = ?")
+                or croak($dbh->errstr);
+        if(!$upsth->execute($fileid)) {
+            $dbh->rollback;
+            $webdata{statustext} = "Delete failed!";
+            $webdata{statuscolor} = "errortext";
+        } else {
+            $dbh->commit;
+            $webdata{statustext} = "File deleted";
+            $webdata{statuscolor} = "oktext";
+        }
+    }
+    
+    my @files;
+    my $sth = $dbh->prepare_cached("SELECT id, username, created, updated,
+                                   filename, is_public
+                                   FROM documents
+                                   WHERE doctype = 'Word'
+                                   AND (is_public = 'true'
+                                        OR username = ?)
+                                   ORDER BY created DESC")
+                or croak($dbh->errstr);
+    if(!$sth->execute($webdata{userData}->{user})) {
+        $dbh->rollback;
+        $webdata{statustext} = "Failed to list the files!?!";
+        $webdata{statuscolor} = "errortext";
+    } else {
+        while((my $line = $sth->fetchrow_hashref)) {
+            $line->{updated} = fixDateField($line->{updated});
+            $line->{created} = fixDateField($line->{created});
+            push @files, $line;
+        }
+        $sth->finish;
+        $dbh->rollback;
+    }
+    $webdata{Files} = \@files;
 
     my $template = $self->{server}->{modules}->{templates}->get("docswordprocessor_list", 1, %webdata);
     return (status  =>  404) unless $template;
@@ -145,123 +144,123 @@ sub list {
 sub edit {
     my ($self, $cgi, $mode, $filename, $fileid) = @_;
 
-	my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
     my %webdata = (
         $self->{server}->get_defaultwebdata(),
         PageTitle   =>  $self->{open}->{pagetitle},
-        PostLink	=>  $self->{open}->{webpath},
+        PostLink    =>  $self->{open}->{webpath},
     );
 
-	if(!defined($mode) || !defined($filename)) {
-		$mode = $cgi->param("mode") || "edit";
-		$filename = $cgi->param("filename") || "";
-		$fileid = $cgi->param("fileid") || "";
-	}
-	if(!defined($fileid)) {
-		$fileid = "";
-	}
-	
-	my $webpath = $cgi->path_info();
-	if($webpath =~ /\/([0-9]+)$/) {
-		$fileid = $1;
-		# Call from Search
-		# Just fake the call from "view"
-		$mode="edit";
-	}
-	
-	my ($nextmode, $data);
-	
-	# "saveuserform is currently not implemented, turn it to "viewuserform" instead
-	# to just reload the form
-	# FIXME!
-	if($mode eq "saveuserform") {
-		$mode = "viewuserform";
-	}
-	
-	# normal mode handling resumes here
-	if($mode eq "create") {
-		$nextmode = "savenew";
-		$fileid = "";
-		$data = "";
-	} elsif($mode eq "edit" || $mode eq "viewuserform") {
-		if($mode eq "edit") {
-			$nextmode = "save";
-		} else {
-			$nextmode = "saveuserform";
-		}
-		my $getsth = $dbh->prepare_cached("SELECT content
-										  FROM documents
-										  WHERE id = ?")
-				or die($dbh->errstr);
-		if(!$getsth->execute($fileid)) {
-			$dbh->rollback;
-			$webdata{statustext} = "Failed to read the files!";
-			$webdata{statuscolor} = "errortext";
-		} else {
-			($data) = $getsth->fetchrow_array;
-			$getsth->finish;
-			$dbh->rollback;
-		}
-	} elsif($mode eq "savenew") {
-		$nextmode = "save";
-		$data = $cgi->param("fck1") || "";
-		my $plain_text = HTML::FormatText->new->format(parse_html($data));
-		my $idsth = $dbh->prepare_cached("SELECT nextval('documents_id_seq')")
-				or die($dbh->errstr);
-		my $insth = $dbh->prepare_cached("INSERT INTO documents
-										  (id, username, filename, content, txtcontent, doctype)
-										  VALUES (?, ?, ?, ?, ?, 'Word')")
-				or die($dbh->errstr);
-		if(!$idsth->execute()) {
-			$dbh->rollback;
-			$webdata{statustext} = "Failed to generate unique ID!";
-			$webdata{statuscolor} = "errortext";
-		} else {
-			($fileid) = $idsth->fetchrow_array;
-			$idsth->finish;
-			
-			if(!$insth->execute($fileid, $webdata{userData}->{user},
-								$filename, $data, $plain_text)) {
-				$dbh->rollback;
-				$webdata{statustext} = "Failed to insert file!";
-				$webdata{statuscolor} = "errortext";
-			} else {
-				$webdata{statustext} = "File created!";
-				$webdata{statuscolor} = "oktext";
-				$dbh->commit;
-			}	
-		}
-	} elsif($mode eq "save") {
-		$nextmode = "save";
-		$data = $cgi->param("fck1") || "";
-		my $plain_text = HTML::FormatText->new->format(parse_html($data));
-		my $upsth = $dbh->prepare_cached("UPDATE documents
-										  SET updated = now(),
-										  content = ?,
-										  txtcontent = ?
-										  WHERE id = ?")
-				or die($dbh->errstr);
-		if(!$upsth->execute($data, $plain_text, $fileid)) {
-			$dbh->rollback;
-			$webdata{statustext} = "Failed to write the files!";
-			$webdata{statuscolor} = "errortext";
-		} else {
-			$webdata{statustext} = "File saved!";
-			$webdata{statuscolor} = "oktext";
-			$dbh->commit;
-		}
-	}
-	
-	$webdata{FileID} = $fileid;
-	$webdata{FileName} = $filename;
-	$webdata{FileData} = $data;
-	$webdata{EditMode} = $nextmode;
+    if(!defined($mode) || !defined($filename)) {
+        $mode = $cgi->param("mode") || "edit";
+        $filename = $cgi->param("filename") || "";
+        $fileid = $cgi->param("fileid") || "";
+    }
+    if(!defined($fileid)) {
+        $fileid = "";
+    }
     
-	my $templname = "docswordprocessor_edit";
-	if($nextmode eq "saveuserform") {
-		$templname = "docswordprocessor_view";
-	}
-	
+    my $webpath = $cgi->path_info();
+    if($webpath =~ /\/([0-9]+)$/) {
+        $fileid = $1;
+        # Call from Search
+        # Just fake the call from "view"
+        $mode="edit";
+    }
+    
+    my ($nextmode, $data);
+    
+    # "saveuserform is currently not implemented, turn it to "viewuserform" instead
+    # to just reload the form
+    # FIXME!
+    if($mode eq "saveuserform") {
+        $mode = "viewuserform";
+    }
+    
+    # normal mode handling resumes here
+    if($mode eq "create") {
+        $nextmode = "savenew";
+        $fileid = "";
+        $data = "";
+    } elsif($mode eq "edit" || $mode eq "viewuserform") {
+        if($mode eq "edit") {
+            $nextmode = "save";
+        } else {
+            $nextmode = "saveuserform";
+        }
+        my $getsth = $dbh->prepare_cached("SELECT content
+                                          FROM documents
+                                          WHERE id = ?")
+                or croak($dbh->errstr);
+        if(!$getsth->execute($fileid)) {
+            $dbh->rollback;
+            $webdata{statustext} = "Failed to read the files!";
+            $webdata{statuscolor} = "errortext";
+        } else {
+            ($data) = $getsth->fetchrow_array;
+            $getsth->finish;
+            $dbh->rollback;
+        }
+    } elsif($mode eq "savenew") {
+        $nextmode = "save";
+        $data = $cgi->param("fck1") || "";
+        my $plain_text = HTML::FormatText->new->format(parse_html($data));
+        my $idsth = $dbh->prepare_cached("SELECT nextval('documents_id_seq')")
+                or croak($dbh->errstr);
+        my $insth = $dbh->prepare_cached("INSERT INTO documents
+                                          (id, username, filename, content, txtcontent, doctype)
+                                          VALUES (?, ?, ?, ?, ?, 'Word')")
+                or croak($dbh->errstr);
+        if(!$idsth->execute()) {
+            $dbh->rollback;
+            $webdata{statustext} = "Failed to generate unique ID!";
+            $webdata{statuscolor} = "errortext";
+        } else {
+            ($fileid) = $idsth->fetchrow_array;
+            $idsth->finish;
+            
+            if(!$insth->execute($fileid, $webdata{userData}->{user},
+                                $filename, $data, $plain_text)) {
+                $dbh->rollback;
+                $webdata{statustext} = "Failed to insert file!";
+                $webdata{statuscolor} = "errortext";
+            } else {
+                $webdata{statustext} = "File created!";
+                $webdata{statuscolor} = "oktext";
+                $dbh->commit;
+            }    
+        }
+    } elsif($mode eq "save") {
+        $nextmode = "save";
+        $data = $cgi->param("fck1") || "";
+        my $plain_text = HTML::FormatText->new->format(parse_html($data));
+        my $upsth = $dbh->prepare_cached("UPDATE documents
+                                          SET updated = now(),
+                                          content = ?,
+                                          txtcontent = ?
+                                          WHERE id = ?")
+                or croak($dbh->errstr);
+        if(!$upsth->execute($data, $plain_text, $fileid)) {
+            $dbh->rollback;
+            $webdata{statustext} = "Failed to write the files!";
+            $webdata{statuscolor} = "errortext";
+        } else {
+            $webdata{statustext} = "File saved!";
+            $webdata{statuscolor} = "oktext";
+            $dbh->commit;
+        }
+    }
+    
+    $webdata{FileID} = $fileid;
+    $webdata{FileName} = $filename;
+    $webdata{FileData} = $data;
+    $webdata{EditMode} = $nextmode;
+    
+    my $templname = "docswordprocessor_edit";
+    if($nextmode eq "saveuserform") {
+        $templname = "docswordprocessor_view";
+    }
+    
     my $template = $self->{server}->{modules}->{templates}->get($templname, 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
@@ -341,11 +340,11 @@ For more information about FCKEditor, visit http://ckeditor.com/
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -1,18 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
 package Maplat::Web::StandardFields;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
+use strict;
+use warnings;
+
+use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Sys::Hostname;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
-use strict;
-use warnings;
 
 use Carp;
 
@@ -22,6 +20,13 @@ sub new {
     
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
+    
+    # copy general config options to field-hash
+        foreach my $keyname (keys %{$self->{static}->{fields}}) {
+            next if($keyname eq 'hosts');
+            $self->{fields}->{$keyname} = $self->{static}->{fields}->{$keyname};
+        }
+    
     
     # copy host-specific settings from sub-hash to field-hash
     my $hname = hostname;
@@ -38,11 +43,13 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
     $self->register_defaultwebdata("get_defaultwebdata");
+    return;
 }
 
 sub get_defaultwebdata {
@@ -136,11 +143,11 @@ Maplat::Web::Memcache
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

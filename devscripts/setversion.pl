@@ -1,5 +1,9 @@
 #!/usr/bin/perl
 
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# Developed under Artistic license
+# for Magna Powertrain Ilz
+
 use strict;
 use warnings;
 

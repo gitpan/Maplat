@@ -20,23 +20,22 @@ use warnings;
 use Test::More;
 use Socket;
 BEGIN { 
-	# Disable preforking for now
-    plan skip_all => "PreForking not yet stable";
-	exit(0);
-
+    if ( not $ENV{TEST_PG} ) {
+        my $msg = 'DBI/DBD::PG test.  Set $ENV{TEST_PG} to a true value to run.';
+        plan( skip_all => $msg );
+    }
     require("t/testhelpers.pm");
     my $daemon_status = connect_memcached();
     if($daemon_status ne "OK") {
         plan skip_all => "no memchached running - wont stress-test";
-		done_testing();
+	exit(0);
     } else {
-        #plan tests => 1305;
+        plan tests => 1305;
     }
     use_ok('Maplat::Web');
     use_ok('Time::HiRes', qw(sleep usleep));
     use_ok('XML::Simple');
     use_ok('WWW::Mechanize');
-    use_ok('HTTP::Cookies');
 
 };
 use DBI     ':sql_types';
@@ -70,12 +69,11 @@ my $config = XMLin($configfile,
 
 $APPNAME = $config->{appname};
 print "Changing application name to '$APPNAME'\n\n";
-
-# Change config to use a forking server
-$config->{server}->{forking} = 1;
+my $isForking = $config->{server}->{forking} || 0;
 
 my @modlist = @{$config->{module}};
 my $webserver = new Maplat::Web($config->{server}->{port});
+$config->{server}->{forking} = 0;
 $webserver->startconfig($config->{server}, 0);
 
 foreach my $module (@modlist) {
@@ -91,13 +89,11 @@ foreach my $module (@modlist) {
 $webserver->endconfig();
 
 # Everything ready to run
-my $pid = $webserver->background();
-warn "Waiting for webserver to start up\n";
-sleep(5);
+my $pid;
 eval {
+    $pid = $webserver->background();
 
-	my $jar = new HTTP::Cookies(file => "cookies.dat", autosave=>1);
-    my $mech = new WWW::Mechanize(cookie_jar => \$jar);
+    my $mech = new WWW::Mechanize();
 
     for(1..50) {
         # Log in...
@@ -112,6 +108,42 @@ eval {
         );
         runchecks($result, "Login", ["Login ok"], []);
 
+        # ...and change to "Hello world", which should now be our default view (check by checking
+        # the string in the menu)
+        # Logout/Login so new user rights are set in this session
+        $result = $mech->get("http://localhost:9500/helloworld/example");
+        runchecks($result, "HelloWorld default view", ["Hello World", "Text in module template", "Dynamic module text"], 
+            []);
+
+        # ...and select admin view again...
+        $result = $mech->submit_form(
+            form_name => 'viewselect',
+            fields      => {
+                viewname    => 'Admin',
+            },
+        );
+        runchecks($result, "Admin", ["Variables", "Status", "Users"], ["Hello World"]);
+
+        # Set and unset a variable
+        $result = $mech->get("http://localhost:9500/admin/variables");
+        runchecks($result, "Variables GET", ["HeaderMessage"], ["Test Text"]);
+        $result = $mech->submit_form(
+            form_name => 'setvariable_HeaderMessage',
+            fields      => {
+                varvalue    => 'Test Text',
+            },
+        );
+        runchecks($result, "Variables SET", ["HeaderMessage", "Test Text"], []);
+        $result = $mech->submit_form(
+            form_name => 'setvariable_HeaderMessage',
+            fields      => {
+                varvalue    => '',
+            },
+        );
+        runchecks($result, "Variables UNSET", ["HeaderMessage"], ["Test Text"]);
+
+
+
         # Conclude this test run and log out
         $result = $mech->get("http://localhost:9500/user/logout");
         runchecks($result, "Log out", ["logged out"], []);
@@ -120,10 +152,9 @@ eval {
 };
 
 # Finish up
-is(kill(15,$pid),1,'Signaled 1 process successfully');
+is(kill(9,$pid),1,'Signaled 1 process successfully');
 wait or die "counldn't wait for sub-process completion";
 
-unlink "cookies.dat";
 done_testing();
 
 sub runchecks {

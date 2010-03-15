@@ -1,22 +1,18 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::Login;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
-
 use strict;
 use warnings;
+
+use base qw(Maplat::Web::BaseModule);
 
 use Carp;
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA1 qw(sha1_hex);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 my $password_prefix = "CARNIVORE::";
 my $password_postfix = "# or 1984";
@@ -42,11 +38,11 @@ sub new {
     # security
     if($self->{check_admin_user} eq "1") {
         my $dbh = $self->{server}->{modules}->{$self->{db}};
-        my $getsth = $dbh->prepare_cached("SELECT username FROM users") or die($dbh->errstr);
+        my $getsth = $dbh->prepare_cached("SELECT username FROM users") or croak($dbh->errstr);
         my $insth = $dbh->prepare_cached("INSERT INTO users (username, password_md5, password_sha1, is_admin, email_addr) " .
-                                  "VALUES (?, ?, ?, ?, ?)") or die($dbh->errstr);
+                                  "VALUES (?, ?, ?, ?, ?)") or croak($dbh->errstr);
         my %users;
-        $getsth->execute or die($dbh->errstr);
+        $getsth->execute or croak($dbh->errstr);
         while((my @array = $getsth->fetchrow_array)) {
             $users{$array[0]} = 1;
         }
@@ -54,7 +50,7 @@ sub new {
         
         if(!defined($users{admin})) {
             my $password = $password_prefix . "admin" . $password_postfix;
-            $insth->execute("admin", md5_hex($password), sha1_hex($password), "true", 'rene.schickbauer@magnapowertrain.com') or die($dbh->errstr);
+            $insth->execute("admin", md5_hex($password), sha1_hex($password), "true", 'rene.schickbauer@gmail.com') or croak($dbh->errstr);
         }
         $dbh->commit;
     }    
@@ -119,11 +115,11 @@ sub get {
         return $self->get_logout($cgi);
     } elsif($webpath eq $self->{sessionrefresh}->{webpath}) {
         return $self->get_sessionrefresh($cgi);
-    } elsif($self->{currentData}->{type} eq "user" && $webpath eq $self->{pwchange}->{webpath}) {
+    } elsif($webpath eq $self->{pwchange}->{webpath}) {
         return $self->get_pwchange($cgi);
     } elsif($self->{currentData}->{type} eq "admin" && $webpath eq $self->{useredit}->{webpath}) {
         return $self->get_useredit($cgi);
-	} elsif($self->{currentData}->{type} =~ /^(admin|user)$/ && $webpath eq $self->{viewselect}->{webpath}) {
+    } elsif($self->{currentData}->{type} =~ /^(admin|user)$/ && $webpath eq $self->{viewselect}->{webpath}) {
         return $self->get_viewselect($cgi);
     } else {
         return (status  =>  404);
@@ -134,18 +130,18 @@ sub get_viewselect {
     my ($self, $cgi) = @_;
     
     my $session = $cgi->cookie("maplat-session");
-	
-	my %webdata = (
+    
+    my %webdata = (
         $self->{server}->get_defaultwebdata(),
         PageTitle   =>  $self->{pwchange}->{viewselect},
     );
-	
+    
     my $user;
     my $newview = $cgi->param('viewname') || '';
     
     if($self->validateSessionID($session, $cgi)) {
         $user = $self->{server}->{modules}->{$self->{memcache}}->get($session);
-		if($newview ne "") {
+        if($newview ne "") {
             $user->{view} = "logout"; # Make logout view the default
             $user->{startpage} = $self->{logout}->{webpath};
             foreach my $view (@{$self->{viewselect}->{views}->{view}}) {
@@ -155,10 +151,10 @@ sub get_viewselect {
                     $user->{startpage} = $view->{startlink};
                 }
            }
-		}
-		
-		$self->{server}->{modules}->{$self->{memcache}}->set($session, $user);
-		# Redirect to start page of this view
+        }
+        
+        $self->{server}->{modules}->{$self->{memcache}}->set($session, $user);
+        # Redirect to start page of this view
         return (status      => 307,
                 location    => $user->{startpage},
                 type        => "text/html",
@@ -178,7 +174,7 @@ sub get_viewselect {
                                 "<a href=\"" . $self->{login}->{webpath} . "\">here</a>.</body></html>",
                 );
     }
-	
+    
 }
 
 sub get_logout {
@@ -187,7 +183,7 @@ sub get_logout {
     my $session = $cgi->cookie("maplat-session");
     if(defined($session)) {
         $self->{server}->{modules}->{$self->{memcache}}->delete($session);
-		$self->{server}->user_logout($session);
+        $self->{server}->user_logout($session);
     }
     
     $self->{cookie} = $cgi->cookie({"name" => "maplat-session",
@@ -229,10 +225,10 @@ sub get_login {
         }
         my $rightCols = join(", ", @dbRights);
         my $sth = $dbh->prepare_cached("SELECT username, email_addr,
-									   $rightCols
-									   FROM users " .
+                                       $rightCols
+                                       FROM users " .
                                 "WHERE username = ? AND password_md5 = ? and password_sha1 = ?")
-                    or die($dbh->errstr);
+                    or croak($dbh->errstr);
         
         my $password = $password_prefix . $webdata{password} . $password_postfix;
         $sth->execute($webdata{username}, md5_hex($password), sha1_hex($password));
@@ -246,7 +242,7 @@ sub get_login {
             } else {
                 $user{type} = "user";
             }
-			
+            
             foreach my $dbright (@dbRights) {
                 if($line->{$dbright}) {
                     $user{$dbright} = 1;
@@ -269,29 +265,29 @@ sub get_login {
             
             if(!defined($user{view})) {
                 # User has no right, automatically log out again ;-)
-				$user{view} = "logout";
+                $user{view} = "logout";
                 $user{startpage} = $self->{logout}->{webpath};
-			}
-			last;
+            }
+            last;
         }
         $sth->finish;
         $dbh->commit;
         if(defined($user{username})) {
             my $session = "SESSION" . int(rand(1000000)) . int(rand(1000000)) . int(rand(1000000));
-	    
-		    my $host_addr = $cgi->remote_addr();
-		    $session .= "-of-" . md5_hex($host_addr . $ip_postfix);
-	    
+        
+            my $host_addr = $cgi->remote_addr();
+            $session .= "-of-" . md5_hex($host_addr . $ip_postfix);
+        
             $self->{server}->{modules}->{$self->{memcache}}->set($session, \%user);
             $webdata{statustext} = "Login ok, please wait...!";
             $webdata{statuscolor} = "oktext";
             $webdata{OnLoad} = "document.location.href = '" . $user{startpage} . "';";
-			
+            
             $self->{cookie} = $cgi->cookie({"name" => "maplat-session",
                                     "value" => "$session",
                                     "expires" => "+10m"});
-			$self->{currentSessionID} = $session;
-			$self->{server}->user_login($user{username}, $session);
+            $self->{currentSessionID} = $session;
+            $self->{server}->user_login($user{username}, $session);
         } else {
             $webdata{statustext} = "Login error";
             $webdata{statuscolor} = "errortext";
@@ -333,9 +329,9 @@ sub get_pwchange {
                 my $dbh = $self->{server}->{modules}->{$self->{db}};
                 my $selsth = $dbh->prepare_cached("SELECT username FROM users " .
                                             "WHERE username = ? AND password_md5 = ? and password_sha1 = ?")
-                            or die($dbh->errstr);
+                            or croak($dbh->errstr);
                 my $oldpwok = 0;
-                $selsth->execute($webdata{userData}->{user}, md5_hex($oldpw), sha1_hex($oldpw)) or die($dbh->errstr);
+                $selsth->execute($webdata{userData}->{user}, md5_hex($oldpw), sha1_hex($oldpw)) or croak($dbh->errstr);
                 while((my @array = $selsth->fetchrow_array)) {
                     $oldpwok = 1;
                 }
@@ -348,8 +344,8 @@ sub get_pwchange {
                 } else {
                     my $upsth = $dbh->prepare_cached("UPDATE users SET password_md5 = ?, password_sha1 = ? " .
                                               "WHERE username = ?")
-                                            or die($dbh->errstr);
-                    $upsth->execute(md5_hex($newpw), sha1_hex($newpw), $webdata{userData}->{user}) or die($dbh->errstr);
+                                            or croak($dbh->errstr);
+                    $upsth->execute(md5_hex($newpw), sha1_hex($newpw), $webdata{userData}->{user}) or croak($dbh->errstr);
                     $upsth->finish;
                     $dbh->commit;
                     $webdata{statustext} = "Password changed!";
@@ -428,14 +424,14 @@ sub get_useredit {
             $webdata{statustext} = "Incomplete form!";
             $webdata{statuscolor} = "errortext";
         } else {
-			
+            
             my $addsth = $dbh->prepare_cached("INSERT INTO users (username, password_md5,
-											  password_sha1, email_addr) " .
+                                              password_sha1, email_addr) " .
                                        "VALUES (?, ?, ?, ?)")
-                        or die($dbh->errstr);
+                        or croak($dbh->errstr);
             my $newpw = $password_prefix . $webdata{adduser}->{pwnew} . $password_postfix;
             if(!$addsth->execute($webdata{adduser}->{username}, md5_hex($newpw),
-								sha1_hex($newpw), $webdata{adduser}->{email})) {
+                                sha1_hex($newpw), $webdata{adduser}->{email})) {
                 $webdata{statustext} = "User creation failed: " . $dbh->errstr;
                 $webdata{statuscolor} = "errortext";
                 $addsth->finish;
@@ -445,9 +441,9 @@ sub get_useredit {
                 my $upstatus = 1;
                 foreach my $userLevel (@userLevels) {
                     if($upstatus) {
-                        my $chsth = $dbh->prepare_cached("UPDATE users SET $userLevel = ?									  
+                        my $chsth = $dbh->prepare_cached("UPDATE users SET $userLevel = ?                                      
                                                     WHERE username = ?")
-                        or die($dbh->errstr);
+                        or croak($dbh->errstr);
                         
                         my $lval= $cgi->param("adduser_" . $userLevel) || '';
                         if($lval eq "") {
@@ -486,7 +482,7 @@ sub get_useredit {
             $webdata{statuscolor} = "errortext";            
         } else {
             my $delsth = $dbh->prepare_cached("DELETE FROM users WHERE username = ?")
-                    or die($dbh->errstr);
+                    or croak($dbh->errstr);
             if($delsth->execute($username)) {
                 $delsth->finish;
                 $dbh->commit;
@@ -503,14 +499,14 @@ sub get_useredit {
         my $username = $cgi->param('username') || '';
         my $password = $cgi->param('password') || '';
         my $email = $cgi->param('email_addr') || '';
-		
+        
         my $chsth;
         my $chstatus = 1;
         if($password ne "") {
             $password = $password_prefix . $password . $password_postfix;
             $chsth = $dbh->prepare_cached("UPDATE users SET password_md5 = ?, password_sha1 = ? " .
                                    "WHERE username = ?")
-                        or die($dbh->errstr);
+                        or croak($dbh->errstr);
                         
             if(!$chsth->execute(md5_hex($password), sha1_hex($password), $username)) {
                 $webdata{statustext} = "Password change failed: " . $dbh->errstr;
@@ -523,9 +519,9 @@ sub get_useredit {
             }
         }
         if($chstatus) {
-            $chsth = $dbh->prepare_cached("UPDATE users SET email_addr = ?									  
-										WHERE username = ?")
-            or die($dbh->errstr);
+            $chsth = $dbh->prepare_cached("UPDATE users SET email_addr = ?                                      
+                                        WHERE username = ?")
+            or croak($dbh->errstr);
             
             if(!$chsth->execute($email, $username)) {
                 $webdata{statustext} = "User change failed: " . $dbh->errstr;
@@ -540,9 +536,9 @@ sub get_useredit {
         
         foreach my $userLevel (@userLevels) {
             if($chstatus) {
-                $chsth = $dbh->prepare_cached("UPDATE users SET $userLevel = ?									  
+                $chsth = $dbh->prepare_cached("UPDATE users SET $userLevel = ?                                      
                                             WHERE username = ?")
-                or die($dbh->errstr);
+                or croak($dbh->errstr);
                 
                 my $lval= $cgi->param($userLevel) || '';
                 if($lval eq "") {
@@ -573,9 +569,9 @@ sub get_useredit {
     
                 
     my $selsth = $dbh->prepare_cached("SELECT *
-									  FROM users " .
+                                      FROM users " .
                                 "ORDER BY username")
-                        or die($dbh->errstr);
+                        or croak($dbh->errstr);
     $selsth->execute();
     my @users;
     while((my $user = $selsth->fetchrow_hashref)) {
@@ -608,42 +604,43 @@ sub get_useredit {
 
 sub register {
     my $self = shift;
-	
-	$self->register_webpath($self->{login}->{webpath}, "get");
-	$self->register_webpath($self->{logout}->{webpath}, "get");
-	$self->register_webpath($self->{pwchange}->{webpath}, "get");
-	$self->register_webpath($self->{useredit}->{webpath}, "get");
-	$self->register_webpath($self->{viewselect}->{webpath}, "get");
-	$self->register_webpath($self->{sessionrefresh}->{webpath}, "get");
-	$self->register_prefilter("prefilter");
-	$self->register_postfilter("postfilter");
-	$self->register_defaultwebdata("get_defaultwebdata");
+    
+    $self->register_webpath($self->{login}->{webpath}, "get");
+    $self->register_webpath($self->{logout}->{webpath}, "get");
+    $self->register_webpath($self->{pwchange}->{webpath}, "get");
+    $self->register_webpath($self->{useredit}->{webpath}, "get");
+    $self->register_webpath($self->{viewselect}->{webpath}, "get");
+    $self->register_webpath($self->{sessionrefresh}->{webpath}, "get");
+    $self->register_prefilter("prefilter");
+    $self->register_postfilter("postfilter");
+    $self->register_defaultwebdata("get_defaultwebdata");
     $self->register_prerender("prerender");
+    return;
 }
 
 sub prefilter {
     my ($self, $cgi) = @_;
     
     my $webpath = $cgi->path_info();
-	#warn "User requested path $webpath\n";
+    #warn "User requested path $webpath\n";
 
     $self->{cookie} = 0;
     $self->{currentData} = undef;
-	$self->{currentSessionID} = undef;
+    $self->{currentSessionID} = undef;
     
     if($webpath eq $self->{login}->{webpath} || $webpath eq $self->{logout}->{webpath} ||
        $webpath =~ /^\/(pics|static|logo)\//) {
-	    # Ok, we need to access our own pages as well as all
-	    # stuff in /static, /pics and /logo to display the login and logout pages,
-	    # so don't block them ;-)
+        # Ok, we need to access our own pages as well as all
+        # stuff in /static, /pics and /logo to display the login and logout pages,
+        # so don't block them ;-)
         # This also speeds up the process a little bit
-	    return;
+        return;
     }
-	
-	if($webpath =~ /^\/webapi\//) {
-		# All Webapi pages have to do their own user handling if they require it
-		return;
-	}
+    
+    if($webpath =~ /^\/webapi\//) {
+        # All Webapi pages have to do their own user handling if they require it
+        return;
+    }
 
     my $session = $cgi->cookie("maplat-session");
     my $user;
@@ -654,11 +651,11 @@ sub prefilter {
             foreach my $ur (@{$self->{userlevels}->{userlevel}}) {
                 my $checkpath = "^" .  $ur->{path};
                 if(($webpath =~ /$checkpath/ && !$user->{$ur->{db}})) {
-		    #warn "Forbidden path $webpath\n";
+            #warn "Forbidden path $webpath\n";
                     my %deniedwebdata = (
                         $self->{server}->get_defaultwebdata(),
                         PageTitle   =>  $self->{pagetitle},
-                        webpath	    =>  $webpath,
+                        webpath        =>  $webpath,
                         statustext  =>  "Forbidden! You are not allowed to access this page but tried anyway.<br>&nbsp;<br>" .
                                         "Please ask your administrator for mercy (buying a coffee might help)!",
                     );
@@ -673,10 +670,10 @@ sub prefilter {
                                             "expires" => "+10m"});
             my %currentData = (sessionid    =>  $session,
                                user         =>  $user->{username},
-							   email_addr	=>	$user->{email_addr},
+                               email_addr    =>    $user->{email_addr},
                                type         =>  $user->{type},
-							   view			=>	$user->{view},
-                               logoview		=>	$user->{logoview},
+                               view            =>    $user->{view},
+                               logoview        =>    $user->{logoview},
                               );
             
             foreach my $ur (@{$self->{userlevels}->{userlevel}}) {
@@ -684,17 +681,17 @@ sub prefilter {
             }
             $self->{currentData} = \%currentData;
         } else {
-	    #warn "No user session data for $session\n";
-	}
+        #warn "No user session data for $session\n";
+    }
     } else {
-	#warn "Invalid session cookie\n";
+    #warn "Invalid session cookie\n";
     }
     
     if($self->{cookie}) {
-		# Refresh the session
-		$self->{server}->sessionrefresh($self->{currentData}->{sessionid});
-		$self->{currentSessionID} = $session;
-		
+        # Refresh the session
+        $self->{server}->sessionrefresh($self->{currentData}->{sessionid});
+        $self->{currentSessionID} = $session;
+        
         return; # No redirection
     } else {
         # Need to login
@@ -725,6 +722,7 @@ sub get_defaultwebdata {
     if($self->{currentData}) {
         $webdata->{userData} = $self->{currentData};
     }
+    return;
 }
 
 # Generating the dynamic menu
@@ -797,20 +795,20 @@ sub prerender {
                             $menuItem{link} = $mod{webpath};
                             $menuItem{PageTitle} = $mod{pagetitle};
                             if(defined($menu->{checkvar})) {
-								if(defined($webdata->{$menu->{checkvar}}) &&
-										$webdata->{$menu->{checkvar}} ne "") {
-									$menuItem{isActive} = 1;
-								}
-							} elsif(!defined($mod{isActive}) || $mod{isActive}) {
+                                if(defined($webdata->{$menu->{checkvar}}) &&
+                                        $webdata->{$menu->{checkvar}} ne "") {
+                                    $menuItem{isActive} = 1;
+                                }
+                            } elsif(!defined($mod{isActive}) || $mod{isActive}) {
                                 $menuItem{isActive} = 1;
                             }
-							
-							if(defined($menu->{warnvar})) {
-								if(defined($webdata->{$menu->{warnvar}}) &&
-								   $webdata->{$menu->{warnvar}} > 0) {
-									$menuItem{warning} = $webdata->{$menu->{warnvar}};
-								}
-							}
+                            
+                            if(defined($menu->{warnvar})) {
+                                if(defined($webdata->{$menu->{warnvar}}) &&
+                                   $webdata->{$menu->{warnvar}} > 0) {
+                                    $menuItem{warning} = $webdata->{$menu->{warnvar}};
+                                }
+                            }
                         }
                     }
                     
@@ -831,48 +829,49 @@ sub prerender {
     
     $webdata->{userViews} = \@userViews;
     $webdata->{menuItems} = \@menuItems;
+    return;
 }
 
 sub validateSessionID {
     my ($self, $session, $cgi) = @_;
     
     if(!defined($session) || $session eq "NONE") {
-	#warn "No session cookie: $session\n";
-	return 0; # Invalid session
+    #warn "No session cookie: $session\n";
+    return 0; # Invalid session
     }
     
     my $client_checksum = "";
     if($session =~ /\-of\-(.*)/) {
-	$client_checksum = $1;
+    $client_checksum = $1;
     } else {
-	#warn "Session ID missing from cookie: $session\n";
-	return 0; # Session ID missing Client IP checksum
+    #warn "Session ID missing from cookie: $session\n";
+    return 0; # Session ID missing Client IP checksum
     }
     
     my $host_addr = $cgi->remote_addr();
     my $host_checksum =  md5_hex($host_addr . $ip_postfix);
     if($host_checksum eq $client_checksum) {
-	return 1; # Client-IP checks out
+    return 1; # Client-IP checks out
     } else {
-	#warn "Cookie checksum wrong: my $host_checksum your $client_checksum your ip: $host_addr\n";
-	return 0; # Burn in hell for faking the client IP checksum
+    #warn "Cookie checksum wrong: my $host_checksum your $client_checksum your ip: $host_addr\n";
+    return 0; # Burn in hell for faking the client IP checksum
     }
 }
 
 sub get_sessionid {
-	my ($self) = @_;
-	
-	return $self->{currentSessionID};
+    my ($self) = @_;
+    
+    return $self->{currentSessionID};
 }
 
 sub get_sessionrefresh {
     my ($self, $cgi) = @_;
-	
-	# we just return the current time, everything else is done by prefilter ;-)
-	return (status      => 200,
-		type        => "text/plain",
-		data         => getISODate(),
-		);
+    
+    # we just return the current time, everything else is done by prefilter ;-)
+    return (status      => 200,
+        type        => "text/plain",
+        data         => getISODate(),
+        );
 }
 
 1;
@@ -1033,11 +1032,11 @@ Maplat::Web
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -1,14 +1,13 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Helpers::CSVFilter;
 use strict;
 use warnings;
 
-our $VERSION = 0.970;
+use Carp;
+
+our $VERSION = 0.98;
 
 sub new {
     my ($class, %config) = @_;
@@ -22,7 +21,7 @@ sub filter {
     my (@headers, @headcount, @lines);
     
     $self->{logger}->debuglog("Opening input file");
-    open(my $ifh, "<", $self->{source}) or die($!);
+    open(my $ifh, "<", $self->{source}) or croak($!);
     
     $self->{logger}->debuglog("Reading source file to memory");
     @lines = <$ifh>;
@@ -61,7 +60,9 @@ sub filter {
             my $ofname = $self->{destination};
             $filecount++;
             $ofname =~ s/#/$filecount/g;
-            open($ofh, ">", $ofname) or die($!);
+
+            # Special filehandle handling (i most likely know what i'm doing here), don't use Perl::Critic on this one
+            open($ofh, ">", $ofname) or croak($!); ## no critic
             $self->{logger}->debuglog("Opening new output file $ofname");
             $outline = "";
             for(my $i = 0; $i < $#headers; $i++) {
@@ -97,6 +98,7 @@ sub filter {
     if(defined($ofh)) {
         close $ofh;
     }
+    return;
 }
 
 1;
@@ -132,11 +134,11 @@ Do the filtering.
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

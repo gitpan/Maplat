@@ -1,18 +1,15 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::TemplateCache;
-use Template;
-use Maplat::Web::BaseModule;
-@ISA = ('Maplat::Web::BaseModule');
-
-our $VERSION = 0.970;
-
 use strict;
 use warnings;
+
+use base qw(Maplat::Web::BaseModule);
+use Template;
+
+our $VERSION = 0.98;
+
 
 use Carp;
 
@@ -25,7 +22,7 @@ sub new {
     
     $self->{processor} = Template->new();
     if(!defined($self->{processor})) {
-        die("Failed to load template engine");
+        croak("Failed to load template engine");
     }
     
     return $self;
@@ -37,54 +34,65 @@ sub reload {
 
     my %files;
 
-	foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
-		next if($bdir eq ".");
-		my $fulldir = $bdir . "/Maplat/Web/Templates";
-		print "   ** checking $fulldir \n";
-		if(-d $fulldir) {
-			print "   **** loading extra static files\n";
-			$self->load_dir($fulldir, \%files);
+	foreach my $view (@{$self->{view}}) {
+		foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+			next if($bdir eq "."); # Load "./" at the end
+			my $fulldir = $bdir . "/" . $view->{path};
+			print "   ** checking $fulldir \n";
+			if(-d $fulldir) {
+				#print "   **** loading extra template files\n";
+				$self->load_dir($fulldir, $view->{base}, \%files);
+			}
+		}
+		{ # Load "./"
+			my $fulldir = $view->{path};
+			print "   ** checking $fulldir \n";
+			if(-d $fulldir) {
+				#print "   **** loading local template files\n";
+				$self->load_dir($fulldir, $view->{base}, \%files);
+			}
 		}
 	}
 
-	if(-d $self->{path}) {
-		$self->load_dir($self->{path}, \%files);	
-	} else {
-		print "   **** WARNING: configured dir " . $self->{path} . " does not exist!\n";
-	}
-
     $self->{cache} = \%files;  
+    return;
 }
 
 sub load_dir {
-	my ($self, $dir, $files) = @_;
-    opendir(my $dfh, $dir) or die($!);
+    my ($self, $dir, $base, $files) = @_;
+	
+	$base =~ s/^\///o;
+	$base =~ s/\/$//o;
+	
+    opendir(my $dfh, $dir) or croak($!);
     while((my $fname = readdir($dfh))) {
         next if($fname !~ /\.tt$/);
         my $nfname = $dir . "/" . $fname;
-        my $kname = $fname;
+        my $kname = $base . '/' . $fname;
+		$kname =~ s/^\///o;
         $kname =~s /\.tt$//g;
         open(my $fh, "<", $nfname) or confess($!);
-        my $holdTerminator = $/;
+        my $holdTerminator = $/; ## no critic
         undef $/;
         binmode($fh);
         my $data = <$fh>;
-        $/ = $holdTerminator;
-        close($fh);
+        $/ = $holdTerminator; ## no critic
         close($fh);
         $files->{$kname} = $data;
     }
     closedir($dfh);
+    return;
 }
 
 sub register {
     my $self = shift;
     # Templates don't register themself
+    return;
 }
 
 sub get {
     my ($self, $name, $uselayout, %webdata) = @_;
-    return undef unless defined($self->{cache}->{$name});
+    return unless defined($self->{cache}->{$name});
     
     #return undef unless defined($self->{cache}->{$layout});
     
@@ -94,9 +102,14 @@ sub get {
     $self->{server}->prerender(\%webdata);
     
     my $fullpage;
+	
+	my $layoutname = $self->{layout};
+	if(defined($webdata{UserLayout}) && defined($self->{cache}->{$webdata{UserLayout}})) {
+		$layoutname = $webdata{UserLayout};
+	}
     
     if($uselayout) {
-        $fullpage = $self->{cache}->{$self->{layout}};
+        $fullpage = $self->{cache}->{$layoutname};
         my $page = $self->{cache}->{$name};
         $fullpage =~ s/XX_BODY_XX/$page/;
     } else {
@@ -139,7 +152,14 @@ of the page for every module.
                 <modname>templates</modname>
                 <pm>TemplateCache</pm>
                 <options>
-                        <path>MaplatWeb/Templates</path>
+			<view>
+				<path>MaplatWeb/Templates</path>
+				<base>/</base>
+			</view>
+			<view>
+				<path>some/other/relative/path</path>
+				<base>myothertemplates/</base>
+			</view>
                         <!-- Layout-Template to use for complete pages -->
                         <layout>maplatlayout</layout>
                 </options>
@@ -173,11 +193,11 @@ Maplat::Web
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

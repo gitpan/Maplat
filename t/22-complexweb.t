@@ -21,6 +21,11 @@ use Test::More;
 use Socket;
 my $hasMemcached;
 BEGIN { 
+    if ( not $ENV{TEST_PG} ) {
+        my $msg = 'DBI/DBD::PG test.  Set $ENV{TEST_PG} to a true value to run.';
+        plan( skip_all => $msg );
+    }
+
     plan tests => 47;
     use_ok('Maplat::Web');
     use_ok('Time::HiRes', qw(sleep usleep));

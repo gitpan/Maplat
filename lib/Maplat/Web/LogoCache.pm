@@ -1,18 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Web::LogoCache;
-use Maplat::Web::BaseModule;
-use Maplat::Helpers::DateStrings;
-@ISA = ('Maplat::Web::BaseModule');
-
-our $VERSION = 0.970;
-
 use strict;
 use warnings;
+use 5.010;
+
+use base qw(Maplat::Web::BaseModule);
+use Maplat::Helpers::DateStrings;
+
+our $VERSION = 0.98;
+
 
 use Carp;
 
@@ -24,6 +22,10 @@ sub new {
     bless $self, $class; # Re-bless with our class
     
     $self->{lastUpdate} = "19700101";
+    if(!defined($self->{EXTRAINC})) {
+        my @tmp;
+        $self->{EXTRAINC} = \@tmp;
+    }
            
     return $self;
 }
@@ -33,37 +35,60 @@ sub reload {
     delete $self->{cache} if defined $self->{cache};
 
     my %files;
-    opendir(my $dfh, $self->{imgpath}) or die($!);
-    while((my $fname = readdir($dfh))) {
-        next if($fname =~ /^\./);
-        $fname =~ /(.*)\.([a-zA-Z0-9]*)/;
-        my ($kname, $type) = ($1, $2);
-        if($type =~ /jpg/i) {
-            $type = "image/jpeg";
-        } elsif($type =~ /bmp/i) {
-            $type = "image/bitmap";
-        } elsif($type =~ /htm/i) {
-            $type = "text/html";
-        } elsif($type =~ /css/i) {
-            $type = "text/css";
-        } elsif($type =~ /js/i) {
-            $type = "application/javascript";
+    
+    my @dirs;
+    foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+        if($bdir ne ".") {
+            my $fname = $bdir . "/" . $self->{imgpath};
+            next if($fname ~~ @dirs);
+            if(-d $fname) {
+                push @dirs, $fname;
+            }
         }
-        
-        my $nfname = $self->{imgpath} . "/" . $fname;
-        my $data = $self->getFile($nfname);
-
-        my %entry = (name   => $kname,
-                    fullname=> $nfname,
-                    type    => $type,
-                    data    => $data,
-                    );
-        $files{$self->{imgwebpath} . $fname} = \%entry; # Store under full name
     }
-    closedir($dfh);
+    {
+        my $fname = './' . $self->{imgpath};
+        if(-d $fname) {
+            push @dirs, $fname;
+        }
+    }
+    
+
+    foreach my $bdir (@dirs) {
+        print "    Reading files in $bdir...\n";
+        opendir(my $dfh, $bdir) or croak($!);
+        while((my $fname = readdir($dfh))) {
+            next if($fname =~ /^\./);
+            $fname =~ /(.*)\.([a-zA-Z0-9]*)/;
+            my ($kname, $type) = ($1, $2);
+            if($type =~ /jpg/i) {
+                $type = "image/jpeg";
+            } elsif($type =~ /bmp/i) {
+                $type = "image/bitmap";
+            } elsif($type =~ /htm/i) {
+                $type = "text/html";
+            } elsif($type =~ /css/i) {
+                $type = "text/css";
+            } elsif($type =~ /js/i) {
+                $type = "application/javascript";
+            }
+            
+            my $nfname = $bdir . "/" . $fname;
+            my $data = $self->getFile($nfname);
+    
+            my %entry = (name   => $kname,
+                        fullname=> $nfname,
+                        type    => $type,
+                        data    => $data,
+                        );
+            $files{$self->{imgwebpath} . $fname} = \%entry; # Store under full name
+        }
+        closedir($dfh);
+    }
     $self->{cache} = \%files;
     
     $self->reloadTemplates();
+    return;
 }
 
 sub register {
@@ -72,6 +97,7 @@ sub register {
     $self->register_webpath($self->{webpath}, "get");
     $self->register_webpath($self->{imgwebpath}, "get");
     $self->register_defaultwebdata("get_defaultwebdata");
+    return;
 }
 
 sub get {
@@ -98,7 +124,7 @@ sub getDescription {
     my %webdata = (
         $self->{server}->get_defaultwebdata(),
         PageTitle   =>  $self->{pagetitle},
-        webpath	    =>  $self->{webpath},
+        webpath        =>  $self->{webpath},
         LogoDayText =>  $self->{description},
     );
     
@@ -114,10 +140,10 @@ sub getFile {
 
     open(my $fh, "<", $fname) or confess($!);
     my $holdTerminator = $/;
-    undef $/;
+    $/ = undef; ## no critic
     binmode($fh);
     my $data = <$fh>;
-    $/ = $holdTerminator;
+    $/ = $holdTerminator; ## no critic
     close($fh);
 
     return $data;
@@ -135,21 +161,74 @@ sub get_defaultwebdata {
     
     $webdata->{MainHeaderLogo} = $self->{$view};
     $webdata->{HasSpecialLogo} = $self->{$view . "_has_special"};
+    return;
 }
 
 sub reloadSingleTemplate {
     my ($self, $tname) = @_;
     
-    my $special = $self->{layoutpath} . "/" . $self->{lastUpdate} . "_" . $tname . ".tt";
-    my $normal = $self->{layoutpath} . "/" . $tname . ".tt";
-    
-    if(-e $special) {
-        $self->{$tname} = $self->getFile($special);
-        $self->{$tname . "_has_special"} = 1;
-    } else {
-        $self->{$tname} = $self->getFile($normal);
-        $self->{$tname . "_has_special"} = 0;
+    my @dirs;
+    foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+        if($bdir ne ".") {
+            my $fname = $bdir . "/" . $self->{layoutpath};
+            next if($fname ~~ @dirs);
+            if(-d $fname) {
+                push @dirs, $fname;
+            }
+        }
     }
+    {
+        my $fname = './' . $self->{layoutpath};
+        if(-d $fname) {
+            push @dirs, $fname;
+        }        
+    }
+
+    $self->{$tname . "_has_special"} = 0;
+    
+    foreach my $bdir (@dirs) {
+        my $special = $bdir . "/" . $self->{lastUpdate} . "_" . $tname . ".tt";
+        my $normal = $bdir . "/" . $tname . ".tt";
+        
+        if(-e $special) {
+            $self->{$tname} = $self->getFile($special);
+            $self->{$tname . "_has_special"} = 1;
+        } elsif(-e $normal && $self->{$tname . "_has_special"} == 0) {
+            $self->{$tname} = $self->getFile($normal);
+            $self->{$tname . "_has_special"} = 0;
+        }
+    }
+    return;
+}
+
+sub reloadDescription {
+    my ($self) = @_;
+    
+    my @dirs;
+    foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+        if($bdir ne ".") {
+            my $fname = $bdir . "/" . $self->{layoutpath};
+            next if($fname ~~ @dirs);
+            if(-d $fname) {
+                push @dirs, $fname;
+            }
+        }
+    }
+    {
+        my $fname = './' . $self->{layoutpath};
+        if(-d $fname) {
+            push @dirs, $fname;
+        }        
+    }
+    
+    foreach my $bdir (@dirs) {
+        my $special = $bdir . "/" . $self->{lastUpdate} . "_description.tt";
+        
+        if(-e $special) {
+            $self->{description} = $self->getFile($special);
+        }
+    }
+    return;
 }
 
 sub reloadTemplates {
@@ -167,12 +246,9 @@ sub reloadTemplates {
         $self->reloadSingleTemplate($logoview->{logodisplay});
     }
     
-    my $descfname = $self->{layoutpath} . "/" . $self->{lastUpdate} . "_description.tt";
-    if(-e $descfname) {
-        $self->{"description"} = $self->getFile($descfname);
-    } else {
-        $self->{"description"} = "No description available for this logo";
-    }
+    $self->reloadDescription();
+    
+    return;
 }
 
 1;
@@ -242,6 +318,10 @@ Internal function - reload a single template file.
 
 Internal function - dispatch reloads for all templates.
 
+=head2 reloadDescription
+
+Internal function - reload the description template.
+
 =head1 Dependencies
 
 This module depends on the Login module beeing already configured, because it hooks
@@ -256,11 +336,11 @@ Maplat::Web::Login
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

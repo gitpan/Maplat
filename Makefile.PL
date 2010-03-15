@@ -26,7 +26,8 @@ if ($VERSION =~ /_/) {
 require App::Info::RDBMS::PostgreSQL;
 require App::Info::Handler::Prompt;
 my $p = App::Info::Handler::Prompt->new;
-my $pg = App::Info::RDBMS::PostgreSQL->new(on_unknown => $p);
+#my $pg = App::Info::RDBMS::PostgreSQL->new(on_unknown => $p);
+my $pg = App::Info::RDBMS::PostgreSQL->new();
 my ($major_ver, $minor_ver, $patch, $conf, $bindir) = map {$pg->$_}
 	qw/major_version minor_version patch_version configure bin_dir/;
 my $initdb = '';
@@ -54,14 +55,18 @@ WriteMakefile(
     NAME              => 'Maplat',
     VERSION_FROM      => 'lib/Maplat.pm', # finds $VERSION
     PREREQ_PM         => {
+            "Archive::Zip" => 0,
+            "Carp" => 0,
             "CGI" => 0,
-            "Date::Manip" => 0,
-            "Date::Simple" => 0,
+            "Data::Dumper" => 0,
+            "Date::Manip",
+            "Date::Simple",
             "DBI" => 0,
             "DBD::Pg" => 0,
             "Digest::MD5" => 0,
             "Digest::SHA1" => 0,
             "English" => 0,
+            "Errno" => 0,
             "FileHandle" => 0,
             "File::Spec" => 0,
             "File::stat" => 0,
@@ -88,5 +93,5 @@ WriteMakefile(
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Maplat.pm', # retrieve abstract from module
-       AUTHOR         => 'Rene Schickbauer <rene.schickbauer@magnapowertrain.com>') : ()),
+       AUTHOR         => 'Rene Schickbauer <rene.schickbauer@gmail.com>') : ()),
 );

@@ -4,11 +4,9 @@ use 5.010000;
 use strict;
 use warnings;
 
-require Exporter;
+use base qw(Exporter);
 
-our @ISA = qw(Exporter);
-
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 
 
@@ -48,7 +46,7 @@ Please, also take a look at the included example in the tarball available on CPA
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

@@ -1,14 +1,12 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
 package Maplat::Helpers::TextLogger;
 use strict;
 use warnings;
 
 use Maplat::Helpers::DateStrings;
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub new {
     my ($class, %config) = @_;
@@ -19,7 +17,7 @@ sub new {
     return $self;
 }
 
-sub log {
+sub logLine {
     my ($self, $logline) = @_;
     
     my $fullline = getISODate() . "  $logline\n";
@@ -28,19 +26,21 @@ sub log {
     print {$self->{fh}} $fullline;
     close($self->{fh});
     print $fullline . "\n";
+    return;
 }
 
 sub alive {
     my ($self) = @_;
     
     $self->log("-- " . $self->{appname} . " is alive --");
+    return;
 }
 
 sub DESTROY {
     my ($self) = @_;
     
     $self->log("Stopping logfile");
-    
+    return;
 }
 
 1;
@@ -75,7 +75,7 @@ prefixed to the logline.
 appname is the application name or some other unique identifier. logfile is the filename
 of the logfile we want to use.
 
-=head2 log
+=head2 logLine
 
 Takes one argument, the text we want to log.
 
@@ -87,11 +87,11 @@ of thumb.
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

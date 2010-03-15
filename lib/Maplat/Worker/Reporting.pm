@@ -1,19 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Worker::Reporting;
-use Maplat::Worker::BaseModule;
-use Maplat::Helpers::DateStrings;
-@ISA = ('Maplat::Worker::BaseModule');
-
 use strict;
 use warnings;
+
+use base qw(Maplat::Worker::BaseModule);
+use Maplat::Helpers::DateStrings;
+
 use Carp;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub new {
     my ($proto, %config) = @_;
@@ -22,8 +19,8 @@ sub new {
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
 
-	my @debuglog;
-	$self->{debuglog} = \@debuglog;
+    my @debuglog;
+    $self->{debuglog} = \@debuglog;
 
     return $self;
 }
@@ -31,50 +28,54 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
+    return;
 }
 
 
-sub log {
-	my ($self, $error_type, $description) = @_;
+sub dblog {
+    my ($self, $error_type, $description) = @_;
     
     my $dbh = $self->{server}->{modules}->{$self->{db}};
-	
+    
     my $sth = $dbh->prepare("INSERT INTO errors (error_type, description)" .
                             "VALUES (?, ?)")
-                or die($dbh->errstr);
-    $sth->execute($error_type, $description) or die($dbh->errstr);
+                or croak($dbh->errstr);
+    $sth->execute($error_type, $description) or croak($dbh->errstr);
     $sth->finish;
     
     if($self->{email}) {
-        $self->{server}->{modules}->{$self->{mail}}->send(
-            'rene.schickbauer@magnapowertrain.com',
+        $self->{server}->{modules}->{$self->{mail}}->sendMail(
+            'rene.schickbauer@gmail.com',
             'ERROR: ' . $error_type,
             $description,
             'text/plain',
         );
     }
+    return;
 }
 
 sub debuglog {
-	my ($self, $line) = @_;
-	
-	chomp $line;
-	$line = getISODate() . " " . $line;
-	
-	push @{$self->{debuglog}}, $line;
-	if(scalar @{$self->{debuglog}} > $self->{maxlines}) {
-		shift @{$self->{debuglog}};
-	}
-	my $memh = $self->{server}->{modules}->{$self->{memcache}};
-	$memh->set($self->{worker}, $self->{debuglog});
-	
-	if($self->{std_out}) {
-		print "$line\n";
-	}
+    my ($self, $line) = @_;
+    
+    chomp $line;
+    $line = getISODate() . " " . $line;
+    
+    push @{$self->{debuglog}}, $line;
+    if(scalar @{$self->{debuglog}} > $self->{maxlines}) {
+        shift @{$self->{debuglog}};
+    }
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    $memh->set($self->{worker}, $self->{debuglog});
+    
+    if($self->{std_out}) {
+        print "$line\n";
+    }
+    return;
 }
 
 1;
@@ -121,7 +122,7 @@ worker name which is used in logging to memcache
 
 Log a information line to stdout and to memcached.
 
-=head2 log
+=head2 dblog
 
 Log a line to database.
 
@@ -140,11 +141,11 @@ Maplat::Worker
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

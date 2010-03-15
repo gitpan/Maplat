@@ -1,5 +1,4 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 
@@ -7,7 +6,7 @@ package Maplat::Web::BaseModule;
 use strict;
 use warnings;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 use Carp;
 
@@ -40,28 +39,29 @@ sub register_webpath {
     my ($self, $path, $funcname) = @_;
     
     $self->{server}->add_webpath($path, $self, $funcname);
+    return;
 }
 
 BEGIN {
-	# Auto-magically generate a number of similar functions without actually
+    # Auto-magically generate a number of similar functions without actually
     # writing them down one-by-one. This makes consistent changes much easier, but
     # you need perl wizardry level +10 to understand how it works...
     #
     # Added wizardry points are gained by this module beeing a parent class to
     # all other web modules, so this auto-generated functions are subclassed into
     # every child.
-	my @stdFuncs = qw(prefilter postfilter defaultwebdata task loginitem
+    my @stdFuncs = qw(prefilter postfilter defaultwebdata task loginitem
                         logoutitem sessionrefresh prerender);
-	no strict 'refs';
+    no strict 'refs';
     
     # -- Deep magic begins here...
-	for my $a (@stdFuncs){
-		*{__PACKAGE__ . "::register_$a"} =
+    for my $a (@stdFuncs){
+        *{__PACKAGE__ . "::register_$a"} =
             sub {
                 my $funcname = "add_$a";
                 $_[0]->{server}->$funcname($_[0], $_[1]);
             };
-	}
+    }
     # ... and ends here
 }
 
@@ -334,11 +334,11 @@ Maplat::Worker
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

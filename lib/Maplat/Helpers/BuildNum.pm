@@ -1,26 +1,29 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Helpers::BuildNum;
 use strict;
 use warnings;
+use 5.010;
 
 use Maplat::Helpers::DateStrings;
 use Sys::Hostname;
 
-require Exporter;
-our @ISA = qw(Exporter);
-our @EXPORT = qw(calcBuildNum readBuildNum);
+use base qw(Exporter);
+our @EXPORT = qw(calcBuildNum readBuildNum); ## no critic
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub calcBuildNum {
+    state $fixedbuildnum;
+
+    if(defined($fixedbuildnum)) {
+        return $fixedbuildnum;
+    }
     my $hname = hostname;
     my $ts = getFileDate();
     my $buildnum = $ts . "_" . $hname;
+    $fixedbuildnum = $buildnum;
     
     return $buildnum;
 }
@@ -140,11 +143,11 @@ Then, at runtime, you can get the current build number:
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

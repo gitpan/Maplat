@@ -1,64 +1,63 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
 package Maplat::Helpers::CommandHelper;
-
-use 5.010;
 use strict;
 use warnings;
+
+use 5.010;
 use Maplat::Helpers::DateStrings;
+use Carp;
 
-our @ISA = qw(Exporter);
-our @EXPORT = qw(getCommandQueue);
+use base qw(Exporter);
+our @EXPORT = qw(getCommandQueue); ## no critic
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub getCommandQueue {
-	my ($dbh, $memh, $command) = @_;
-	
-	my %active = $memh->get_activecommands();
-	
-	my @commands;
-	
-	my $where = "";
-	if(defined($command) and $command ne "") {
-		$where .= $command . " ";
-	}
-	if($where ne "") {
-		$where = " WHERE $where ";
-	}
-	
-	
-	my $stmt = "SELECT id, queuetime AS time, command AS name, arguments, starttime FROM commandqueue $where ORDER BY starttime, command, arguments[0]";
-	
-	my $sth = $dbh->prepare_cached($stmt) or die($dbh->errstr);
-	$sth->execute;
-	while((my $line = $sth->fetchrow_hashref)) {
-		$line->{time} = fixDateField($line->{time});
-		$line->{starttime} = fixDateField($line->{starttime});
+    my ($dbh, $memh, $command) = @_;
+    
+    my %active = $memh->get_activecommands();
+    
+    my @commands;
+    
+    my $where = "";
+    if(defined($command) and $command ne "") {
+        $where .= $command . " ";
+    }
+    if($where ne "") {
+        $where = " WHERE $where ";
+    }
+    
+    
+    my $stmt = "SELECT id, queuetime AS time, command AS name, arguments, starttime FROM commandqueue $where ORDER BY starttime, command, arguments[0]";
+    
+    my $sth = $dbh->prepare_cached($stmt) or croak($dbh->errstr);
+    $sth->execute;
+    while((my $line = $sth->fetchrow_hashref)) {
+        $line->{time} = fixDateField($line->{time});
+        $line->{starttime} = fixDateField($line->{starttime});
 
-		if(defined($line->{arguments}->[0])) {
-			$line->{args} = join("<br>", @{$line->{arguments}});
-		} else {
-			$line->{args} = "";
-		}
-		
-		if($line->{id} ~~ %active) {
-			$line->{class} = "activecommand";
-			$line->{worker} = $active{$line->{id}};
-			$line->{worker} =~ s/\ Worker//go;
-		} else {
-			$line->{worker} = "";
-		}
-		
-		push @commands, $line;
-	}
-	
-	$sth->finish;
-	$dbh->commit;
-	return \@commands;
+        if(defined($line->{arguments}->[0])) {
+            $line->{args} = join("<br>", @{$line->{arguments}});
+        } else {
+            $line->{args} = "";
+        }
+        
+        if($line->{id} ~~ %active) {
+            $line->{class} = "activecommand";
+            $line->{worker} = $active{$line->{id}};
+            $line->{worker} =~ s/\ Worker//go;
+        } else {
+            $line->{worker} = "";
+        }
+        
+        push @commands, $line;
+    }
+    
+    $sth->finish;
+    $dbh->commit;
+    return \@commands;
 }
 
 1;
@@ -89,11 +88,11 @@ and (optionally) a command (database where clause snippet).
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

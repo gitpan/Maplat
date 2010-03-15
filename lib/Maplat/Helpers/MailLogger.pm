@@ -1,22 +1,16 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
 package Maplat::Helpers::MailLogger;
 use strict;
 use warnings;
 
 use 5.008000;
-use strict;
-use warnings;
 
-require Exporter;
+use base qw(Exporter);
+#our @EXPORT= qw();
 
-our @ISA = qw(Exporter);
-our @EXPORT= qw();
-
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 use Maplat::Helpers::Strings qw(tabsToTable);
 use Maplat::Helpers::DateStrings;
@@ -26,8 +20,7 @@ use MIME::Base64;
 use PDF::Report;
 
 sub new {
-    my $class = shift;
-    my %args = @_;
+    my ($class, %args) = @_;
     my $self = bless {}, $class;
     $self->{debugdata} = 0;
     foreach my $key (qw[file subject server port sender reciever debugdata]) {
@@ -49,6 +42,7 @@ sub start {
     if($self->{debugdata}) {
         $self->warn("Logging DEBUG data, logfile may get HUGE!");
     }
+    return;
 }
 
 sub finish {
@@ -130,13 +124,13 @@ sub finish {
 
     
     close($self->{fh});
+    return 1;
     
 }
 
-sub log {
-    my ($self) = shift;
+sub logLine {
+    my ($self, %args) = @_;
     return 0 if(!$self->{active});
-    my %args = @_;
     my $date = getISODate();
     my $logline = "$date\t" . uc($args{level}) . "\t" . $args{text};
     if(uc($args{level}) eq "ERROR") {
@@ -153,32 +147,32 @@ sub log {
 sub debug {
     my ($self, $text) = @_;
     return 1 if(!$self->{debugdata});
-    return $self->log(level    => 'DEBUG',
+    return $self->logLine(level    => 'DEBUG',
                         text     =>  $text);
 }
 
 sub info {
     my ($self, $text) = @_;
-    return $self->log(level    => 'INFO',
+    return $self->logLine(level    => 'INFO',
                         text     =>  $text);
 }
 
-sub warn {
+sub warning {
     my ($self, $text) = @_;
-    return $self->log(level    => 'WARNING',
+    return $self->logLine(level    => 'WARNING',
                         text     =>  $text);
 }
 
 sub error {
     my ($self, $text) = @_;
-    return $self->log(level    => 'ERROR',
+    return $self->logLine(level    => 'ERROR',
                         text     =>  $text);
 }
 
 sub makePDF {
     my $self = shift;
     
-    my $pdf = new PDF::Report(PageSize          => "A4", 
+    my $pdf = PDF::Report->new(PageSize          => "A4", 
                                 PageOrientation => "Portrait",
                                 );
     
@@ -236,6 +230,8 @@ sub makePDF {
     return $pdf->Finish();   
 
 }
+
+1;
 __END__
 
 =head1 NAME
@@ -307,7 +303,7 @@ Takes one argument, a string. Logs this string with the level DEBUG.
 
 Takes one argument, a string. Logs this string with the level INFO.
 
-=head2 warn
+=head2 warning
 
 Takes one argument, a string. Logs this string with the level WARNING.
 
@@ -321,7 +317,7 @@ Finished up the report and sends it. It is prudent to discard the $logger object
 a call to finish. Continuing to use the logger after a call to finish will not work and/or
 may have some undesired side effects.
 
-=head2 log
+=head2 logLine
 
 Internal helper function.
 
@@ -331,16 +327,14 @@ Internal helper function.
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
 at your option, any later version of Perl 5 you may have available.
 
 =cut
-
-1;

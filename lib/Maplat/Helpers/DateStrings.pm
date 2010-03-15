@@ -1,22 +1,19 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Helpers::DateStrings;
-
-use 5.008000;
 use strict;
 use warnings;
+
+use 5.008000;
 use Maplat::Helpers::Padding qw(doFPad);
 
 use Date::Manip qw(Date_Init UnixDate);
 
-our @ISA = qw(Exporter);
-our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset);
+use base qw(Exporter);
+our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset); ## no critic
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 our $lastUniqueDate = "";
 our $UniqueDateCounter = 0;
@@ -55,7 +52,7 @@ sub updateTimeMap {
     $mon += 1;
     
     my $nextyear = $year+1;
-	my $lastyear = $year-1;
+    my $lastyear = $year-1;
     
     # a number of variable dates
     my %vardates = (
@@ -72,29 +69,30 @@ sub updateTimeMap {
     
     foreach my $varkey (keys %vardates) {
         my $varval = $vardates{$varkey};
-		my $lastYearDay = UnixDate($varval . " $lastyear", "%Y-%m-%d");
+        my $lastYearDay = UnixDate($varval . " $lastyear", "%Y-%m-%d");
         my $currentYearDay = UnixDate($varval . " $year", "%Y-%m-%d");
         my $nextYearDay = UnixDate($varval . " $nextyear", "%Y-%m-%d");
     
-		my ($tmpyear, $tmpmon, $tmpday) = split/\-/, $currentYearDay;
-		# normal
+        my ($tmpyear, $tmpmon, $tmpday) = split/\-/, $currentYearDay;
+        # normal
         if($mon < $tmpmon || ($mon == $tmpmon && $mday <= $tmpday)) {
             $timemap{$varkey} = $currentYearDay;
         } else {
             $timemap{$varkey} = $nextYearDay;
         }
-		
-		# "last ..."
-		my $lastvarkey = "last " . $varkey;
-		if($mon < $tmpmon || ($mon == $tmpmon && $mday <= $tmpday)) {
+        
+        # "last ..."
+        my $lastvarkey = "last " . $varkey;
+        if($mon < $tmpmon || ($mon == $tmpmon && $mday <= $tmpday)) {
             $timemap{$lastvarkey} = $lastYearDay;
         } else {
             $timemap{$lastvarkey} = $currentYearDay;
         }
     }
+    return;
 }
 
-sub getISODate() {
+sub getISODate {
     my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
     $year += 1900;
     $mon += 1;
@@ -121,7 +119,7 @@ sub getISODate_nDaysOffset {
     return "$year-$mon-$mday $hour:$min:$sec";
 }
 
-sub getShortFiledate() {
+sub getShortFiledate {
     my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
     $year += 1900;
     $mon += 1;
@@ -131,18 +129,18 @@ sub getShortFiledate() {
     return "$year$mon$mday";
 }
 
-sub getCurrentHour() {
+sub getCurrentHour {
     my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
     $year += 1900;
     $mon += 1;
     
     $mon = doFPad($mon, 2);
     $mday = doFPad($mday, 2);
-	$hour = doFPad($hour, 2);
+    $hour = doFPad($hour, 2);
     return "$year$mon$mday$hour";
 }
 
-sub getCurrentDay() {
+sub getCurrentDay {
     my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
     $year += 1900;
     $mon += 1;
@@ -153,7 +151,7 @@ sub getCurrentDay() {
     return "$year$mon$mday";
 }
 
-sub getFileDate() {
+sub getFileDate {
     my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
     $year += 1900;
     $mon += 1;
@@ -166,7 +164,7 @@ sub getFileDate() {
     return "$year$mon$mday$hour$min$sec";
 }
 
-sub getUniqueFileDate() {
+sub getUniqueFileDate {
     my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
     $year += 1900;
     $mon += 1;
@@ -196,7 +194,7 @@ sub getUniqueFileDate() {
     
 }
 
-sub getDateAndTime() {
+sub getDateAndTime {
     my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
     $year += 1900;
     $mon += 1;
@@ -227,15 +225,15 @@ sub parseNaturalDate {
         $dateString = "$3 $1";
     }
     
-	if($dateString =~ /last/) {
-		# First try only keys with "last" in it
-		foreach my $speakdate (keys %timemap) {
-			next unless $speakdate =~ /last/;
-			my $writedate = $timemap{$speakdate};
-			$dateString =~ s/\b$speakdate\b/$writedate/g;
-		}	
-	}
-	
+    if($dateString =~ /last/) {
+        # First try only keys with "last" in it
+        foreach my $speakdate (keys %timemap) {
+            next unless $speakdate =~ /last/;
+            my $writedate = $timemap{$speakdate};
+            $dateString =~ s/\b$speakdate\b/$writedate/g;
+        }    
+    }
+    
     foreach my $speakdate (keys %timemap) {
         my $writedate = $timemap{$speakdate};
         $dateString =~ s/\b$speakdate\b/$writedate/g;
@@ -253,16 +251,16 @@ sub parseNaturalDate {
 }
 
 sub fixDateField {
-	my ($date) = @_;
-	
-	if($date =~ /(\d\d\d\d\-\d\d\-\d\d\ \d\d\:\d\d\:\d\d)/o) {
-		$date = $1;
-	}
-	if($date eq "1970-01-01 23:59:59") {
-		$date = "";
-	}
-	
-	return $date;
+    my ($date) = @_;
+    
+    if($date =~ /(\d\d\d\d\-\d\d\-\d\d\ \d\d\:\d\d\:\d\d)/o) {
+        $date = $1;
+    }
+    if($date eq "1970-01-01 23:59:59") {
+        $date = "";
+    }
+    
+    return $date;
 }
 
 
@@ -405,11 +403,11 @@ Internal function.
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

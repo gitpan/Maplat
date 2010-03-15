@@ -1,12 +1,16 @@
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# Developed under Artistic license
+# for Magna Powertrain Ilz
 package Maplat::Worker;
 use strict;
 use warnings;
 use English;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Worker::AdminCommands;
+use Maplat::Worker::BaseModule;
 use Maplat::Worker::Commands;
 use Maplat::Worker::DirCleaner;
 use Maplat::Worker::MemCache;
@@ -14,7 +18,6 @@ use Maplat::Worker::OracleDB;
 use Maplat::Worker::PostgresDB;
 use Maplat::Worker::Reporting;
 use Maplat::Worker::SendMail;
-use Maplat::Worker::BaseModule;
 #=!=END-AUTO-INCLUDES
 
 
@@ -29,7 +32,7 @@ sub startconfig {
     my ($self, $isCompiled) = @_;
     
     if(!defined($isCompiled)) {
-	$isCompiled = 0;
+    $isCompiled = 0;
     }
     $self->{compiled} = $isCompiled;
     
@@ -38,6 +41,7 @@ sub startconfig {
     
     my %tmpModules;
     $self->{modules} = \%tmpModules;
+    return; 
 }
 
 sub configure {
@@ -47,23 +51,25 @@ sub configure {
     $config{modname} = $modname;
     
     # ...what perl module it's supposed to be...
-	my $perlmodule = "Maplat::Worker::$perlmodulename";
+    my $perlmodule = "Maplat::Worker::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
-		# Local module - load it first
-		my $requirestr;
-		if($self->{compiled} && $OSNAME eq 'MSWin32') {
-		    my $boundname = "Worker_" . $perlmodulename . ".pm";
-		    print "Dynamically loading bound file for $boundname...\n";
-		    my $modfilename = PerlApp::extract_bound_file($boundname);
-		    die("$perlmodule not bound to application") unless defined $modfilename;
-		    print "  Bound file name $modfilename\n";
-		    $requirestr = "require '" . $modfilename . "'";		    
-		} else {
-		    print "Dynamically loading $perlmodule...\n";
-		    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
-		}
-		eval $requirestr;
-	}
+	croak("$perlmodule not loaded");
+	
+        ## Local module - load it first
+        #my $requirestr;
+        #if($self->{compiled} && $OSNAME eq 'MSWin32') {
+        #    my $boundname = "Worker_" . $perlmodulename . ".pm";
+        #    print "Dynamically loading bound file for $boundname...\n";
+        #    my $modfilename = PerlApp::extract_bound_file($boundname);
+        #    croak("$perlmodule not bound to application") unless defined $modfilename;
+        #    print "  Bound file name $modfilename\n";
+        #    $requirestr = "require '" . $modfilename . "'";            
+        #} else {
+        #    print "Dynamically loading $perlmodule...\n";
+        #    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
+        #}
+        #eval $requirestr;
+    }
     $config{pmname} = $perlmodule;
     
     # and its parent
@@ -73,12 +79,14 @@ sub configure {
     $self->{modules}->{$modname}->register; # Register handlers provided by the module
     $self->{modules}->{$modname}->reload;   # (Re)load module's data
     print "Module $modname ($perlmodule) configured.\n";
+    return; 
 }
 
 sub endconfig {
     # Nothing to do
     print "All modules loaded\n";
     print "\nWe are go for auto-sequence start!\n\n";
+    return; 
 }
 
 sub run {
@@ -104,6 +112,7 @@ sub add_worker {
     );
     
     push @{$self->{workers}}, \%conf;
+    return; 
 }
 
 1;
@@ -210,11 +219,11 @@ Please also take a look in the example provided in the tarball available on CPAN
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

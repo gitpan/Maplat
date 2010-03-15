@@ -1,20 +1,17 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Worker::OracleDB;
-use Maplat::Worker::BaseModule;
-@ISA = ('Maplat::Worker::BaseModule');
-use Maplat::Helpers::DateStrings;
-
 use strict;
 use warnings;
+
+use base qw(Maplat::Worker::BaseModule);
+use Maplat::Helpers::DateStrings;
+
 use DBI;
 use Carp;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub new {
     my ($proto, %config) = @_;
@@ -23,10 +20,9 @@ sub new {
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
 
-	# our $dbh = DBI->connect("dbi:Oracle:sid=$dbsid;host=$dbhost;port=$dbport", $dbuser, $dbpass) or die($!);
-	my $dbh = DBI->connect($self->{dburl}, $self->{dbuser}, $self->{dbpassword},
-                               {AutoCommit => 0, RaiseError => 0}) or die($@);
-	$self->{mdbh} = $dbh;
+    my $dbh = DBI->connect($self->{dburl}, $self->{dbuser}, $self->{dbpassword},
+                               {AutoCommit => 0, RaiseError => 0}) or croak($@);
+    $self->{mdbh} = $dbh;
 
     return $self;
 }
@@ -34,42 +30,42 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. 
+    return;
 }
 
 sub register {
     my $self = shift;
-	# Nothing to do...
+    # Nothing to do...
+    return;
 }
 
 BEGIN {
-	# Auto-magically generate a number of similar functions without actually
+    # Auto-magically generate a number of similar functions without actually
     # writing them down one-by-one. This makes changes much easier, but
     # you need perl wizardry level +10 to understand how it works...
-	my @stdFuncs = qw(prepare prepare_cached do quote);
-	my @simpleFuncs = qw(commit rollback errstr);
+    my @stdFuncs = qw(prepare prepare_cached do quote);
+    my @simpleFuncs = qw(commit rollback errstr);
     my @varSetFuncs = qw(AutoCommit RaiseError);
-	my @varGetFuncs = qw();
-	no strict 'refs';
+    my @varGetFuncs = qw();
+    no strict 'refs';
 
-	for my $a (@simpleFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a(); };
-	}
-		
-	for my $a (@stdFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a($_[1]); };
-	}
+    for my $a (@simpleFuncs){
+        *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a(); };
+    }
+        
+    for my $a (@stdFuncs){
+        *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a($_[1]); };
+    }
 
-	for my $a (@varSetFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a} = $_[1]; };
-	}
-	
-	for my $a (@varGetFuncs){
-		*{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a}; };
-	}
-
+    for my $a (@varSetFuncs){
+        *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a} = $_[1]; };
+    }
+    
+    for my $a (@varGetFuncs){
+        *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a}; };
+    }
 
 }
-
 1;
 __END__
 
@@ -148,11 +144,11 @@ DBD::Oracle
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

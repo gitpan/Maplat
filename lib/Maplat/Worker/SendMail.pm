@@ -1,12 +1,11 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Worker::SendMail;
-use Maplat::Worker::BaseModule;
-@ISA = ('Maplat::Worker::BaseModule');
+use strict;
+use warnings;
+
+use base qw(Maplat::Worker::BaseModule);
 
 use Maplat::Helpers::DateStrings;
 use Mail::Sendmail;
@@ -14,11 +13,9 @@ use MIME::QuotedPrint;
 use MIME::Base64;
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS);
 
-use strict;
-use warnings;
 use Carp;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub new {
     my ($proto, %config) = @_;
@@ -33,17 +30,19 @@ sub new {
 sub reload {
     my ($self) = shift;
     # Nothing to do.. in here, we only use the template and database module
+    return;
 }
 
 sub register {
     my $self = shift;
+    return;
 }
 
 
-sub send {
-	my ($self, $reciever, $subject, $message, $contenttype) = @_;
-	
-	my %mail = (
+sub sendMail {
+    my ($self, $reciever, $subject, $message, $contenttype) = @_;
+    
+    my %mail = (
                 To              => $reciever,
                 From            => $self->{sender},
                 Subject         => $self->{subject_prefix} . " " . $subject,
@@ -69,57 +68,57 @@ sub send {
 }
 
 sub sendFiles{
-	my ($self, $reciever, $subject, $body, $zipFile, @files) = @_;
-	
-	my $boundary = "====" . time() . "====";
-	my $contenttype = "multipart/mixed; boundary=\"$boundary\"";
-	my $message = "--$boundary\n" .
+    my ($self, $reciever, $subject, $body, $zipFile, @files) = @_;
+    
+    my $boundary = "====" . time() . "====";
+    my $contenttype = "multipart/mixed; boundary=\"$boundary\"";
+    my $message = "--$boundary\n" .
                 "Content-Type: text/plain; charset=\"iso-8859-1\"\n" .
                 "Content-Transfer-Encoding: quoted-printable\n" .
                 "\n" .
                 encode_qp($body) . "\n" .
                 "\n";
 
-	my $zip = new Archive::Zip();
-	foreach my $file (@files) {
-		my $filemember = $zip->addFile($file);
-		$filemember->desiredCompressionMethod( COMPRESSION_DEFLATED );
-		$filemember->desiredCompressionLevel( COMPRESSION_LEVEL_BEST_COMPRESSION );
-	}
-	$zip->writeToFileNamed($zipFile);
-				
-	foreach my $file ($zipFile) {
-		my $fdata = "";
-		open(my $ifh, "<", $file) or return(0, "Can't read file $file");		
-		my $holdTerminator = $/;
+    my $zip = Archive::Zip->new();
+    foreach my $file (@files) {
+        my $filemember = $zip->addFile($file);
+        $filemember->desiredCompressionMethod( COMPRESSION_DEFLATED );
+        $filemember->desiredCompressionLevel( COMPRESSION_LEVEL_BEST_COMPRESSION );
+    }
+    $zip->writeToFileNamed($zipFile);
+                
+    foreach my $file ($zipFile) {
+        my $fdata = "";
+        open(my $ifh, "<", $file) or return(0, "Can't read file $file");        
+        my $holdTerminator = $/;
         undef $/;
         binmode($ifh);
         $fdata = <$ifh>;
-        $/ = $holdTerminator;		
-		close $ifh;
-		$fdata = encode_base64($fdata);
-		my $shortname = $file;
-		$shortname =~ s/^.*\///go;
-		$shortname =~ s/^.*\\//go;
-		$file =~ /\.([^\.]*)$/o;
-		my $type = lc $1;
-		my $longtype = "text/plain";
-		if($type eq "csv") {
-			$longtype = "text/csv";
-		} elsif($type eq "pdf") {
-			$longtype = "application/pdf";
-		}
-		
+        local $/ = $holdTerminator;        
+        close $ifh;
+        $fdata = encode_base64($fdata);
+        my $shortname = $file;
+        $shortname =~ s/^.*\///go;
+        $shortname =~ s/^.*\\//go;
+        $file =~ /\.([^\.]*)$/o;
+        my $type = lc $1;
+        my $longtype = "text/plain";
+        if($type eq "csv") {
+            $longtype = "text/csv";
+        } elsif($type eq "pdf") {
+            $longtype = "application/pdf";
+        }
+        
         $message .= "--$boundary\n" .
-					"Content-Type: application/zip; name=\"$shortname\"\n" .
-					"Content-Transfer-Encoding: base64\n" .
-					"Content-Disposition: attachment; filename=\"$shortname\"\n" .
-					"\n" .
-					"$fdata\n";
-	}
+                    "Content-Type: application/zip; name=\"$shortname\"\n" .
+                    "Content-Transfer-Encoding: base64\n" .
+                    "Content-Disposition: attachment; filename=\"$shortname\"\n" .
+                    "\n" .
+                    "$fdata\n";
+    }
     $message .= "--$boundary--\n";
-	
-	return $self->send($reciever, $subject, $message, $contenttype);	
+    
+    return $self->sendMail($reciever, $subject, $message, $contenttype);    
 }
 
 1;
@@ -152,7 +151,7 @@ via the Mail::Sendmail module.
                 </options>
         </module>
 
-=head2 send
+=head2 sendMail
 
 Send an email.
 
@@ -170,11 +169,11 @@ Maplat::Worker
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -8,14 +8,20 @@ use DBI;
 use DBD::Pg;
 use Test::More;
 use lib 't','.';
+
 require 'dbdpg_test_setup.pl';
 select(($|=1,select(STDERR),$|=1)[1]);
 
 ## Define this here in case we get to the END block before a connection is made.
 BEGIN {
+	if ( not $ENV{TEST_PG} ) {
+	    my $msg = 'DBI/DBD::PG test.  Set $ENV{TEST_PG} to a true value to run.';
+	    plan( skip_all => $msg );
+	}
 	use vars qw/$t $pgversion $pglibversion $pgvstring $pgdefport $helpconnect $dbh $connerror %set/;
 	($pgversion,$pglibversion,$pgvstring,$pgdefport) = ('?','?','?','?');
 }
+
 
 ($helpconnect,$connerror,$dbh) = connect_database();
 

@@ -1,6 +1,7 @@
 <maplat>
 	<!-- displayed Application name -->
 	<appname>Maplat WebGui</appname>
+        <extraincpaths>./t</extraincpaths>
 	
 	<server>
 		<port>9500</port>
@@ -20,7 +21,10 @@
 		<modname>templates</modname>
 		<pm>TemplateCache</pm>
 		<options>
-			<path>Maplat/Web/Templates</path>
+			<view>
+				<path>Maplat/Web/Templates</path>
+				<base>/</base>
+			</view>
 			<!-- Layout-Template to use for complete pages -->
 			<layout>simplelayout</layout>
 		</options>
@@ -51,7 +55,7 @@
 	<!-- Memcache module (just handles the memcache instance variable) -->
 	<module>
 		<modname>memcache</modname>
-		<pm>MemCache</pm>
+		<pm>MemCacheSim</pm>
 		<options>
 			<service>127.0.0.1:11211</service>
 			<namespace>MaplatMem</namespace>

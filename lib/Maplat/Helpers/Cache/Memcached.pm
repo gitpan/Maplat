@@ -35,7 +35,7 @@ use constant F_COMPRESS => 2;
 use constant COMPRESS_SAVINGS => 0.20; # percent
 
 use vars qw($VERSION $HAVE_ZLIB $FLAG_NOSIGNAL);
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 BEGIN {
     $HAVE_ZLIB = eval "use Compress::Zlib (); 1;";
@@ -1206,4 +1206,4 @@ Brad Whitaker <whitaker@danga.com>
 
 Jamie McCarthy <jamie@mccarthy.vg>
 
-Fork for quickfix hacks for ActiveState Perl on Windows by Rene Schickbauer <rene.schickbauer@magnapowertrain.com>
+Fork for quickfix hacks for ActiveState Perl on Windows by Rene Schickbauer <rene.schickbauer@gmail.com>

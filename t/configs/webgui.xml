@@ -20,7 +20,10 @@
 		<modname>templates</modname>
 		<pm>TemplateCache</pm>
 		<options>
-			<path>Maplat/Web/Templates</path>
+			<view>
+				<path>Maplat/Web/Templates</path>
+				<base>/<base>
+			</view>
 			<!-- Layout-Template to use for complete pages -->
 			<layout>maplatlayout</layout>
 		</options>

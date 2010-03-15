@@ -1,21 +1,18 @@
-
-# MAPLAT  (C) 2008-2009 Rene Schickbauer
+# MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-
-
 package Maplat::Worker::MemCache;
-use Maplat::Worker::BaseModule;
-@ISA = ('Maplat::Worker::BaseModule');
+use strict;
+use warnings;
+
+use base qw(Maplat::Worker::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 
-use strict;
-use warnings;
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
 
-our $VERSION = 0.970;
+our $VERSION = 0.98;
 
 sub new {
     my ($proto, %config) = @_;
@@ -24,158 +21,161 @@ sub new {
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
 
-	my $memd;
-	my $memd_loaded = 0;
-	# Decide which Memcached module we want to use
-	# First, we try the festest one, then the standard
-	# one and if everything fails we use our own
-	if(eval('require Cache::Memcached::Fast')) {
-		print "    Cache::Memcached::Fast available.\n";
-		$memd = new Cache::Memcached::Fast {
-						servers   => [ $self->{service} ],
-						namespace => $self->{namespace} . "::",
-						connect_timeout  => 0,
-					};
-		$memd_loaded = 1;
-	} elsif(eval('require Cache::Memcached')) {
-		print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
-		$memd = new Cache::Memcached {
-						servers   => [ $self->{service} ],
-						namespace => $self->{namespace} . "::",
-						connect_timeout  => 0,
-					};
-		$memd_loaded = 1;
-	} else {
-		print "    No Cache::Memcached* available ... will try to use Maplat::Helpers::Cache::Memcached\n";
-	}
+    my $memd;
+    my $memd_loaded = 0;
+    # Decide which Memcached module we want to use
+    # First, we try the festest one, then the standard
+    # one and if everything fails we use our own
+    if(eval('require Cache::Memcached::Fast')) {
+        print "    Cache::Memcached::Fast available.\n";
+        $memd = Cache::Memcached::Fast->new ({
+                        servers   => [ $self->{service} ],
+                        namespace => $self->{namespace} . "::",
+                        connect_timeout  => 0,
+                    });
+        $memd_loaded = 1;
+    } elsif(eval('require Cache::Memcached')) {
+        print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
+        $memd = Cache::Memcached->new ({
+                        servers   => [ $self->{service} ],
+                        namespace => $self->{namespace} . "::",
+                        connect_timeout  => 0,
+                    });
+        $memd_loaded = 1;
+    } else {
+        print "    No Cache::Memcached* available ... will try to use Maplat::Helpers::Cache::Memcached\n";
+    }
 
-	# Check if the selected Memcached lib is working correctly
-	my $key = "test_" . int(rand(10000)) . "_" . int(rand(10000));
-	my $val = "test_" . int(rand(10000)) . "_" . int(rand(10000));
-	my $newval;
-	if($memd_loaded) {
-		$memd->set($key, $val);
-		$newval = $memd->get($key);
-	}
-	if(!defined($newval) || $newval ne $val) {
-		if($memd_loaded) {
-			print "    Selected Memcached client lib is broken - falling back to Maplat::Helpers::Cache::Memcached\n";
-		}
-		$memd = new Maplat::Helpers::Cache::Memcached {
-						servers   => [ $self->{service} ],
-						namespace => $self->{namespace} . "::",
-						connect_timeout  => 0,
-					};
-		$memd->set($key, $val);
-		$newval = $memd->get($key);
-		if(!defined($newval) || $newval ne $val) {
-			die("Maplat Memcached client lib is also broken - giving up!"); 
-		} else {
-			$memd->delete($key);
-		}
-	} else {
-		$memd->delete($key);
-	}
+    # Check if the selected Memcached lib is working correctly
+    my $key = "test_" . int(rand(10000)) . "_" . int(rand(10000));
+    my $val = "test_" . int(rand(10000)) . "_" . int(rand(10000));
+    my $newval;
+    if($memd_loaded) {
+        $memd->set($key, $val);
+        $newval = $memd->get($key);
+    }
+    if(!defined($newval) || $newval ne $val) {
+        if($memd_loaded) {
+            print "    Selected Memcached client lib is broken - falling back to Maplat::Helpers::Cache::Memcached\n";
+        }
+        $memd = Maplat::Helpers::Cache::Memcached->new ({
+                        servers   => [ $self->{service} ],
+                        namespace => $self->{namespace} . "::",
+                        connect_timeout  => 0,
+                    });
+        $memd->set($key, $val);
+        $newval = $memd->get($key);
+        if(!defined($newval) || $newval ne $val) {
+            croak("Maplat Memcached client lib is also broken - giving up!"); 
+        } else {
+            $memd->delete($key);
+        }
+    } else {
+        $memd->delete($key);
+    }
 
 
 
-	print "    Selected Memcached library seems to be working. Good!\n";
-	$self->{memd} = $memd;
-	
-	# Add version information about our to the memcached storage
-	# for the rare cases we need that for other programs to run
-	# a compatibility API or something
-	# APPNAME and VERSION in main needs to be declared "our ..."
-	$self->set("VERSION::" . $main::APPNAME, $main::VERSION);
-	$self->set("BUILD::" . $main::APPNAME, readBuildNum());
+    print "    Selected Memcached library seems to be working. Good!\n";
+    $self->{memd} = $memd;
+    
+    # Add version information about our to the memcached storage
+    # for the rare cases we need that for other programs to run
+    # a compatibility API or something
+    # APPNAME and VERSION in main needs to be declared "our ..."
+    $self->set("VERSION::" . $main::APPNAME, $main::VERSION);
+    $self->set("BUILD::" . $main::APPNAME, readBuildNum());
 
-	$self->{oldtime} = 0;
+    $self->{oldtime} = 0;
 
     return $self;
 }
 
 sub reload {
     my ($self) = shift;
+    return;
 
 }
 
 sub register {
     my $self = shift;
-	$self->register_worker("refresh_lifetick");
+    $self->register_worker("refresh_lifetick");
+    return;
 }
 
 sub refresh_lifetick {
-	my ($self) = @_;
-	
-	my $ticktime = time;
-	
-	if(($ticktime - $self->{oldtime}) > 10) {
-		# only refresh every 10 seconds or so to keep
-		# resource usage low - otherwise we'd be setting
-		# the lifetick 1000 times a second or so
-		my $tickkey = "LIFETICK::" . $$;
-		$self->set($tickkey, $ticktime);
-		$self->{oldtime} = $ticktime;
-		return 1;
-	}
-	return 0;
+    my ($self) = @_;
+    
+    my $ticktime = time;
+    
+    if(($ticktime - $self->{oldtime}) > 10) {
+        # only refresh every 10 seconds or so to keep
+        # resource usage low - otherwise we'd be setting
+        # the lifetick 1000 times a second or so
+        my $tickkey = "LIFETICK::" . $$;
+        $self->set($tickkey, $ticktime);
+        $self->{oldtime} = $ticktime;
+        return 1;
+    }
+    return 0;
 }
 
 # disable_lifetick is used to temporarly suspend lifetick operation
 # for long-running database commands; normal lifetick handling is resumed with
 # the following refresh_lifetick call.
 sub disable_lifetick {
-	my ($self) = @_;
+    my ($self) = @_;
 
-	my $ticktime = 0;
-	my $tickkey = "LIFETICK::" . $$;
-	$self->set($tickkey, $ticktime);
-	$self->{oldtime} = $ticktime;
-	
-	return 1;
+    my $ticktime = 0;
+    my $tickkey = "LIFETICK::" . $$;
+    $self->set($tickkey, $ticktime);
+    $self->{oldtime} = $ticktime;
+    
+    return 1;
 }
 
 sub get {
-	my ($self, $key) = @_;
-	
-	$key = $self->sanitize_key($key);
-	
-	return $self->{memd}->get($key);
+    my ($self, $key) = @_;
+    
+    $key = $self->sanitize_key($key);
+    
+    return $self->{memd}->get($key);
 }
 
 sub set {
-	my ($self, $key, $data) = @_;
-	
-	$key = $self->sanitize_key($key);
-	
-	return $self->{memd}->set($key, $data);
+    my ($self, $key, $data) = @_;
+    
+    $key = $self->sanitize_key($key);
+    
+    return $self->{memd}->set($key, $data);
 }
 
-sub delete {
-	my ($self, $key) = @_;
-	
-	$key = $self->sanitize_key($key);
-	
-	return $self->{memd}->delete($key);
+sub delete { ## no critic(BuiltinHomonyms)
+    my ($self, $key) = @_;
+    
+    $key = $self->sanitize_key($key);
+    
+    return $self->{memd}->delete($key);
 }
 
 sub sanitize_key {
-	my ($self, $key) = @_;
-	
-	# Certain chars are not allowed in keys for whatever reason.
-	# This *should* be handled by the Cache::Memcached module, but isn't
-	# We handle this by substituting them with a tripple underline
-	
-	$key =~ s/\ /___/go;
-	
-	return $key;
+    my ($self, $key) = @_;
+    
+    # Certain chars are not allowed in keys for whatever reason.
+    # This *should* be handled by the Cache::Memcached module, but isn't
+    # We handle this by substituting them with a tripple underline
+    
+    $key =~ s/\ /___/go;
+    
+    return $key;
 }
 
 # Helpers for "active commands"
 sub set_activecommand {
-	my ($self, $commandid) = @_;
-	
-	$self->set($main::APPNAME . "::activecommand", $commandid);
+    my ($self, $commandid) = @_;
+    
+    $self->set($main::APPNAME . "::activecommand", $commandid);
+    return;
 }
 1;
 __END__
@@ -275,11 +275,11 @@ Maplat::Worker
 
 =head1 AUTHOR
 
-Rene Schickbauer, E<lt>rene.schickbauer@magnapowertrain.comE<gt>
+Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2009 by Rene Schickbauer
+Copyright (C) 2008-2010 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
