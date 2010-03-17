@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Sys::Hostname;
 
-our $VERSION = 0.98;
+our $VERSION = 0.99;
 
 
 use Carp;

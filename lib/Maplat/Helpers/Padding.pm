@@ -10,7 +10,7 @@ use 5.008000;
 use base qw(Exporter);
 our @EXPORT_OK = qw(doFPad doSpacePad trim);
 
-our $VERSION = 0.98;
+our $VERSION = 0.99;
 
 sub doFPad {
     my ($val, $len) = @_;

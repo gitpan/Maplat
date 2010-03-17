@@ -15,7 +15,7 @@ use Archive::Zip qw( :ERROR_CODES :CONSTANTS);
 
 use Carp;
 
-our $VERSION = 0.98;
+our $VERSION = 0.99;
 
 sub new {
     my ($proto, %config) = @_;

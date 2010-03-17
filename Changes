@@ -1,5 +1,8 @@
 Revision history for Perl extension Maplat.
 
+0.99  Mon Wen 17 14:00:00 2010
+	- Fixed missing requirements in Makefile.PL
+
 0.98  Mon Mar 15 13:00:00 2010
 	- Changed DBI/DBD::Pg tests to author tests
 	- Added Author test for Perl::Critic

@@ -12,7 +12,7 @@ use Digest::MD5 qw(md5_hex);
 use Digest::SHA1 qw(sha1_hex);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.98;
+our $VERSION = 0.99;
 
 my $password_prefix = "CARNIVORE::";
 my $password_postfix = "# or 1984";

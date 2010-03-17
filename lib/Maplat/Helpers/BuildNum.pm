@@ -12,7 +12,7 @@ use Sys::Hostname;
 use base qw(Exporter);
 our @EXPORT = qw(calcBuildNum readBuildNum); ## no critic
 
-our $VERSION = 0.98;
+our $VERSION = 0.99;
 
 sub calcBuildNum {
     state $fixedbuildnum;

@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Maplat
-version:            0.98
+version:            0.99
 abstract:           The MAPLAT Web Framework
 author:
     - Rene Schickbauer <rene.schickbauer@gmail.com>
@@ -16,6 +16,7 @@ requires:
     CGI:                  0
     Data::Dumper:         0
     Date::Manip:          Date::Simple
+    Date::Simple:         0
     DBD::Pg:              0
     DBI:                  0
     Digest::MD5:          0
@@ -29,6 +30,7 @@ requires:
     Getopt::Long:         0
     HTML::FormatText:     0
     HTML::Parse:          0
+    HTTP::Server::Simple::CGI:  0
     IO::Handle:           0
     IO::Socket::SSL:      0
     Mail::Sendmail:       0

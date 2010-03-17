@@ -8,7 +8,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Template;
 
-our $VERSION = 0.98;
+our $VERSION = 0.99;
 
 
 use Carp;

@@ -13,7 +13,7 @@ use Date::Manip qw(Date_Init UnixDate);
 use base qw(Exporter);
 our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset); ## no critic
 
-our $VERSION = 0.98;
+our $VERSION = 0.99;
 
 our $lastUniqueDate = "";
 our $UniqueDateCounter = 0;
