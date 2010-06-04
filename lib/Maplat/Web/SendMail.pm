@@ -7,7 +7,7 @@ use warnings;
 
 use base qw(Maplat::Web::BaseModule);
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 use Maplat::Helpers::DateStrings;
 use Mail::Sendmail;
@@ -40,6 +40,8 @@ sub register {
 sub get {
     my ($self, $cgi) = @_;
     
+    my $th = $self->{server}->{modules}->{templates};
+    
     my @recievers = $cgi->param("reciever[]");
     my $subject = $cgi->param("subject") || "";
     my $mailtext = $cgi->param("mailtext") || "";
@@ -49,8 +51,8 @@ sub get {
         $self->{server}->get_defaultwebdata(),
         PageTitle   =>  $self->{pagetitle},
         webpath        =>  $self->{admin}->{webpath},
-        subject     =>  $subject,
-        mailtext   =>  $mailtext,
+        subject     =>  $th->quote($subject),
+        mailtext   =>  $th->quote($mailtext),
     );
     
     if($webdata{userData}->{type} ne "admin") {
@@ -95,7 +97,7 @@ sub get {
     $webdata{users} = \@users;
     
     
-    my $template = $self->{server}->{modules}->{templates}->get("sendmail", 1, %webdata);
+    my $template = $th->get("sendmail", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
             type    => "text/html",

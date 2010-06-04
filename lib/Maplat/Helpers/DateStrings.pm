@@ -9,11 +9,16 @@ use 5.008000;
 use Maplat::Helpers::Padding qw(doFPad);
 
 use Date::Manip qw(Date_Init UnixDate);
+use Date::Parse;
 
 use base qw(Exporter);
-our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset); ## no critic
+our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime
+                fixDateField parseNaturalDate getShortFiledate getCurrentHour
+                getCurrentDay getISODate_nDaysOffset offsetISODate setmylocaltime); ## no critic
 
-our $VERSION = 0.99;
+
+
+our $VERSION = 0.991;
 
 our $lastUniqueDate = "";
 our $UniqueDateCounter = 0;
@@ -34,6 +39,17 @@ our %timemap = (
     "new years eve" => "THISYEAR-12-31",
 );
 our $timemap_updated = "";
+our $timezoneoffset = 0;
+
+sub setmylocaltime {
+    my ($lt) = @_;
+    
+    $timezoneoffset = $lt;
+}
+
+sub getmylocaltime {
+    return localtime ($timezoneoffset + time);
+}
 
 sub updateTimeMap {
     # calculate some variable date and time strings
@@ -47,7 +63,7 @@ sub updateTimeMap {
     $timemap_updated = $currentDate;
     
     Date_Init("TZ=CET");
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -93,7 +109,7 @@ sub updateTimeMap {
 }
 
 sub getISODate {
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -120,7 +136,7 @@ sub getISODate_nDaysOffset {
 }
 
 sub getShortFiledate {
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -130,7 +146,7 @@ sub getShortFiledate {
 }
 
 sub getCurrentHour {
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -141,7 +157,7 @@ sub getCurrentHour {
 }
 
 sub getCurrentDay {
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -152,7 +168,7 @@ sub getCurrentDay {
 }
 
 sub getFileDate {
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -165,7 +181,7 @@ sub getFileDate {
 }
 
 sub getUniqueFileDate {
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -182,7 +198,7 @@ sub getUniqueFileDate {
             while($newmin == $min) {
                 print "getUniqueFileDate is throtteling\n";
                 sleep(1);
-                (undef,$newmin) = localtime time;
+                (undef,$newmin) = getmylocaltime();
             }
         }
     } else {
@@ -195,7 +211,7 @@ sub getUniqueFileDate {
 }
 
 sub getDateAndTime {
-    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime time;
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = getmylocaltime();
     $year += 1900;
     $mon += 1;
     
@@ -213,7 +229,7 @@ sub parseNaturalDate {
     updateTimeMap();
     
     # parse some extra mappings
-    my (undef,undef, undef, undef,undef, $thisyear) = localtime time;
+    my (undef,undef, undef, undef,undef, $thisyear) = getmylocaltime();
     $thisyear += 1900;
     my $nextyear = $thisyear + 1;
     
@@ -263,6 +279,24 @@ sub fixDateField {
     return $date;
 }
 
+sub offsetISODate {
+    my($date, $offset) = @_;
+    
+    my $oldtime = str2time($date) + $offset;
+    
+    my ($sec,$min, $hour, $mday,$mon, $year, $wday,$ yday, $isdst) = localtime $oldtime;
+    $year += 1900;
+    $mon += 1;
+    
+    $mon = doFPad($mon, 2);
+    $mday = doFPad($mday, 2);
+    $hour = doFPad($hour, 2);
+    $min = doFPad($min, 2);
+    $sec = doFPad($sec, 2);
+    my $newtime = "$year-$mon-$mday $hour:$min:$sec";
+    
+    return $newtime;
+}
 
 1;
 
@@ -303,6 +337,10 @@ as delimeter betweeen date and time, e.g.
 =head2 getISODate_nDaysOffset
 
 Similar to getISODate, but offsets the date with the given number of days.
+
+=head2 offsetISODate
+
+This function take an ISO date string and an offset in seconds and returns the re-calculated ISO date.
 
 =head2 getFileDate
 
@@ -400,6 +438,14 @@ are replaced by empty strings. Also, the datestring is trimmed of unnessecary wh
 =head2 updateTimeMap
 
 Internal function.
+
+=head2 setmylocaltime
+
+Internal function, workaround for a specific Windows machine with broken registry
+
+=head2 getmylocaltime
+
+Internal function, workaround for a specific Windows machine with broken registry
 
 =head1 AUTHOR
 

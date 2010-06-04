@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
@@ -153,7 +153,7 @@ sub endconfig {
         #
         # Cache::Memcached::Fast says we should do this AFTER forking,
         # but we should be all right if we kill the connections beforehand.
-        print "   *** Will fork, disconnect all memcache servers...\n";
+        #print "   *** Will fork, disconnect all memcache servers...\n";
         $self->{forked} = 1;
         $self->{memd}->disconnect_all;
         delete $self->{memd};
@@ -277,6 +277,20 @@ This module provides a web module that gives the caller an interface to the memc
 Internally, it tries to use (in that order) Cache::Memcached::Fast, Cache::Memcached and
 Maplat::Helpers::Cache::Memcached and test if they actually can set and retrieve keys.
 
+=head1 WARNING
+
+If you want to store data permanent (even within a single program run), you should use Maplat::Web::MemCachePg,
+which is using this module, but also uses the PostgreSQL module as a permanent backing store.
+
+The memcache daemon itself is very fast, but is basically a cache; e.g. if more data comes in that it can hold,
+the oldest data is silently discarded. Therefore, using a backing store for things like Login-data, shopping cart
+contents and other things you want to permanently store, use a real backing store. You dont want to loose some
+session information because more users logged on than memcached was set to handle.
+
+A few Maplat::Web:: modules implement their own caching strategy, like the UserSettings module. For these, you should
+*not* use Maplat::Web::MemCachePg but Maplat::Web::MemCache, otherwise you negate some of the performance due to
+overhead (double store).
+
 =head1 Configuration
 
         <module>
@@ -298,8 +312,6 @@ namespace if a single name assigned to all programs of the same project. Differe
 accessing the same memcached server must use different namespaces, while all programs working
 on a common project must use the same namespace. this is so, because next to caching, memcached
 in the Maplat framework is also used for interprocess communication.
-
-maxage is the maximum age in days the files are allowed to reside in the directory
 
 Further, the main script must declare the variables $VERSION and $APPNAME, because some functionality
 of the wrapper needs those. This values are set in memcached and can be read out by the WebGUI as a central

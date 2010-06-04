@@ -8,7 +8,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 use Carp;
@@ -68,21 +68,23 @@ sub postfilter {
     } elsif($self->{BrowserData}->{Browser} eq "Firefox") {
         # *** Workarounds for Firefox ***
         if($result->{status} eq "307") {
-            # Firefox makes troubles with a 307 resulting
+            # some versions of Firefox make troubles with a 307 resulting
             # from a POST (for example viewselect), it pops
             # up a completly stupid extra YES/NO box.
-            # Soo... rewrite to a 200 and HTML-redirect the page
+            # Soo... rewrite to a 303 and also add a HTML-redirect the page
             # instead
+            # Of course, in case of POST and then redirecting, the correct return code
+            # *IS* a 303, *not* the 307. But strangely enough, only Firefox shows this
+            # very annoying behavior.
             
             my $location = $result->{location};
-            undef $result->{location};
-            $result->{status} = 200;
-            $result->{statustext} = "Using HTML redirect for broken Firefox";
+            $result->{status} = 303;
+            $result->{statustext} = "Using HTML redirect for Firefox";
             
             my %webdata = (
                 $self->{server}->get_defaultwebdata(),
                 PageTitle           =>  "Redirect",
-                ExtraHEADElements    => "<meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=$location\">",
+                ExtraHEADElements    => "<meta HTTP-EQUIV=\"REFRESH\" content=\"3; url=$location\">",
                 NextLocation        => $location,
             );
                 

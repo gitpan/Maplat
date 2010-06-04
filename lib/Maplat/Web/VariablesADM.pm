@@ -8,7 +8,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 # WARNING: This uses mainly hardcoded stuff
 
@@ -45,6 +45,7 @@ sub get {
     
     my $webpath = $cgi->path_info();
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $th = $self->{server}->{modules}->{templates};
 
     # Need to handle setting/deleting variables before getting the
     # default webdata so changes take effect instantly
@@ -79,13 +80,13 @@ sub get {
         }
         my %line = (
             name    => $var,
-            value    => $val,
+            value    => $th->quote($val),
         );
         push @varlist, \%line;
     }
     $webdata{variables} = \@varlist;
     
-    my $template = $self->{server}->{modules}->{templates}->get("variablesadm", 1, %webdata);
+    my $template = $th->get("variablesadm", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
             type    => "text/html",

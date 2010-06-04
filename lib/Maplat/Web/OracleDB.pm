@@ -8,7 +8,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 use DBI;
 use English;
@@ -34,7 +34,7 @@ sub checkDBH {
     my $dbh = DBI->connect($self->{dburl}, $self->{dbuser}, $self->{dbpassword},
                                {AutoCommit => 0, RaiseError => 0}) or croak($@);
     $self->{mdbh} = $dbh;
-    print "DBI created for PID $PID\n";
+    #print "DBI created for PID $PID\n";
     return;
 }
 
@@ -48,7 +48,7 @@ sub DESTROY {
     $self->{mdbh}->rollback;
     $self->{mdbh}->disconnect;
     delete $self->{mdbh};
-    print "DBI destroyed for PID $PID\n";
+    #print "DBI destroyed for PID $PID\n";
     return;
 }
 
@@ -71,7 +71,7 @@ sub endconfig {
     if($self->{forking}) {
         # forking server: disconnect from database, generate new connection
         # after the fork on demand
-        print "   *** Will fork, disconnect Oracle server...\n";
+        #print "   *** Will fork, disconnect Oracle server...\n";
         $self->rollback;
         $self->{mdbh}->disconnect;    
         delete $self->{mdbh};

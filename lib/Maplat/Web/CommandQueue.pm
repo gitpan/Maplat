@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::CommandHelper;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 use Carp;
@@ -42,6 +42,7 @@ sub get {
     my $webpath = $cgi->path_info();
     my $dbh = $self->{server}->{modules}->{$self->{db}};
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $th = $self->{server}->{modules}->{templates};
 
     my %webdata = 
     (
@@ -207,7 +208,7 @@ sub get {
     }
     $webdata{admincommands} = \@admincommands;
     
-    my $template = $self->{server}->{modules}->{templates}->get("commandqueue", 1, %webdata);
+    my $template = $th->get("commandqueue", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
             type    => "text/html",

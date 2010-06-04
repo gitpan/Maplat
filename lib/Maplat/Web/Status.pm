@@ -8,7 +8,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 use Carp;
@@ -40,6 +40,7 @@ sub get {
     my ($self, $cgi) = @_;
 
     my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $th = $self->{server}->{modules}->{templates};
     
     # !!! Must work on form data before calling get_defaultwebdata, otherwise the header will be wrong
     my $mode = $cgi->param('mode') || 'view';
@@ -75,6 +76,7 @@ sub get {
     $errsth->execute or croak($dbh->errstr);
     while((my $errline = $errsth->fetchrow_hashref)) {
         $errline->{error_image} = "rbserror_" . lc($errline->{error_type}) . ".bmp";
+        $th->hashquote($errline, qw[description]);
         push @errors, $errline;
     }
     $errsth->finish;
@@ -82,7 +84,7 @@ sub get {
         
     $dbh->rollback;
     
-    my $template = $self->{server}->{modules}->{templates}->get("status", 1, %webdata);
+    my $template = $th->get("status", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
             type    => "text/html",

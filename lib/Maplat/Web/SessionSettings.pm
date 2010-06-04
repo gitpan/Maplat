@@ -9,7 +9,9 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.99;
+use Carp;
+
+our $VERSION = 0.991;
 
 
 sub new {
@@ -18,6 +20,8 @@ sub new {
     
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
+
+    $self->{lastClean} = getCurrentHour();
 
     return $self;
 }
@@ -49,14 +53,32 @@ sub get {
     my $settingref;
         
     my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+
     my $sessionid = $loginh->get_sessionid;
     return 0 if(!defined($sessionid));
     
-    my $memh = $self->{server}->{modules}->{$self->{memcache}};
     my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
     
     $settingref = $memh->get($keyname);
     if(defined($settingref)) {
+        return (1, $settingref);
+    }
+
+    # Ok, try DB
+    my $sth = $dbh->prepare_cached("SELECT sdata FROM session_settings WHERE sid = ? AND skey = ?")
+          or die($dbh->errstr);
+    $sth->execute($sessionid, $settingname) or die($dbh->errstr);
+    while((my @line = $sth->fetchrow_array)) {
+       $settingref = Maplat::Helpers::DBSerialize::dbthaw($line[0]);
+       last;
+    }
+    $sth->finish;
+ 
+    # Ok, now also store data in memcached
+    if(defined($settingref)) {
+       $memh->set($keyname, $settingref);
         return (1, $settingref);
     }
     
@@ -67,102 +89,92 @@ sub set {
     my ($self, $settingname, $settingref) = @_;
     
     my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+
     my $sessionid = $loginh->get_sessionid;
     return 0 if(!defined($sessionid));
     
-    my $memh = $self->{server}->{modules}->{$self->{memcache}};
     my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
-    my $listname = "SessionSettings::Sessions";
-    
-    my $list = $memh->get($listname);
-    if(!defined($list)) {
-        $list = {};
-    }
-    
-    if(defined($list->{$sessionid})) {
-        $list->{$sessionid}->{memkeys}->{$keyname} = 1;
-    }
-
     $memh->set($keyname, $settingref);
-    $memh->set($listname, $list);
+
+    my $sth = $dbh->prepare_cached("SELECT merge_sessionsettings(?, ?, ?)")
+            or return;
+    if(!$sth->execute($sessionid, $settingname, Maplat::Helpers::DBSerialize::dbfreeze($settingref))) {
+        $sth->finish;
+        $dbh->rollback;
+        croak($dbh->errstr);
+     } else {
+        $sth->finish;
+        $dbh->commit;
+     }
     
-    return 1;
+      return 1;
 }
 
 sub delete {## no critic(BuiltinHomonyms)
-    my ($self, $settingname) = @_;
+    my ($self, $settingname, $forcedid) = @_;
     
     my $settingref;
 
     my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+
     my $sessionid = $loginh->get_sessionid;
+    if(defined($forcedid)) {
+        $sessionid = $forcedid;
+    }
     return 0 if(!defined($sessionid));
 
-    my $memh = $self->{server}->{modules}->{$self->{memcache}};
     my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
-    my $listname = "SessionSettings::Sessions";
     
-    my $list = $memh->get($listname);
-    if(!defined($list)) {
-        $list = {};
-    }
-    
-    if(defined($list->{$sessionid})) {
-        delete $list->{$sessionid}->{memkeys}->{$keyname};
-    }
 
     $memh->delete($keyname);
-    $memh->set($listname, $list);
 
+   my $sth = $dbh->prepare_cached("DELETE FROM session_settings WHERE sid = ? AND skey = ?")
+         or croak($dbh->errstr);
+   $sth->execute($sessionid, $settingname) or croak($dbh->errstr);
+   $sth->finish;
+   $dbh->commit;
     
     return 1;
 }
 
 sub list {
-    my ($self) = @_;
+			my ($self, $forcedid) = @_;
     
     my @settingnames = ();
     
     my $loginh = $self->{server}->{modules}->{$self->{login}};
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+
     my $sessionid = $loginh->get_sessionid;
+
+    if(defined($forcedid)) {
+        $sessionid = $forcedid;
+    }
+
     return 0 if(!defined($sessionid));
 
-    my $memh = $self->{server}->{modules}->{$self->{memcache}};
-    my $listname = "SessionSettings::Sessions";
-    my $keyrm = "SessionSettings::" . $sessionid . "::";
-    
-    my $list = $memh->get($listname);
-    if(!defined($list)) {
-        return 0;
+    my $sth = $dbh->prepare_cached("SELECT skey FROM session_settings WHERE sid = ?")
+        or croak($dbh->errstr);
+    $sth->execute($sessionid) or croak($dbh->errstr);
+    while((my @line = $sth->fetchrow_array)) {
+        push @settingnames, $line[0];
     }
-    
-    if(defined($list->{$sessionid}) && defined($list->{$sessionid}->{memkeys})) {
-        foreach my $memkey (sort keys %{$list->{$sessionid}->{memkeys}}) {
-            my $tmp = $memkey;
-            $tmp =~ s/$keyrm//g;
-            push @settingnames, $tmp;
-        }
-        return (1, @settingnames);
-    }
-    return (0, @settingnames);
+    $sth->finish;
+
+    return (1, @settingnames);
 }
 
 sub on_login {
     my ($self, $username, $sessionid) = @_;
     
-    my $memh = $self->{server}->{modules}->{$self->{memcache}};
-    my $listname = "SessionSettings::Sessions";
+    $self->set('lastUpdate', time);
+    $self->set('userName', $username);
     
-    my $list = $memh->get($listname);
-    if(!defined($list)) {
-        $list = {};
-    }
-    
-    $list->{$sessionid}->{lastUpdate} = time;
-    $list->{$sessionid}->{userName} = $username;
-    $list->{$sessionid}->{memkeys} = {};
-    
-    $memh->set($listname, $list);    
     return;
 }
 
@@ -170,21 +182,13 @@ sub on_logout {
     my ($self, $sessionid) = @_;
     
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
-    my $listname = "SessionSettings::Sessions";
     
-    my $list = $memh->get($listname);
-    if(!defined($list)) {
-        return;
-    }
-    
-    if(defined($list->{$sessionid}) && defined($list->{$sessionid}->{memkeys})) {
-        foreach my $key (keys %{$list->{$sessionid}->{memkeys}}) {
-            $memh->delete($key);
+    my ($status, @keys) = $self->list($sessionid);
+    if($status != 0) {
+        foreach my $key (@keys) {
+            $self->delete($key, $sessionid);
         }
-        delete $list->{$sessionid};
     }
-    
-    $memh->set($listname, $list);
     return;
 }
 
@@ -192,36 +196,42 @@ sub on_refresh {
     my ($self, $sessionid) = @_;
 
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
-    my $listname = "SessionSettings::Sessions";
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    $self->set('lastUpdate', time);
+
     
-    my $list = $memh->get($listname);
-    if(!defined($list)) {
-        return;
-    }
-    
-    # FIRST, delete all sessions that are over 2 hours old (Login uses 1 hour, so
-    # we should be on the save side)
+    # Clean up stale sessions - this is only needed if the user
+    # closes his/her browser without logging out first. As long as the browser
+    # is open, an automatic refresh (javascript) keeps the session "fresh"
+    # Only run this once an hour, automatic logout is handled by the Login module
+    # by way of expiring cookies/session information. We need this just in case the
+    # Login module CAN'T handle the logout because the browser was forced closed.
+    my $now = getCurrentHour();
+    #return if($now eq $self->{lastClean});
+
+
+    my $liststh = $dbh->prepare("SELECT sid, sdata
+                                FROM session_settings
+                                WHERE skey = 'lastUpdate'")
+        or croak($dbh->errstr);
+    $liststh->execute or croak($dbh->errstr);
+
+    my @stalesessions;
     my $currTime = time;
-    foreach my $session (keys %{$list}) {
-        my $oldTime = $list->{$sessionid}->{lastUpdate} || 0;
-        my $age = ($currTime - $oldTime) / 3600;
+    while((my @line = $liststh->fetchrow_array)) {
+        my $oldTime = Maplat::Helpers::DBSerialize::dbthaw($line[1]);
+        my $age = ($currTime - $$oldTime) / 3600;
         if($age > 2) {
-            # Ok, delete this session
-            if(defined($list->{$sessionid}) && defined($list->{$sessionid})->{memkeys}) {
-                foreach my $key (keys %{$list->{$sessionid}->{memkeys}}) {
-                    $memh->delete($key);
-                }
-            }
-            delete $list->{$session};
+            push @stalesessions, $line[0];
         }
     }
-    
-    # Update sessions timestamp
-    if(defined($list->{$sessionid})) {
-        $list->{$sessionid}->{lastUpdate} = $currTime;
+    $liststh->finish;
+
+    foreach my $session (@stalesessions) {
+        # "Manually" logout users
+        $self->on_logout($session);
     }
-    
-    $memh->set($listname, $list);
+
     return;
 }
 
@@ -243,7 +253,7 @@ specific data on a per session basis. It can, for example, be used to save sessi
 to memcache. It can handle complex data structures.
 
 Data is not permanently stored, but rather it's deleted when a user logs out or the session times out (auto
-user logout)
+user logout). Data is backed up by a DB with its own caching stragety.
 
 =head1 Configuration
 
@@ -252,9 +262,16 @@ user logout)
                 <pm>SessionSettings</pm>
                 <options>
                         <memcache>memcache</memcache>
+                        <db>maindb</db>
                         <login>authentification</login>
                 </options>
         </module>
+
+=head1 WARNING
+
+This module implements its own memcached-based caching strategy. Use Maplat::Web::MemCache as the memcache module,
+don't use Maplat::Web::MemCachePg. While both will work and data will be stored permanently, using MemCachePg will
+generate some overhead, because the data will be saved redundatly in two places.
 
 =head2 set
 

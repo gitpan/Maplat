@@ -7,10 +7,11 @@ use warnings;
 
 use base qw(Maplat::Web::BaseModule);
 use Template;
+use HTML::Entities;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
-
+use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 use Carp;
 
 sub new {
@@ -71,13 +72,7 @@ sub load_dir {
         my $kname = $base . '/' . $fname;
 		$kname =~ s/^\///o;
         $kname =~s /\.tt$//g;
-        open(my $fh, "<", $nfname) or confess($!);
-        my $holdTerminator = $/; ## no critic
-        undef $/;
-        binmode($fh);
-        my $data = <$fh>;
-        $/ = $holdTerminator; ## no critic
-        close($fh);
+        my $data = slurpBinFile($nfname);
         $files->{$kname} = $data;
     }
     closedir($dfh);
@@ -123,6 +118,45 @@ sub get {
         $self->{LastError} = $self->{processor}->{_ERROR};
     }
     return $output;
+}
+
+sub quote {
+	my ($self, $val) = @_;
+	
+	return encode_entities($val);
+}
+
+sub hashquote {
+	my ($self, $hash, @keys) = @_;
+	
+	foreach my $key(@keys) {
+		if(defined($hash->{$key})) {
+			$hash->{$key} = $self->quote($hash->{$key});
+		} else {
+			$hash->{$key} = "";
+		}
+	}
+	return 1;
+}
+
+sub arrayquote {
+	my ($self, $array);
+	
+	my $cnt = scalar @$array;
+
+	for(my $i; $i < $cnt; $i++) {
+		if(!defined($array->[$i])) {
+			$array->[$i] = "";
+		} else {
+			$array->[$i] = $self->quote($array->[$i]);
+		}
+	}
+}
+
+sub unquote {
+	my ($self, $val) = @_;
+	
+	return decode_entities($val);	
 }
 
 1;

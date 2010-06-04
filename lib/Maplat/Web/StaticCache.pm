@@ -6,8 +6,9 @@ use strict;
 use warnings;
 
 use base qw(Maplat::Web::BaseModule);
+use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 use Carp;
@@ -86,13 +87,7 @@ sub load_dir {
             $type = "application/javascript";
         }
         
-        open(my $fh, "<", $nfname) or confess($!);
-        my $holdTerminator = $/; ## no critic
-        undef $/;
-        binmode($fh);
-        my $data = <$fh>;
-        $/ = $holdTerminator; ## no critic
-        close($fh);
+        my $data = slurpBinFile($nfname);
         my %entry = (name   => $kname,
                     fullname=> $nfname,
                     type    => $type,

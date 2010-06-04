@@ -7,7 +7,9 @@ use warnings;
 
 use Carp;
 
-our $VERSION = 0.99;
+use Maplat::Helpers::FileSlurp qw(slurpTextFile);
+
+our $VERSION = 0.991;
 
 sub new {
     my ($class, %config) = @_;
@@ -20,13 +22,8 @@ sub filter {
     
     my (@headers, @headcount, @lines);
     
-    $self->{logger}->debuglog("Opening input file");
-    open(my $ifh, "<", $self->{source}) or croak($!);
-    
-    $self->{logger}->debuglog("Reading source file to memory");
-    @lines = <$ifh>;
-    $self->{logger}->debuglog("Closing input file");
-    close $ifh;
+    $self->{logger}->debuglog("Loading input file");
+    @lines = slurpTextFile($self->{source});
     
     my $filecount = 0;
     my $linecount = 0;

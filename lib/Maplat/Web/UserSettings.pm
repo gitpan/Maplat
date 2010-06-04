@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 sub new {
@@ -160,6 +160,11 @@ text field. This avoids having to play around with blobs.
                 </options>
         </module>
 
+=head1 WARNING
+
+This module implements its own memcached-based caching strategy. Use Maplat::Web::MemCache as the memcache module,
+don't use Maplat::Web::MemCachePg. While both will work and data will be stored permanently, using MemCachePg will
+generate some overhead, because the data will be saved redundatly in two places.
 
 =head2 set
 

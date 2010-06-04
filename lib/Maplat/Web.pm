@@ -14,7 +14,7 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 use Template;
 use Data::Dumper;
@@ -22,9 +22,10 @@ use FileHandle;
 use Socket;
 use Data::Dumper;
 use Maplat::Helpers::Mascot;
-use IO::Socket::SSL;
+#use IO::Socket::SSL;
 
 #=!=START-AUTO-INCLUDES
+use Maplat::Web::Accesslog;
 use Maplat::Web::BaseModule;
 use Maplat::Web::BrowserWorkarounds;
 use Maplat::Web::CommandQueue;
@@ -37,6 +38,7 @@ use Maplat::Web::Errors;
 use Maplat::Web::Login;
 use Maplat::Web::LogoCache;
 use Maplat::Web::MemCache;
+use Maplat::Web::MemCachePg;
 use Maplat::Web::MemCacheSim;
 use Maplat::Web::OracleDB;
 use Maplat::Web::PathRedirection;
@@ -64,7 +66,9 @@ sub handle_request {
                     -cache_control=>"no-cache, no-store, must-revalidate",
                     -charset => 'utf-8',
                     -lang => 'en-EN',
-                    -title => 'MAPLAT WebGUI');
+                    -title => 'MAPLAT WebGUI',
+		    '-x-frame-options'	=> 'deny', # deny clickjacking, see http://www.webmasterworld.com/webmaster/4022867.htm
+		);
     
     my %result = (status    => 404, # Default result
                   type      => "text/plain",
@@ -180,29 +184,29 @@ sub startconfig {
     }
 
 
-    if(defined($self->{maplat}->{usessl}) && $self->{maplat}->{usessl}) {
-        # Create subroutine to tell HTTP::Server::Simple that we want to use SSL
-        # with the certs defined in the config. This is done by creating an
-        # accept hook
-        no strict 'refs';
-        *{__PACKAGE__ . "::accept_hook"} = sub {
-            my $self = shift;
-            my $fh   = $self->stdio_handle;
-
-            $self->SUPER::accept_hook(@_);
-
-            my $newfh =
-            IO::Socket::SSL->start_SSL( $fh, 
-                SSL_server    => 1,
-                SSL_use_cert  => 1,
-                SSL_cert_file => $_[0]->{maplat}->{sslcert},
-                SSL_key_file  => $_[0]->{maplat}->{sslkey},
-            )
-            or carp "problem setting up SSL socket: " . IO::Socket::SSL::errstr();
-
-            $self->stdio_handle($newfh) if $newfh;
-        };
-    }
+#    if(defined($self->{maplat}->{usessl}) && $self->{maplat}->{usessl}) {
+#        # Create subroutine to tell HTTP::Server::Simple that we want to use SSL
+#        # with the certs defined in the config. This is done by creating an
+#        # accept hook
+#        no strict 'refs';
+#        *{__PACKAGE__ . "::accept_hook"} = sub {
+#            my $self = shift;
+#            my $fh   = $self->stdio_handle;
+#
+#            $self->SUPER::accept_hook(@_);
+#
+#            my $newfh =
+#            IO::Socket::SSL->start_SSL( $fh, 
+#                SSL_server    => 1,
+#                SSL_use_cert  => 1,
+#                SSL_cert_file => $_[0]->{maplat}->{sslcert},
+#                SSL_key_file  => $_[0]->{maplat}->{sslkey},
+#            )
+#            or carp "problem setting up SSL socket: " . IO::Socket::SSL::errstr();
+#
+#            $self->stdio_handle($newfh) if $newfh;
+#        };
+#    }
         
     # Clean up configuration
     my %tmpPaths;
@@ -470,6 +474,10 @@ module for the the browsers request is found.
 
 Warning! If you are upgrading from 0.91 or lower, beware: There are a few incompatible changes in the server
 initialization! Please see the Example in the tarball for details.
+
+=head1 SSL Support
+
+SSL support is currently disabled in the source code due to multiple problems with the implementation.
 
 =head1 Configuration and Startup
 

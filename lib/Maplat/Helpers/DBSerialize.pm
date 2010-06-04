@@ -10,15 +10,23 @@ use warnings;
 
 use base qw(Exporter);
 our @EXPORT = qw(dbfreeze dbthaw); ## no critic
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 use Storable qw(freeze thaw);
 use MIME::Base64;
+use Carp;
 
 sub dbfreeze {
     my ($data) = @_;
-    
-    return encode_base64(freeze($data), "");
+
+    if(!defined($data)) {
+        croak('$data is undefined in dbfreeze');
+    } elsif(ref($data) eq "REF") {
+        return encode_base64(freeze($data), "");
+    } else {
+        return encode_base64(freeze(\$data), "");
+    }
+      
 }
 
 sub dbthaw {

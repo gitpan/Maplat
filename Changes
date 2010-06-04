@@ -1,6 +1,19 @@
 Revision history for Perl extension Maplat.
 
-0.99  Mon Wen 17 14:00:00 2010
+0.991 Fri Jun 04 09:20:00 2010
+	- Added some helper modules for cleaner code in main modules
+	- Added accesslog for webinterface
+	- fixed return codes according to HTTP specs
+	- Added database-backed version of MemCache called MemCachePg
+	⁻ Fix possible bug with un->finish'd DBI statement
+	- Added function to add offsets to ISO date
+	- Added workaround for wrong timezones on a few windows machines. This is basically only required when running as windows service, as far as i can tell.
+	- Changes to headers to try preventing clickjacking
+	- TemplateCache: Add function for HTML entity quoting
+	- Moved some templates to the correct plugin
+	- fixed some tests (that actually broke cpantesters tests)
+
+0.99  Mon Mar 17 14:00:00 2010
 	- Fixed missing requirements in Makefile.PL
 
 0.98  Mon Mar 15 13:00:00 2010

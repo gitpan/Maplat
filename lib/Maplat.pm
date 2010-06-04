@@ -6,7 +6,7 @@ use warnings;
 
 use base qw(Exporter);
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 

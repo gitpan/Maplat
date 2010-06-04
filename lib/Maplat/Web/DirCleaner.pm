@@ -9,7 +9,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 use Carp;
@@ -40,6 +40,7 @@ sub get {
     my ($self, $cgi) = @_;
     
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $th = $self->{server}->{modules}->{templates};
     
     my %webdata = (
         $self->{server}->get_defaultwebdata(),
@@ -52,7 +53,7 @@ sub get {
     if($dirstatus) {
         foreach my $dir (sort keys %{$dirstatus}) {
             my %hline = (
-                path        => $dir,
+                path        => $th->quote($dir),
                 status        => $dirstatus->{$dir}->{status},
                 maxage        => $dirstatus->{$dir}->{maxage},
             );
@@ -61,7 +62,7 @@ sub get {
     }
     $webdata{dirlines} = \@dirlines;
     
-    my $template = $self->{server}->{modules}->{templates}->get("dircleaner", 1, %webdata);
+    my $template = $th->get("dircleaner", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
             type    => "text/html",

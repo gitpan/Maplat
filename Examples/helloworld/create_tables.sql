@@ -325,5 +325,43 @@ GRANT ALL ON SCHEMA public TO postgres;
 GRANT ALL ON SCHEMA public TO PUBLIC;
 
 
+CREATE TABLE memcachedb
+(
+  mckey text NOT NULL,
+  mcdata text NOT NULL,
+  CONSTRAINT memcachedb_pk PRIMARY KEY (mckey) USING INDEX TABLESPACE "RBS_INDEX1"
+)
+WITH (
+  FILLFACTOR=20, 
+  OIDS=FALSE
+)
+TABLESPACE "RBS_DATA";
+ALTER TABLE memcachedb OWNER TO "MAPLAT_Server";
 
+
+CREATE OR REPLACE FUNCTION merge_memcachedb(mc_key text, mc_data text)
+  RETURNS void AS
+$BODY$
+BEGIN
+    LOOP
+        -- first try to update the key
+        UPDATE memcachedb SET mcdata = mc_data WHERE mckey = mc_key;
+        IF found THEN
+            RETURN;
+        END IF;
+        -- not there, so try to insert the key
+        -- if someone else inserts the same key concurrently,
+        -- we could get a unique-key failure
+        BEGIN
+            INSERT INTO memcachedb (mckey, mcdata) VALUES (mc_key, mc_data);
+            RETURN;
+        EXCEPTION WHEN unique_violation THEN
+            -- do nothing, and loop to try the UPDATE again
+        END;
+    END LOOP;
+END;
+$BODY$
+  LANGUAGE 'plpgsql' VOLATILE
+  COST 100;
+ALTER FUNCTION merge_memcachedb(text, text) OWNER TO "MAPLAT_Server";
 

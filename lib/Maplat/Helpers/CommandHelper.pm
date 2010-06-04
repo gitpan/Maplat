@@ -12,7 +12,7 @@ use Carp;
 use base qw(Exporter);
 our @EXPORT = qw(getCommandQueue); ## no critic
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 sub getCommandQueue {
     my ($dbh, $memh, $command) = @_;

@@ -12,7 +12,7 @@ use Digest::MD5 qw(md5_hex);
 use Digest::SHA1 qw(sha1_hex);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 my $password_prefix = "CARNIVORE::";
 my $password_postfix = "# or 1984";
@@ -141,6 +141,7 @@ sub get_viewselect {
     
     if($self->validateSessionID($session, $cgi)) {
         $user = $self->{server}->{modules}->{$self->{memcache}}->get($session);
+        $user = $$user;
         if($newview ne "") {
             $user->{view} = "logout"; # Make logout view the default
             $user->{startpage} = $self->{logout}->{webpath};
@@ -155,7 +156,7 @@ sub get_viewselect {
         
         $self->{server}->{modules}->{$self->{memcache}}->set($session, $user);
         # Redirect to start page of this view
-        return (status      => 307,
+        return (status      => 303,
                 location    => $user->{startpage},
                 type        => "text/html",
                 data         => "<html><body><h1>Changing view</h1><br>" .
@@ -166,7 +167,7 @@ sub get_viewselect {
 
     } else {
         # Need to login
-        return (status      => 307,
+        return (status      => 303,
                 location    => $self->{login}->{webpath},
                 type        => "text/html",
                 data         => "<html><body><h1>Please login</h1><br>" .
@@ -646,6 +647,7 @@ sub prefilter {
     my $user;
     if($self->validateSessionID($session, $cgi)) {
         $user = $self->{server}->{modules}->{$self->{memcache}}->get($session);
+        $user = $$user;
         if(defined($user)) {
             # Check if the user tries to open something he's not allowed to
             foreach my $ur (@{$self->{userlevels}->{userlevel}}) {
@@ -695,7 +697,7 @@ sub prefilter {
         return; # No redirection
     } else {
         # Need to login
-        return (status      => 307,
+        return (status      => 303,
                 location    => $self->{login}->{webpath},
                 type        => "text/html",
                 data         => "<html><body><h1>Please login</h1><br>" .

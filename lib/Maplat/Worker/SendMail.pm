@@ -12,10 +12,11 @@ use Mail::Sendmail;
 use MIME::QuotedPrint;
 use MIME::Base64;
 use Archive::Zip qw( :ERROR_CODES :CONSTANTS);
+use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 
 use Carp;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 sub new {
     my ($proto, %config) = @_;
@@ -88,14 +89,7 @@ sub sendFiles{
     $zip->writeToFileNamed($zipFile);
                 
     foreach my $file ($zipFile) {
-        my $fdata = "";
-        open(my $ifh, "<", $file) or return(0, "Can't read file $file");        
-        my $holdTerminator = $/;
-        undef $/;
-        binmode($ifh);
-        $fdata = <$ifh>;
-        local $/ = $holdTerminator;        
-        close $ifh;
+        my $fdata = slurpBinFile($file);
         $fdata = encode_base64($fdata);
         my $shortname = $file;
         $shortname =~ s/^.*\///go;

@@ -76,6 +76,7 @@ lib/Maplat/Helpers/CommandHelper.pm
 lib/Maplat/Helpers/CSVFilter.pm
 lib/Maplat/Helpers/DateStrings.pm
 lib/Maplat/Helpers/DBSerialize.pm
+lib/Maplat/Helpers/FileSlurp.pm
 lib/Maplat/Helpers/Logo.pm
 lib/Maplat/Helpers/MailLogger.pm
 lib/Maplat/Helpers/Mascot.pm
@@ -83,6 +84,7 @@ lib/Maplat/Helpers/Padding.pm
 lib/Maplat/Helpers/Strings.pm
 lib/Maplat/Helpers/TextLogger.pm
 lib/Maplat/Web.pm
+lib/Maplat/Web/Accesslog.pm
 lib/Maplat/Web/BaseModule.pm
 lib/Maplat/Web/BrowserWorkarounds.pm
 lib/Maplat/Web/CommandQueue.pm
@@ -118,6 +120,7 @@ lib/Maplat/Web/Logo/Layout/devtest.tt
 lib/Maplat/Web/Logo/Layout/logout.tt
 lib/Maplat/Web/LogoCache.pm
 lib/Maplat/Web/MemCache.pm
+lib/Maplat/Web/MemCachePg.pm
 lib/Maplat/Web/MemCacheSim.pm
 lib/Maplat/Web/OracleDB.pm
 lib/Maplat/Web/PathRedirection.pm
@@ -775,11 +778,7 @@ lib/Maplat/Web/Templates/logoday.tt
 lib/Maplat/Web/Templates/logout.tt
 lib/Maplat/Web/Templates/maplatlayout.tt
 lib/Maplat/Web/Templates/mapping.tt
-lib/Maplat/Web/Templates/prodlines_admin.tt
-lib/Maplat/Web/Templates/prodlines_user.tt
 lib/Maplat/Web/Templates/pwchange.tt
-lib/Maplat/Web/Templates/scheduler.tt
-lib/Maplat/Web/Templates/schedulerfilter.tt
 lib/Maplat/Web/Templates/sendmail.tt
 lib/Maplat/Web/Templates/status.tt
 lib/Maplat/Web/Templates/themes.tt

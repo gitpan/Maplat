@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::Strings 'normalizeString';
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 use Carp;

@@ -8,8 +8,9 @@ use 5.010;
 
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
+use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 
 use Carp;
@@ -74,7 +75,7 @@ sub reload {
             }
             
             my $nfname = $bdir . "/" . $fname;
-            my $data = $self->getFile($nfname);
+            my $data = slurpBinFile($nfname);
     
             my %entry = (name   => $kname,
                         fullname=> $nfname,
@@ -135,20 +136,6 @@ sub getDescription {
             data    => $template);
 }
 
-sub getFile {
-    my ($self, $fname) = @_;
-
-    open(my $fh, "<", $fname) or confess($!);
-    my $holdTerminator = $/;
-    $/ = undef; ## no critic
-    binmode($fh);
-    my $data = <$fh>;
-    $/ = $holdTerminator; ## no critic
-    close($fh);
-
-    return $data;
-}
-
 sub get_defaultwebdata {
     my ($self, $webdata) = @_;
     
@@ -191,10 +178,10 @@ sub reloadSingleTemplate {
         my $normal = $bdir . "/" . $tname . ".tt";
         
         if(-e $special) {
-            $self->{$tname} = $self->getFile($special);
+            $self->{$tname} = slurpBinFile($special);
             $self->{$tname . "_has_special"} = 1;
         } elsif(-e $normal && $self->{$tname . "_has_special"} == 0) {
-            $self->{$tname} = $self->getFile($normal);
+            $self->{$tname} = slurpBinFile($normal);
             $self->{$tname . "_has_special"} = 0;
         }
     }
@@ -225,7 +212,7 @@ sub reloadDescription {
         my $special = $bdir . "/" . $self->{lastUpdate} . "_description.tt";
         
         if(-e $special) {
-            $self->{description} = $self->getFile($special);
+            $self->{description} = slurpBinFile($special);
         }
     }
     return;
@@ -305,10 +292,6 @@ Get Logo and descriptions.
 =head2 getDescription
 
 Return the rendered descriptions of LogoDays.
-
-=head2 getFile
-
-Internal function - read in a file in binary mode.
 
 =head2 reloadSingleTemplate
 

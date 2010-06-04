@@ -14,7 +14,7 @@ use File::stat;
 
 use Carp;
 
-our $VERSION = 0.99;
+our $VERSION = 0.991;
 
 sub new {
     my ($proto, %config) = @_;
