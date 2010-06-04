@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 
 sub new {

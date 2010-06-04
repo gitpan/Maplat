@@ -10,7 +10,7 @@ use 5.008000;
 use base qw(Exporter);
 #our @EXPORT= qw();
 
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 use Maplat::Helpers::Strings qw(tabsToTable);
 use Maplat::Helpers::DateStrings;

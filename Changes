@@ -1,5 +1,12 @@
 Revision history for Perl extension Maplat.
 
+0.992 Fri Jun 04 13:00:00 2010
+    - Emergency bugfix: test scripts fail because some functions
+      are not correctly documented (podcoverage)
+    - Fixed: Perlcritic fails due to "no critic" placed on incorrect line
+    - Fixed: Perlcritic tripped due to missing "return" at end of function setmylocaltime
+    
+
 0.991 Fri Jun 04 09:20:00 2010
 	- Added some helper modules for cleaner code in main modules
 	- Added accesslog for webinterface

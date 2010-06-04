@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Template;
 use HTML::Entities;
 
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 use Carp;
@@ -151,6 +151,7 @@ sub arrayquote {
 			$array->[$i] = $self->quote($array->[$i]);
 		}
 	}
+    return 1;
 }
 
 sub unquote {
@@ -212,6 +213,36 @@ $name if the name of the template file (without the .tt suffix)
 $uselayout is a boolean, indicating if meta-rendering with the configured layout.
 
 %webdata is a hash that is passed through to the template toolkit.
+
+=head2 quote
+
+HTML-encodes (quotes) a scalar. Takes one argument (the value to quote) and returns the quoted value.
+
+=head2 unquote
+
+The reverse of quote(), takes an encoded value and returns the decoded (unquoted) one.
+
+=head2 arrayquote
+
+Similar to quote(), but HTML-encodes all values of an array. This works in-place, actually changing
+your array instead of working on a copy! Due to this, it should work on even huge arrays, with the downside
+of changing the callers data directly.
+
+Takes one argument, a reference to the array to quote.
+
+Warning: This function is designed to work only on simple arrays, elements that are references to sub-structures (
+scalars, hashes, arrays, functions,...) will lead to undefined behavior!
+
+=head2 hashquote
+
+Similar to quote(), but HTML-encodes all values of a hash. This works in-place, actually changing
+your hash instead of working on a copy! Due to this, it should work on even huge hashes, with the downside
+of changing the callers data directly.
+
+Takes one argument, a reference to the hash to quote.
+
+Warning: This function is designed to work only on simple hashes, elements that are references to sub-structures (
+scalars, hashes, arrays, functions,...) will lead to undefined behavior!
 
 =head2 load_dir
 

@@ -10,7 +10,7 @@ use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 use Carp;
 

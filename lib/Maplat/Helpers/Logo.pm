@@ -10,7 +10,7 @@ use 5.008000;
 use base qw(Exporter);
 our @EXPORT= qw(MaplatLogo); ## no critic
 
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 our @lines;
 

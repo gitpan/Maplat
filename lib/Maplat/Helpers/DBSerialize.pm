@@ -10,7 +10,7 @@ use warnings;
 
 use base qw(Exporter);
 our @EXPORT = qw(dbfreeze dbthaw); ## no critic
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 use Storable qw(freeze thaw);
 use MIME::Base64;

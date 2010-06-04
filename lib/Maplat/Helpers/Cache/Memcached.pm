@@ -35,7 +35,7 @@ use constant F_COMPRESS => 2;
 use constant COMPRESS_SAVINGS => 0.20; # percent
 
 use vars qw($VERSION $HAVE_ZLIB $FLAG_NOSIGNAL);
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 BEGIN {
     $HAVE_ZLIB = eval "use Compress::Zlib (); 1;";

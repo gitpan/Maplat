@@ -12,13 +12,9 @@ use Date::Manip qw(Date_Init UnixDate);
 use Date::Parse;
 
 use base qw(Exporter);
-our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime
-                fixDateField parseNaturalDate getShortFiledate getCurrentHour
-                getCurrentDay getISODate_nDaysOffset offsetISODate setmylocaltime); ## no critic
+our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset offsetISODate setmylocaltime); ## no critic
 
-
-
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 our $lastUniqueDate = "";
 our $UniqueDateCounter = 0;
@@ -45,6 +41,7 @@ sub setmylocaltime {
     my ($lt) = @_;
     
     $timezoneoffset = $lt;
+    return 1;
 }
 
 sub getmylocaltime {

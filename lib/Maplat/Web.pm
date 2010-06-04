@@ -14,7 +14,7 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.991;
+our $VERSION = 0.992;
 
 use Template;
 use Data::Dumper;
