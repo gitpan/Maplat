@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Template;
 use HTML::Entities;
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 use Carp;

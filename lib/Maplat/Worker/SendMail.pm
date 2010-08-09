@@ -16,7 +16,7 @@ use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 
 use Carp;
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 sub new {
     my ($proto, %config) = @_;
@@ -81,35 +81,43 @@ sub sendFiles{
                 "\n";
 
     my $zip = Archive::Zip->new();
+	my $fcount = 0;
     foreach my $file (@files) {
+		next unless(-f $file);
+		$fcount++;
         my $filemember = $zip->addFile($file);
         $filemember->desiredCompressionMethod( COMPRESSION_DEFLATED );
         $filemember->desiredCompressionLevel( COMPRESSION_LEVEL_BEST_COMPRESSION );
     }
-    $zip->writeToFileNamed($zipFile);
-                
-    foreach my $file ($zipFile) {
-        my $fdata = slurpBinFile($file);
-        $fdata = encode_base64($fdata);
-        my $shortname = $file;
-        $shortname =~ s/^.*\///go;
-        $shortname =~ s/^.*\\//go;
-        $file =~ /\.([^\.]*)$/o;
-        my $type = lc $1;
-        my $longtype = "text/plain";
-        if($type eq "csv") {
-            $longtype = "text/csv";
-        } elsif($type eq "pdf") {
-            $longtype = "application/pdf";
-        }
-        
-        $message .= "--$boundary\n" .
-                    "Content-Type: application/zip; name=\"$shortname\"\n" .
-                    "Content-Transfer-Encoding: base64\n" .
-                    "Content-Disposition: attachment; filename=\"$shortname\"\n" .
-                    "\n" .
-                    "$fdata\n";
-    }
+	if($fcount == 0) {
+		$message .= "WARNING: NO DATA AVAILABLE FOR YOU REQUEST!\n" .
+					"Please check your filter settings. Did you select\n" .
+					"the correct database?\n\n";
+	} else {
+		$zip->writeToFileNamed($zipFile);
+		foreach my $file ($zipFile) {
+			my $fdata = slurpBinFile($file);
+			$fdata = encode_base64($fdata);
+			my $shortname = $file;
+			$shortname =~ s/^.*\///go;
+			$shortname =~ s/^.*\\//go;
+			$file =~ /\.([^\.]*)$/o;
+			my $type = lc $1;
+			my $longtype = "text/plain";
+			if($type eq "csv") {
+				$longtype = "text/csv";
+			} elsif($type eq "pdf") {
+				$longtype = "application/pdf";
+			}
+			
+			$message .= "--$boundary\n" .
+						"Content-Type: application/zip; name=\"$shortname\"\n" .
+						"Content-Transfer-Encoding: base64\n" .
+						"Content-Disposition: attachment; filename=\"$shortname\"\n" .
+						"\n" .
+						"$fdata\n";
+		}
+	}
     $message .= "--$boundary--\n";
     
     return $self->sendMail($reciever, $subject, $message, $contenttype);    

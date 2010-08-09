@@ -14,7 +14,7 @@ use Date::Parse;
 use base qw(Exporter);
 our @EXPORT = qw(getISODate getFileDate getUniqueFileDate getDateAndTime fixDateField parseNaturalDate getShortFiledate getCurrentHour getCurrentDay getISODate_nDaysOffset offsetISODate setmylocaltime); ## no critic
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 our $lastUniqueDate = "";
 our $UniqueDateCounter = 0;

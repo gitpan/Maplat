@@ -10,7 +10,7 @@ our @EXPORT_OK = qw(slurpTextFile slurpBinFile);
 
 use Carp;
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 our @lines;
 

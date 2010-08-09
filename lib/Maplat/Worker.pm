@@ -6,7 +6,7 @@ use strict;
 use warnings;
 use English;
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Worker::AdminCommands;

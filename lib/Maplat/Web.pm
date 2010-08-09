@@ -14,7 +14,7 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 use Template;
 use Data::Dumper;
@@ -56,6 +56,50 @@ use Maplat::Web::VariablesADM;
 
 use Carp;
 
+my %httpstatuscodes = (
+    100 => "Continue",
+    101 => "Swicthing Protocols",
+    200 => "OK",
+    201 => "Created",
+    202 => "Accepted",
+    203 => "Non-Authoritive Information",
+    204 => "No Content",
+    205 => "Reset Content",
+    206 => "Partial Content",
+    300 => "Multiple Choices",
+    301 => "Moved Permanently",
+    302 => "Found",
+    303 => "See other",
+    304 => "Not modified",
+    305 => "Use Proxy",
+    306 => "(Unused)",
+    307 => "Temporary Redirect",
+    400 => "Bad Request",
+    401 => "Unauthorized",
+    402 => "Payment Required",
+    403 => "Forbidden",
+    404 => "Not Found",
+    405 => "Method Not Allowed",
+    406 => "Not Acceptable",
+    407 => "Proxy Authentification Required",
+    408 => "Request Timeout",
+    409 => "Conflict",
+    410 => "Gone",
+    411 => "Length Required",
+    412 => "Precondition Failed",
+    413 => "Request Entity Too Large",
+    414 => "Request-URI Too Long",
+    415 => "Unsupported Media Type",
+    416 => "Requested Range Not Satisfiable",
+    417 => "Expectation Failed",
+    500 => "Internal Server Error",
+    501 => "Not Implemented",
+    502 => "Bad Gateway",
+    503 => "Service Unavailable",
+    504 => "Gateway Timeout",
+    505 => "HTTP Version Not Supported",
+);
+
 sub handle_request {
     my ($self, $cgi) = @_;
     my $webpath = $cgi->path_info();
@@ -79,6 +123,20 @@ sub handle_request {
                   );
     my %fallbackresult = %result; # Just in case
 
+    # At this point in time, we only allow GET, POST or HEAD requests.
+    # The other defined HTTP/1.1 methods (PUT, DELETE, TRACE, CONNECT)
+    # will get a "405 Method not allowed" response. Unknown method will
+    # recieve a "501 Not Implemented"
+    if($cgi->request_method() !~ /^(GET|POST|HEAD)$/io) {
+        if($cgi->request_method() !~ /^(PUT|DELETE|TRACE|CONNECT)$/io) {
+            $result{status} = 405;
+        } else {
+            $result{status} = 501;
+        }
+        delete $result{data};
+        delete $result{type};
+        $result{pagedone} = 1;
+    }
     
     # This works on "prefilters" like Authentification checks, path
     # re-routing ("/" -> "302 /index") and similar.
@@ -120,22 +178,16 @@ sub handle_request {
     if($result{status} == 404 && !defined($result{data})) {
         %result = %fallbackresult;
     }
+
     
-    # workaround for lazy modules without status text
+    # Set statustext. This uses the standard RFC 2616 texts for the status codes.
+    # If a module sets the statustext itself (bad idea except in special circumstances), this
+    # is the default
     if(!defined($result{statustext}) || $result{statustext} eq "") {
-        if($result{status} eq "200") {
-            $result{statustext} = "OK";
-        } elsif($result{status} eq "404") {
-            $result{statustext} = "Resource not found";
-        } elsif($result{status} eq "403") {
-            $result{statustext} = "Access denied due to insufficient user rights";
-        } elsif($result{status} eq "307") {
-            $result{statustext} = "See elsewhere";
+        if(defined($httpstatuscodes{$result{status}})) {
+            $result{statustext} = $httpstatuscodes{$result{status}};
         } else {
-            # depending on resultcode, this may trigger the browser into
-            # some confusion... If you see this, you where *too* lazy
-            # programming your module
-            $result{statustext} = "OK but something weird happend (" . $result{status} . ")";
+            $result{statustext} = "Warning UNDEFINED HTTP STATUS CODE";
         }
     }
        
@@ -153,9 +205,33 @@ sub handle_request {
     if(defined($result{cache_control})) {
         $header{"-cache_control"} = $result{cache_control};
     }
-    
+
+    # Disable body generation for specific error codes as defined in RFC 2616
+    foreach my $nbcode (qw[100 101 204 205 304]) {
+        if($result{status} eq $nbcode) {
+            delete $result{data};
+        }
+    }
+
+    # Check to see if we are allowed to generate a Content-Length header field (a "should" in RFC 2616)
+    if(defined($result{data})) {
+        if(!defined($header{"-Transfer-Encoding"})) {
+            $header{"-Content-Length"} = length($result{data});
+        }
+    }
+
+	# Confirm to HEAD request standard. Disable body generation. This should
+    # NOT touch any headers incl. Content-Length, we just don't *deliver*
+    # the content.
+	if($cgi->request_method() eq "HEAD" && defined($result{data})) {
+        delete $result{data};
+    }
+
     print $cgi->header(%header);
-    print $result{data};
+    if(defined($result{data})) {
+        # Some results do not have a body
+        print $result{data};
+    }
     return; 
 }
 
@@ -163,7 +239,7 @@ sub startconfig {
     my ($self, $maplatconfig, $isCompiled) = @_;
     
     if(!defined($isCompiled)) {
-    $isCompiled = 0;
+        $isCompiled = 0;
     }
     $self->{compiled} = $isCompiled;
 

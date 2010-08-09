@@ -10,7 +10,7 @@ use Maplat::Helpers::DateStrings;
 use HTML::Parse;
 use HTML::FormatText;
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 use Carp;
 use MIME::Base64;

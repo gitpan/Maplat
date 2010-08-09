@@ -1,11 +1,21 @@
 Revision history for Perl extension Maplat.
 
+0.993 Mon Aug 09 07:15:00 2010
+    - Fixed SendMail/sending of zipped files
+    - BF example
+    - RFC 2616: Fix status codes for unimplemented/unknown request methods
+    - Use texts from RFC 2616 as default for the HTTP status codes
+    - RFC 2616: Add Content-Length header, required for caching
+    - RFC 2616: Disallow body generation for some HTTP Status codes
+    - RFC 2616: BF for HEAD request
+    - RFC 2616: Respond properly to unsupported request methods.
+    - RFC 2616: Support HEAD request (§9.4) by disabling sending of the body
+
 0.992 Fri Jun 04 13:00:00 2010
     - Emergency bugfix: test scripts fail because some functions
       are not correctly documented (podcoverage)
     - Fixed: Perlcritic fails due to "no critic" placed on incorrect line
     - Fixed: Perlcritic tripped due to missing "return" at end of function setmylocaltime
-    
 
 0.991 Fri Jun 04 09:20:00 2010
 	- Added some helper modules for cleaner code in main modules

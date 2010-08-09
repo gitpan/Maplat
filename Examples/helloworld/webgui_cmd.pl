@@ -14,6 +14,7 @@ BEGIN {
 }
 
 use Maplat::Web;
+use Maplat::Web::HelloWorld;
 use XML::Simple;
 use Time::HiRes qw(sleep usleep);
 

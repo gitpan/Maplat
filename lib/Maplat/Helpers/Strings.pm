@@ -11,7 +11,7 @@ use base qw(Exporter);
 use Maplat::Helpers::Padding qw(doSpacePad);
 our @EXPORT_OK = qw(tabsToTable normalizeString);
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 sub tabsToTable {
     my ($txt, @lengths) = @_;

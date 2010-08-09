@@ -7,7 +7,7 @@ use warnings;
 
 use base qw(Maplat::Web::BaseModule);
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 
 use Carp;

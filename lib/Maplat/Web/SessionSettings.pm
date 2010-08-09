@@ -11,7 +11,7 @@ use Maplat::Helpers::DBSerialize;
 
 use Carp;
 
-our $VERSION = 0.992;
+our $VERSION = 0.993;
 
 
 sub new {
