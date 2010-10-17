@@ -7,7 +7,7 @@ use warnings;
 
 use base qw(Maplat::Web::BaseModule);
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 use Carp;
 
@@ -125,15 +125,15 @@ make sure you use according to local law.
 
 =head1 Configuration
 
-	<module>
-		<modname>accesslog</modname>
-		<pm>Accesslog</pm>
-		<options>
+    <module>
+        <modname>accesslog</modname>
+        <pm>Accesslog</pm>
+        <options>
             <memcache>memcache</memcache>
-			<db>maindb</db>
-			<login>authentification</login>
-		</options>
-	</module>
+            <db>maindb</db>
+            <login>authentification</login>
+        </options>
+    </module>
 
 
 =head2 prefilter

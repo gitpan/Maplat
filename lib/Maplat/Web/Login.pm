@@ -12,7 +12,7 @@ use Digest::MD5 qw(md5_hex);
 use Digest::SHA1 qw(sha1_hex);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 my $password_prefix = "CARNIVORE::";
 my $password_postfix = "# or 1984";
@@ -78,18 +78,18 @@ sub reload {
             next if($menu->{display} ne $modname);
 
             # Try to get data directly from the corresponding module
-            my ($modname, $subvarname, $subsubvarname) = split/\//, $menu->{path};
+            my ($locmodname, $subvarname, $subsubvarname) = split/\//, $menu->{path};
             $subvarname = "" if(!defined($subvarname));
             $subsubvarname = "" if(!defined($subsubvarname));
                     
-            if(defined($self->{server}->{modules}->{$modname})) {
+            if(defined($self->{server}->{modules}->{$locmodname})) {
                 my %mod;
                 if($subvarname eq "") {
-                    %mod = %{$self->{server}->{modules}->{$modname}};
+                    %mod = %{$self->{server}->{modules}->{$locmodname}};
                 } elsif($subsubvarname eq "") {
-                    %mod = %{$self->{server}->{modules}->{$modname}->{$subvarname}};
+                    %mod = %{$self->{server}->{modules}->{$locmodname}->{$subvarname}};
                 } else {
-                    %mod = %{$self->{server}->{modules}->{$modname}->{$subvarname}->{$subsubvarname}};
+                    %mod = %{$self->{server}->{modules}->{$locmodname}->{$subvarname}->{$subsubvarname}};
                 }
                 
                 if(!defined($mod{webpath})) {
@@ -109,7 +109,7 @@ sub get {
     
     my $webpath = $cgi->path_info();
     
-    if($webpath eq $self->{login}->{webpath}) {
+    if($webpath eq $self->{login}->{webpath}) { ## no critic
         return $self->get_login($cgi);
     } elsif($webpath eq $self->{logout}->{webpath}) {
         return $self->get_logout($cgi);
@@ -318,7 +318,7 @@ sub get_pwchange {
     
     my $mode = $cgi->param('mode') || 'view';
     if($mode eq "changepw") {
-        if($webdata{pwold} ne "" && $webdata{pwnew1} ne "" && $webdata{pwnew2} ne "") {
+        if($webdata{pwold} ne "" && $webdata{pwnew1} ne "" && $webdata{pwnew2} ne "") { ## no critic
             if($webdata{pwnew1} ne $webdata{pwnew2}) {
                 $webdata{statustext} = "New Passwords do not match!";
                 $webdata{statuscolor} = "errortext";
@@ -647,7 +647,12 @@ sub prefilter {
     my $user;
     if($self->validateSessionID($session, $cgi)) {
         $user = $self->{server}->{modules}->{$self->{memcache}}->get($session);
-        $user = $$user;
+        if(defined($user)) {
+            while(ref($user) eq "REF") {
+                $user = $$user;
+            }
+        }
+
         if(defined($user)) {
             # Check if the user tries to open something he's not allowed to
             foreach my $ur (@{$self->{userlevels}->{userlevel}}) {

@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Template;
 use HTML::Entities;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 use Carp;
@@ -35,25 +35,25 @@ sub reload {
 
     my %files;
 
-	foreach my $view (@{$self->{view}}) {
-		foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
-			next if($bdir eq "."); # Load "./" at the end
-			my $fulldir = $bdir . "/" . $view->{path};
-			print "   ** checking $fulldir \n";
-			if(-d $fulldir) {
-				#print "   **** loading extra template files\n";
-				$self->load_dir($fulldir, $view->{base}, \%files);
-			}
-		}
-		{ # Load "./"
-			my $fulldir = $view->{path};
-			print "   ** checking $fulldir \n";
-			if(-d $fulldir) {
-				#print "   **** loading local template files\n";
-				$self->load_dir($fulldir, $view->{base}, \%files);
-			}
-		}
-	}
+    foreach my $view (@{$self->{view}}) {
+        foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+            next if($bdir eq "."); # Load "./" at the end
+            my $fulldir = $bdir . "/" . $view->{path};
+            print "   ** checking $fulldir \n";
+            if(-d $fulldir) {
+                #print "   **** loading extra template files\n";
+                $self->load_dir($fulldir, $view->{base}, \%files);
+            }
+        }
+        { # Load "./"
+            my $fulldir = $view->{path};
+            print "   ** checking $fulldir \n";
+            if(-d $fulldir) {
+                #print "   **** loading local template files\n";
+                $self->load_dir($fulldir, $view->{base}, \%files);
+            }
+        }
+    }
 
     $self->{cache} = \%files;  
     return;
@@ -61,16 +61,16 @@ sub reload {
 
 sub load_dir {
     my ($self, $dir, $base, $files) = @_;
-	
-	$base =~ s/^\///o;
-	$base =~ s/\/$//o;
-	
+    
+    $base =~ s/^\///o;
+    $base =~ s/\/$//o;
+    
     opendir(my $dfh, $dir) or croak($!);
     while((my $fname = readdir($dfh))) {
         next if($fname !~ /\.tt$/);
         my $nfname = $dir . "/" . $fname;
         my $kname = $base . '/' . $fname;
-		$kname =~ s/^\///o;
+        $kname =~ s/^\///o;
         $kname =~s /\.tt$//g;
         my $data = slurpBinFile($nfname);
         $files->{$kname} = $data;
@@ -97,11 +97,11 @@ sub get {
     $self->{server}->prerender(\%webdata);
     
     my $fullpage;
-	
-	my $layoutname = $self->{layout};
-	if(defined($webdata{UserLayout}) && defined($self->{cache}->{$webdata{UserLayout}})) {
-		$layoutname = $webdata{UserLayout};
-	}
+    
+    my $layoutname = $self->{layout};
+    if(defined($webdata{UserLayout}) && defined($self->{cache}->{$webdata{UserLayout}})) {
+        $layoutname = $webdata{UserLayout};
+    }
     
     if($uselayout) {
         $fullpage = $self->{cache}->{$layoutname};
@@ -121,43 +121,43 @@ sub get {
 }
 
 sub quote {
-	my ($self, $val) = @_;
-	
-	return encode_entities($val);
+    my ($self, $val) = @_;
+    
+    return encode_entities($val);
 }
 
 sub hashquote {
-	my ($self, $hash, @keys) = @_;
-	
-	foreach my $key(@keys) {
-		if(defined($hash->{$key})) {
-			$hash->{$key} = $self->quote($hash->{$key});
-		} else {
-			$hash->{$key} = "";
-		}
-	}
-	return 1;
+    my ($self, $hash, @keys) = @_;
+    
+    foreach my $key(@keys) {
+        if(defined($hash->{$key})) {
+            $hash->{$key} = $self->quote($hash->{$key});
+        } else {
+            $hash->{$key} = "";
+        }
+    }
+    return 1;
 }
 
 sub arrayquote {
-	my ($self, $array);
-	
-	my $cnt = scalar @$array;
+    my ($self, $array);
+    
+    my $cnt = scalar @$array;
 
-	for(my $i; $i < $cnt; $i++) {
-		if(!defined($array->[$i])) {
-			$array->[$i] = "";
-		} else {
-			$array->[$i] = $self->quote($array->[$i]);
-		}
-	}
+    for(my $i; $i < $cnt; $i++) {
+        if(!defined($array->[$i])) {
+            $array->[$i] = "";
+        } else {
+            $array->[$i] = $self->quote($array->[$i]);
+        }
+    }
     return 1;
 }
 
 sub unquote {
-	my ($self, $val) = @_;
-	
-	return decode_entities($val);	
+    my ($self, $val) = @_;
+    
+    return decode_entities($val);    
 }
 
 1;
@@ -187,14 +187,14 @@ of the page for every module.
                 <modname>templates</modname>
                 <pm>TemplateCache</pm>
                 <options>
-			<view>
-				<path>MaplatWeb/Templates</path>
-				<base>/</base>
-			</view>
-			<view>
-				<path>some/other/relative/path</path>
-				<base>myothertemplates/</base>
-			</view>
+            <view>
+                <path>MaplatWeb/Templates</path>
+                <base>/</base>
+            </view>
+            <view>
+                <path>some/other/relative/path</path>
+                <base>myothertemplates/</base>
+            </view>
                         <!-- Layout-Template to use for complete pages -->
                         <layout>maplatlayout</layout>
                 </options>

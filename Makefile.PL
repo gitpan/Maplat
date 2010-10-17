@@ -75,7 +75,10 @@ WriteMakefile(
             "File::Temp" => 0,
             "Getopt::Long" => 0,
             "HTTP::Server::Simple::CGI" => 0,
-            "HTML::FormatText" => 0,
+
+            # FIXME: HTML::FormatText is broken
+            #"HTML::FormatText" => 0,
+
             "HTML::Parse" => 0,
             "IO::Handle" => 0,
             "IO::Socket::SSL" => 0,
@@ -92,6 +95,7 @@ WriteMakefile(
             "Test::More" => 0,
             "Time::HiRes" => 0,
             "XML::Simple" => 0,
+            "YAML::XS" => 0,
             "WWW::Mechanize" => 0,
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005

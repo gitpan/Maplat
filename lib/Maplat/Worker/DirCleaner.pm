@@ -14,7 +14,7 @@ use File::stat;
 
 use Carp;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 sub new {
     my ($proto, %config) = @_;
@@ -147,7 +147,7 @@ sub clean {
     if($ok) {
         $self->{dirstatus}->{$dir}->{status} = "OK";
     } else {
-        if($self->{dirstatus}->{$dir}->{status} !~ /^(|WARNING|ERROR)$/o) {
+        if($self->{dirstatus}->{$dir}->{status} !~ /^(?:WARNING|ERROR)$/o) {
             $self->{dirstatus}->{$dir}->{status} = "WARNING";
             $reph->dblog("DIR_CLEANER", "Failed to delete file(s) in '$dir'");
             $dbh->commit;

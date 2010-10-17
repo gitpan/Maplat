@@ -9,7 +9,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 
 use Carp;
@@ -51,6 +51,9 @@ sub get {
     my $dirstatus = $memh->get("dircleanstatus");
     my @dirlines;
     if($dirstatus) {
+        while(ref($dirstatus) eq "REF") {
+            $dirstatus = $$dirstatus;
+        }
         foreach my $dir (sort keys %{$dirstatus}) {
             my %hline = (
                 path        => $th->quote($dir),

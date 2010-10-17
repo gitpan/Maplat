@@ -1,5 +1,32 @@
 Revision history for Perl extension Maplat.
 
+0.994 Sun Oct 17 20:40:00 2010
+    - Pass Perl::Critic level 3
+    - Perl::Critic Allow a max. of 7 arguments in function definitions (although varargs aren't counted)
+    - Allow newlines in strings (used mostly for SQL commands). In this, i disagree with Perl::Critic. 
+      While newlines in strings aren't pretty, they are WAY better than those awfull heredocs
+    - Fixed lexically reused variable names (found by Perl::Critic)
+    - Ingore Perl::Critic policy Variables::ProhibitPackageVars. I completly disagree with Conway on that, as long as they are used as defined interfaces.
+    - Allow "set" as function name in Perl::Critic (for our case, it isn't ambiguous)
+    - Fixed Perl:Critic "Capture variable used outside conditional"
+    - Use non-capturing groups where capture not required in regexp
+    - use croak() instead of die()
+    - Fixed "hard tab" issue for Perl::Critic
+    - Fixed ref problem
+    - Fixed debuglog
+    - Fixed FTPSync
+    - Fixed missing "use"
+    - Disable usage of broken HTML::FormatText. This might brake our online office modules
+    - Fixed POD format
+    - Added basic support for includes in config files
+    - PostgresDB can now include auth info from external XML file
+    - Fixed display of version/buildnum in web
+    - Switched from YAML::Syck to YAML::XS
+    - Updated copyright date
+    - Added MemCachePg support for workers
+    - Migrated webfrontend from Storable to YAML
+    - Fixed file endings to unix in all perl files
+
 0.993 Mon Aug 09 07:15:00 2010
     - Fixed SendMail/sending of zipped files
     - BF example

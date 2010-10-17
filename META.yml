@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Maplat
-version:            0.993
+version:            0.994
 abstract:           The MAPLAT Web Framework
 author:
     - Rene Schickbauer <rene.schickbauer@gmail.com>
@@ -29,7 +29,6 @@ requires:
     File::Temp:           0
     FileHandle:           0
     Getopt::Long:         0
-    HTML::FormatText:     0
     HTML::Parse:          0
     HTTP::Server::Simple::CGI:  0
     IO::Handle:           0
@@ -48,6 +47,7 @@ requires:
     Time::HiRes:          0
     WWW::Mechanize:       0
     XML::Simple:          0
+    YAML::XS:             0
 no_index:
     directory:
         - t

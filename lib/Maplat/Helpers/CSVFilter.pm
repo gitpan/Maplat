@@ -9,7 +9,7 @@ use Carp;
 
 use Maplat::Helpers::FileSlurp qw(slurpTextFile);
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 sub new {
     my ($class, %config) = @_;

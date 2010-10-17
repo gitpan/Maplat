@@ -1,11 +1,11 @@
 # MAPLAT  (C) 2008-2010 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
-package Maplat::Web::MemCachePg;
+package Maplat::Worker::MemCachePg;
 use strict;
 use warnings;
 
-use base qw(Maplat::Web::BaseModule);
+use base qw(Maplat::Worker::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 use Maplat::Helpers::DBSerialize;

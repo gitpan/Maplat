@@ -12,7 +12,7 @@ use Maplat::Helpers::BuildNum;
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 sub new {
     my ($proto, %config) = @_;

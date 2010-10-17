@@ -18,6 +18,7 @@ use Time::HiRes ();
 use String::CRC32;
 use Errno qw( EINPROGRESS EWOULDBLOCK EISCONN );
 use Maplat::Helpers::Cache::Memcached::GetParser;
+use Carp;
 use fields qw{
     debug no_rehash stats compress_threshold compress_enable stat_callback
     readonly select_timeout namespace namespace_len servers active buckets
@@ -35,7 +36,7 @@ use constant F_COMPRESS => 2;
 use constant COMPRESS_SAVINGS => 0.20; # percent
 
 use vars qw($VERSION $HAVE_ZLIB $FLAG_NOSIGNAL);
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 BEGIN {
     $HAVE_ZLIB = eval "use Compress::Zlib (); 1;";
@@ -656,8 +657,8 @@ sub _load_multi {
             if ($flags & F_STORABLE) {
                 # wrapped in eval in case a perl 5.6 Storable tries to
                 # unthaw data from a perl 5.8 Storable.  (5.6 is stupid
-                # and dies if the version number changes at all.  in 5.8
-                # they made it only die if it unencounters a new feature)
+                # and croaks if the version number changes at all.  in 5.8
+                # they made it only croak if it unencounters a new feature)
                 eval {
                     $ret->{$k} = Storable::thaw($ret->{$k});
                 };
@@ -670,8 +671,8 @@ sub _load_multi {
     };
 
     foreach (keys %$sock_keys) {
-        my $ipport = $sock_map{$_}        or die "No map found matching for $_";
-        my $sock   = $cache_sock{$ipport} or die "No sock found for $ipport";
+        my $ipport = $sock_map{$_}        or croak "No map found matching for $_";
+        my $sock   = $cache_sock{$ipport} or croak "No sock found for $ipport";
         print STDERR "processing socket $_\n" if $self->{'debug'} >= 2;
         $writing{$_} = $sock;
         if ($self->{namespace}) {
@@ -685,7 +686,7 @@ sub _load_multi {
 
     my $read = sub {
         my $sockstr = "$_[0]";  # $sock is $_[0];
-        my $p = $parser{$sockstr} or die;
+        my $p = $parser{$sockstr} or croak;
         my $rv = $p->parse_from_sock($_[0]);
         if ($rv > 0) {
             # okay, finished with this socket
@@ -761,7 +762,7 @@ sub _load_multi {
         }
     }
 
-    # if there're active sockets left, they need to die
+    # if there're active sockets left, they need to croak
     foreach (values %writing) {
         $dead->($_);
     }

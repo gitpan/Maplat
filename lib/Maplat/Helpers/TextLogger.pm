@@ -4,9 +4,10 @@
 package Maplat::Helpers::TextLogger;
 use strict;
 use warnings;
+use Carp;
 
 use Maplat::Helpers::DateStrings;
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 sub new {
     my ($class, %config) = @_;
@@ -22,7 +23,7 @@ sub logLine {
     
     my $fullline = getISODate() . "  $logline\n";
     
-    open($self->{fh}, ">>", $self->{logfile});
+    open($self->{fh}, ">>", $self->{logfile}) or croak($!);
     print {$self->{fh}} $fullline;
     close($self->{fh});
     print $fullline . "\n";

@@ -4,13 +4,16 @@
 package Maplat::Web::DocsSpreadSheet;
 use strict;
 use warnings;
+use 5.010;
 
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use HTML::Parse;
-use HTML::FormatText;
 
-our $VERSION = 0.993;
+# FIXME: HTML::FormatText is broken
+#use HTML::FormatText;
+
+our $VERSION = 0.994;
 
 use Carp;
 use MIME::Base64;
@@ -80,44 +83,49 @@ sub list {
         $webdata{statuscolor} = "errortext";
     }
     
-    if($mode eq "edit") {
-        return $self->edit($cgi, $fileid, $filename);
-    } elsif($mode eq "create") {
-        return $self->edit($cgi, "new", $filename);
-    } elsif($mode eq "update") {
-        my $ispublic = $cgi->param("is_public") || "";
-        if($ispublic eq "") {
-            $ispublic = "false";
-        } else {
-            $ispublic = "true";
+    given($mode) {
+        when('edit') {
+            return $self->edit($cgi, $fileid, $filename);
         }
-        my $upsth = $dbh->prepare_cached("UPDATE documents
-                                         SET updated = now(),
-                                         filename = ?,
-                                         is_public = ?
-                                         WHERE id = ?")
-                or croak($dbh->errstr);
-        if(!$upsth->execute($filename, $ispublic, $fileid)) {
-            $dbh->rollback;
-            $webdata{statustext} = "Update failed!";
-            $webdata{statuscolor} = "errortext";
-        } else {
-            $dbh->commit;
-            $webdata{statustext} = "File settings updated";
-            $webdata{statuscolor} = "oktext";
+        when('create') {
+            return $self->edit($cgi, "new", $filename);
         }
-    } elsif($mode eq "delete") {
-        my $upsth = $dbh->prepare_cached("DELETE FROM documents
-                                         WHERE id = ?")
-                or croak($dbh->errstr);
-        if(!$upsth->execute($fileid)) {
-            $dbh->rollback;
-            $webdata{statustext} = "Delete failed!";
-            $webdata{statuscolor} = "errortext";
-        } else {
-            $dbh->commit;
-            $webdata{statustext} = "File deleted";
-            $webdata{statuscolor} = "oktext";
+        when('update') {
+            my $ispublic = $cgi->param("is_public") || "";
+            if($ispublic eq "") {
+                $ispublic = "false";
+            } else {
+                $ispublic = "true";
+            }
+            my $upsth = $dbh->prepare_cached("UPDATE documents
+                                             SET updated = now(),
+                                             filename = ?,
+                                             is_public = ?
+                                             WHERE id = ?")
+                    or croak($dbh->errstr);
+            if(!$upsth->execute($filename, $ispublic, $fileid)) {
+                $dbh->rollback;
+                $webdata{statustext} = "Update failed!";
+                $webdata{statuscolor} = "errortext";
+            } else {
+                $dbh->commit;
+                $webdata{statustext} = "File settings updated";
+                $webdata{statuscolor} = "oktext";
+            }
+        }
+        when('delete') {
+            my $upsth = $dbh->prepare_cached("DELETE FROM documents
+                                             WHERE id = ?")
+                    or croak($dbh->errstr);
+            if(!$upsth->execute($fileid)) {
+                $dbh->rollback;
+                $webdata{statustext} = "Delete failed!";
+                $webdata{statuscolor} = "errortext";
+            } else {
+                $dbh->commit;
+                $webdata{statustext} = "File deleted";
+                $webdata{statuscolor} = "oktext";
+            }
         }
     }
     
@@ -221,7 +229,10 @@ sub ajaxpost {
     
     # Remove some prefix junk from Javascript
     $data =~ s/^s\=//o;
-    my $plain_text = HTML::FormatText->new->format(parse_html($data));
+
+    # FIXME: HTML::FormatText is broken
+    #my $plain_text = HTML::FormatText->new->format(parse_html($data));
+    my $plain_text = $data;
 
     # Check if we have a sessiondata entry: If so, make a new
     # file and delete the entry

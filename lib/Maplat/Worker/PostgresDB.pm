@@ -10,12 +10,25 @@ use Maplat::Helpers::DateStrings;
 
 use DBI;
 use Carp;
+use XML::Simple;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 sub new {
     my ($proto, %config) = @_;
     my $class = ref($proto) || $proto;
+    
+    if(defined($config{include})) {
+        if(!-f $config{include} ) {
+            croak("Can't find include config " . $config{include});
+        }
+        my $include = XMLin($config{include});
+        foreach my $key (qw[dburl dbuser dbpassword]) {
+            if(defined($include->{$key})) {
+                $config{$key} = $include->{$key};
+            }
+        }
+    }
     
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
@@ -84,6 +97,7 @@ declare multiple modules with different modnames).
 
 =head1 Configuration
 
+=begin text
         <module>
                 <modname>maindb</modname>
                 <pm>PostgresDB</pm>
@@ -93,6 +107,29 @@ declare multiple modules with different modnames).
                         <dbpassword>SECRET</dbpassword>
                 </options>
         </module>
+=end text
+
+As an alternative, the DB connection info can be included from an external file. The
+file should look like this:
+
+=begin text
+        <postgresql>
+                <dburl>dbi:Pg:dbname=Maplat_DB</dburl>
+                <dbuser>Maplat_Server</dbuser>
+                <dbpassword>SECRET</dbpassword>
+        </postgresql>
+=end text
+        
+with the options section of the module like this:
+
+=begin text
+        <options>
+                <include>/path/to/configuration.xml</include>
+        </options>
+=end text
+
+A combination of these two is possible, the setting from the included file overwriting
+the directly configured ones.
 
 
 dburl is the DBI connection string, see DBD::Pg.

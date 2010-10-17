@@ -73,10 +73,12 @@ lib/Maplat/Helpers/BuildNum.pm
 lib/Maplat/Helpers/Cache/Memcached.pm
 lib/Maplat/Helpers/Cache/Memcached/GetParser.pm
 lib/Maplat/Helpers/CommandHelper.pm
+lib/Maplat/Helpers/ConfigLoader.pm
 lib/Maplat/Helpers/CSVFilter.pm
 lib/Maplat/Helpers/DateStrings.pm
 lib/Maplat/Helpers/DBSerialize.pm
 lib/Maplat/Helpers/FileSlurp.pm
+lib/Maplat/Helpers/FTPSync.pm
 lib/Maplat/Helpers/Logo.pm
 lib/Maplat/Helpers/MailLogger.pm
 lib/Maplat/Helpers/Mascot.pm
@@ -793,6 +795,7 @@ lib/Maplat/Worker/BaseModule.pm
 lib/Maplat/Worker/Commands.pm
 lib/Maplat/Worker/DirCleaner.pm
 lib/Maplat/Worker/MemCache.pm
+lib/Maplat/Worker/MemCachePg.pm
 lib/Maplat/Worker/OracleDB.pm
 lib/Maplat/Worker/PostgresDB.pm
 lib/Maplat/Worker/Reporting.pm

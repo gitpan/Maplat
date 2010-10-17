@@ -9,7 +9,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 
 use Carp;
@@ -51,13 +51,17 @@ sub get {
     my $debuglog = $memh->get($self->{worker});
     my @loglines;
     if($debuglog) {
+        while(ref($debuglog) eq "REF") {
+            $debuglog = $$debuglog;
+        }
         foreach my $line (reverse @{$debuglog}) {
-            $line =~ /(\d\d\d\d\-\d\d\-\d\d\ \d\d\:\d\d\:\d\d)\ (.*)/o;
-            my %hline = (
-                timestamp    => $1,
-                message        => $th->quote($2),
-            );
-            push @loglines, \%hline;
+            if($line =~ /(\d\d\d\d\-\d\d\-\d\d\ \d\d\:\d\d\:\d\d)\ (.*)/o) {
+                my %hline = (
+                    timestamp    => $1,
+                    message        => $th->quote($2),
+                );
+                push @loglines, \%hline;
+            }
         }
     }
     $webdata{debuglines} = \@loglines;

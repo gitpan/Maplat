@@ -14,7 +14,7 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 use Template;
 use Data::Dumper;
@@ -111,8 +111,8 @@ sub handle_request {
                     -charset => 'utf-8',
                     -lang => 'en-EN',
                     -title => 'MAPLAT WebGUI',
-		    '-x-frame-options'	=> 'deny', # deny clickjacking, see http://www.webmasterworld.com/webmaster/4022867.htm
-		);
+            '-x-frame-options'    => 'deny', # deny clickjacking, see http://www.webmasterworld.com/webmaster/4022867.htm
+        );
     
     my %result = (status    => 404, # Default result
                   type      => "text/plain",
@@ -127,8 +127,8 @@ sub handle_request {
     # The other defined HTTP/1.1 methods (PUT, DELETE, TRACE, CONNECT)
     # will get a "405 Method not allowed" response. Unknown method will
     # recieve a "501 Not Implemented"
-    if($cgi->request_method() !~ /^(GET|POST|HEAD)$/io) {
-        if($cgi->request_method() !~ /^(PUT|DELETE|TRACE|CONNECT)$/io) {
+    if($cgi->request_method() !~ /^(?:GET|POST|HEAD)$/io) {
+        if($cgi->request_method() !~ /^(?:PUT|DELETE|TRACE|CONNECT)$/io) {
             $result{status} = 405;
         } else {
             $result{status} = 501;
@@ -220,10 +220,10 @@ sub handle_request {
         }
     }
 
-	# Confirm to HEAD request standard. Disable body generation. This should
+    # Confirm to HEAD request standard. Disable body generation. This should
     # NOT touch any headers incl. Content-Length, we just don't *deliver*
     # the content.
-	if($cgi->request_method() eq "HEAD" && defined($result{data})) {
+    if($cgi->request_method() eq "HEAD" && defined($result{data})) {
         delete $result{data};
     }
 
@@ -347,7 +347,7 @@ sub configure {
     # ...what perl module it's supposed to be...
     my $perlmodule = "Maplat::Web::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
-	croak("$perlmodule not loaded");
+    croak("$perlmodule not loaded");
 
         ## Local module - load it first
         #my $requirestr;

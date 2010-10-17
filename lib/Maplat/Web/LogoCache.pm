@@ -10,7 +10,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 
 use Carp;
@@ -60,29 +60,38 @@ sub reload {
         opendir(my $dfh, $bdir) or croak($!);
         while((my $fname = readdir($dfh))) {
             next if($fname =~ /^\./);
-            $fname =~ /(.*)\.([a-zA-Z0-9]*)/;
-            my ($kname, $type) = ($1, $2);
-            if($type =~ /jpg/i) {
-                $type = "image/jpeg";
-            } elsif($type =~ /bmp/i) {
-                $type = "image/bitmap";
-            } elsif($type =~ /htm/i) {
-                $type = "text/html";
-            } elsif($type =~ /css/i) {
-                $type = "text/css";
-            } elsif($type =~ /js/i) {
-                $type = "application/javascript";
+            if($fname =~ /(.*)\.([a-zA-Z0-9]*)/) {
+                my ($kname, $type) = ($1, $2);
+                given($type) {
+                    when(/jpg/i) {
+                        $type = "image/jpeg";
+                    }
+                    when(/bmp/i) {
+                        $type = "image/bitmap";
+                    }
+                    when(/htm/i) {
+                        $type = "text/html";
+                    }
+                    when(/css/i) {
+                        $type = "text/css";
+                    }
+                    when(/js/i) {
+                        $type = "application/javascript";
+                    }
+                }
+                
+                my $nfname = $bdir . "/" . $fname;
+                my $data = slurpBinFile($nfname);
+        
+                my %entry = (name   => $kname,
+                            fullname=> $nfname,
+                            type    => $type,
+                            data    => $data,
+                            );
+                $files{$self->{imgwebpath} . $fname} = \%entry; # Store under full name
+            } else {
+                croak("Filename $fname has no extension");
             }
-            
-            my $nfname = $bdir . "/" . $fname;
-            my $data = slurpBinFile($nfname);
-    
-            my %entry = (name   => $kname,
-                        fullname=> $nfname,
-                        type    => $type,
-                        data    => $data,
-                        );
-            $files{$self->{imgwebpath} . $fname} = \%entry; # Store under full name
         }
         closedir($dfh);
     }

@@ -8,15 +8,28 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 use DBI;
 use English;
 use Carp;
+use XML::Simple;
 
 sub new {
     my ($proto, %config) = @_;
     my $class = ref($proto) || $proto;
+    
+    if(defined($config{include})) {
+        if(!-f $config{include} ) {
+            croak("Can't find include config " . $config{include});
+        }
+        my $include = XMLin($config{include});
+        foreach my $key (qw[dburl dbuser dbpassword]) {
+            if(defined($include->{$key})) {
+                $config{$key} = $include->{$key};
+            }
+        }
+    }
     
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
@@ -142,6 +155,24 @@ declare multiple modules with different modnames).
                         <dbpassword>SECRET</dbpassword>
                 </options>
         </module>
+
+As an alternative, the DB connection info can be included from an external file. The
+file should look like this:
+
+        <postgresql>
+                <dburl>dbi:Pg:dbname=Maplat_DB</dburl>
+                <dbuser>Maplat_Server</dbuser>
+                <dbpassword>SECRET</dbpassword>
+        </postgresql>
+        
+with the options section of the module like this:
+
+        <options>
+                <include>/path/to/configuration.xml</include>
+        </options>
+
+A combination of these two is possible, the setting from the included file overwriting
+the directly configured ones.
 
 
 dburl is the DBI connection string, see DBD::Pg.

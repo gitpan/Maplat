@@ -5,8 +5,9 @@ package Maplat::Worker;
 use strict;
 use warnings;
 use English;
+use Carp;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Worker::AdminCommands;
@@ -14,6 +15,7 @@ use Maplat::Worker::BaseModule;
 use Maplat::Worker::Commands;
 use Maplat::Worker::DirCleaner;
 use Maplat::Worker::MemCache;
+use Maplat::Worker::MemCachePg;
 use Maplat::Worker::OracleDB;
 use Maplat::Worker::PostgresDB;
 use Maplat::Worker::Reporting;
@@ -53,8 +55,8 @@ sub configure {
     # ...what perl module it's supposed to be...
     my $perlmodule = "Maplat::Worker::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
-	croak("$perlmodule not loaded");
-	
+    croak("$perlmodule not loaded");
+    
         ## Local module - load it first
         #my $requirestr;
         #if($self->{compiled} && $OSNAME eq 'MSWin32') {

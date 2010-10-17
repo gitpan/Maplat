@@ -8,7 +8,7 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 
 use Carp;
@@ -45,8 +45,6 @@ sub get {
     # !!! Must work on form data before calling get_defaultwebdata, otherwise the header will be wrong
     my $mode = $cgi->param('mode') || 'view';
     if($mode ne "view") {
-        my @arguments;
-        my $insth;
         my $command = "";
         
         my $delsth = $dbh->prepare_cached("DELETE FROM errors WHERE error_id = ? ");

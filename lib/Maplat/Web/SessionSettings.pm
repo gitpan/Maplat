@@ -11,7 +11,7 @@ use Maplat::Helpers::DBSerialize;
 
 use Carp;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 
 sub new {
@@ -67,9 +67,9 @@ sub get {
     }
 
     # Ok, try DB
-    my $sth = $dbh->prepare_cached("SELECT sdata FROM session_settings WHERE sid = ? AND skey = ?")
-          or die($dbh->errstr);
-    $sth->execute($sessionid, $settingname) or die($dbh->errstr);
+    my $sth = $dbh->prepare_cached("SELECT yamldata FROM session_settings WHERE sid = ? AND skey = ?")
+          or croak($dbh->errstr);
+    $sth->execute($sessionid, $settingname) or croak($dbh->errstr);
     while((my @line = $sth->fetchrow_array)) {
        $settingref = Maplat::Helpers::DBSerialize::dbthaw($line[0]);
        last;
@@ -142,7 +142,7 @@ sub delete {## no critic(BuiltinHomonyms)
 }
 
 sub list {
-			my ($self, $forcedid) = @_;
+    my ($self, $forcedid) = @_;
     
     my @settingnames = ();
     
@@ -210,7 +210,7 @@ sub on_refresh {
     #return if($now eq $self->{lastClean});
 
 
-    my $liststh = $dbh->prepare("SELECT sid, sdata
+    my $liststh = $dbh->prepare("SELECT sid, yamldata
                                 FROM session_settings
                                 WHERE skey = 'lastUpdate'")
         or croak($dbh->errstr);

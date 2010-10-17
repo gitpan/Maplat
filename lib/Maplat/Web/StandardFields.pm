@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Sys::Hostname;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 
 use Carp;
@@ -65,7 +65,14 @@ sub get_defaultwebdata {
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
     
     foreach my $key (keys %{$self->{memory}->{fields}}) {
-        $webdata->{$key} = $memh->get($self->{memory}->{fields}->{$key});
+        my $data = $memh->get($self->{memory}->{fields}->{$key});
+        if(defined($data) && $self->{memory}->{fields}->{$key} =~ /^(BUILD|VERSION)\:\:/go) {
+            while(ref($data) eq "SCALAR") {
+                $data = $$data;
+            }
+        }
+        $webdata->{$key} = $data;
+
     }
     
     return;

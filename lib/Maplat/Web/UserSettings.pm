@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 
 sub new {
@@ -47,7 +47,7 @@ sub get {
         return (1, $settingref);
     }
     
-    my $sth = $dbh->prepare_cached("SELECT encoded_data FROM users_settings " .
+    my $sth = $dbh->prepare_cached("SELECT yamldata FROM users_settings " .
                             "WHERE username = ? AND name = ?")
                     or return 0;
     

@@ -10,7 +10,7 @@ our @EXPORT_OK = qw(slurpTextFile slurpBinFile);
 
 use Carp;
 
-our $VERSION = 0.993;
+our $VERSION = 0.994;
 
 our @lines;
 
@@ -35,9 +35,9 @@ sub slurpTextFile {
     $data =~ s/\015/\012/go;
 
     # Split the lines, which also removes the linebreaks
-    my @lines = split/\012/, $data;
+    my @datalines = split/\012/, $data;
     
-    return @lines;
+    return @datalines;
 }
 
 sub slurpBinFile {

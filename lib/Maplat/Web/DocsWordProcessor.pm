@@ -4,13 +4,16 @@
 package Maplat::Web::DocsWordProcessor;
 use strict;
 use warnings;
+use 5.010;
 
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use HTML::Parse;
-use HTML::FormatText;
 
-our $VERSION = 0.993;
+# FIXME: HTML::FormatText is broken
+#use HTML::FormatText;
+
+our $VERSION = 0.994;
 
 
 use Carp;
@@ -178,76 +181,89 @@ sub edit {
     }
     
     # normal mode handling resumes here
-    if($mode eq "create") {
-        $nextmode = "savenew";
-        $fileid = "";
-        $data = "";
-    } elsif($mode eq "edit" || $mode eq "viewuserform") {
-        if($mode eq "edit") {
-            $nextmode = "save";
-        } else {
-            $nextmode = "saveuserform";
+    given($mode) {
+        when('create') {
+            $nextmode = "savenew";
+            $fileid = "";
+            $data = "";
         }
-        my $getsth = $dbh->prepare_cached("SELECT content
-                                          FROM documents
-                                          WHERE id = ?")
-                or croak($dbh->errstr);
-        if(!$getsth->execute($fileid)) {
-            $dbh->rollback;
-            $webdata{statustext} = "Failed to read the files!";
-            $webdata{statuscolor} = "errortext";
-        } else {
-            ($data) = $getsth->fetchrow_array;
-            $getsth->finish;
-            $dbh->rollback;
-        }
-    } elsif($mode eq "savenew") {
-        $nextmode = "save";
-        $data = $cgi->param("fck1") || "";
-        my $plain_text = HTML::FormatText->new->format(parse_html($data));
-        my $idsth = $dbh->prepare_cached("SELECT nextval('documents_id_seq')")
-                or croak($dbh->errstr);
-        my $insth = $dbh->prepare_cached("INSERT INTO documents
-                                          (id, username, filename, content, txtcontent, doctype)
-                                          VALUES (?, ?, ?, ?, ?, 'Word')")
-                or croak($dbh->errstr);
-        if(!$idsth->execute()) {
-            $dbh->rollback;
-            $webdata{statustext} = "Failed to generate unique ID!";
-            $webdata{statuscolor} = "errortext";
-        } else {
-            ($fileid) = $idsth->fetchrow_array;
-            $idsth->finish;
-            
-            if(!$insth->execute($fileid, $webdata{userData}->{user},
-                                $filename, $data, $plain_text)) {
+        when(/^(?:edit|viewuserform)/) {
+            if($mode eq "edit") {
+                $nextmode = "save";
+            } else {
+                $nextmode = "saveuserform";
+            }
+            my $getsth = $dbh->prepare_cached("SELECT content
+                                              FROM documents
+                                              WHERE id = ?")
+                    or croak($dbh->errstr);
+            if(!$getsth->execute($fileid)) {
                 $dbh->rollback;
-                $webdata{statustext} = "Failed to insert file!";
+                $webdata{statustext} = "Failed to read the files!";
                 $webdata{statuscolor} = "errortext";
             } else {
-                $webdata{statustext} = "File created!";
+                ($data) = $getsth->fetchrow_array;
+                $getsth->finish;
+                $dbh->rollback;
+            }
+        }
+        when('savenew') {
+            $nextmode = "save";
+            $data = $cgi->param("fck1") || "";
+
+            # FIXME: HTML::FormatText is broken
+            #my $plain_text = HTML::FormatText->new->format(parse_html($data));
+            my $plain_text = $data;
+
+            my $idsth = $dbh->prepare_cached("SELECT nextval('documents_id_seq')")
+                    or croak($dbh->errstr);
+            my $insth = $dbh->prepare_cached("INSERT INTO documents
+                                              (id, username, filename, content, txtcontent, doctype)
+                                              VALUES (?, ?, ?, ?, ?, 'Word')")
+                    or croak($dbh->errstr);
+            if(!$idsth->execute()) {
+                $dbh->rollback;
+                $webdata{statustext} = "Failed to generate unique ID!";
+                $webdata{statuscolor} = "errortext";
+            } else {
+                ($fileid) = $idsth->fetchrow_array;
+                $idsth->finish;
+                
+                if(!$insth->execute($fileid, $webdata{userData}->{user},
+                                    $filename, $data, $plain_text)) {
+                    $dbh->rollback;
+                    $webdata{statustext} = "Failed to insert file!";
+                    $webdata{statuscolor} = "errortext";
+                } else {
+                    $webdata{statustext} = "File created!";
+                    $webdata{statuscolor} = "oktext";
+                    $dbh->commit;
+                }    
+            }
+        }
+        when('save') {
+            $nextmode = "save";
+            $data = $cgi->param("fck1") || "";
+
+            # FIXME: HTML::FormatText is broken
+            #my $plain_text = HTML::FormatText->new->format(parse_html($data));
+            my $plain_text = $data;
+
+            my $upsth = $dbh->prepare_cached("UPDATE documents
+                                              SET updated = now(),
+                                              content = ?,
+                                              txtcontent = ?
+                                              WHERE id = ?")
+                    or croak($dbh->errstr);
+            if(!$upsth->execute($data, $plain_text, $fileid)) {
+                $dbh->rollback;
+                $webdata{statustext} = "Failed to write the files!";
+                $webdata{statuscolor} = "errortext";
+            } else {
+                $webdata{statustext} = "File saved!";
                 $webdata{statuscolor} = "oktext";
                 $dbh->commit;
-            }    
-        }
-    } elsif($mode eq "save") {
-        $nextmode = "save";
-        $data = $cgi->param("fck1") || "";
-        my $plain_text = HTML::FormatText->new->format(parse_html($data));
-        my $upsth = $dbh->prepare_cached("UPDATE documents
-                                          SET updated = now(),
-                                          content = ?,
-                                          txtcontent = ?
-                                          WHERE id = ?")
-                or croak($dbh->errstr);
-        if(!$upsth->execute($data, $plain_text, $fileid)) {
-            $dbh->rollback;
-            $webdata{statustext} = "Failed to write the files!";
-            $webdata{statuscolor} = "errortext";
-        } else {
-            $webdata{statustext} = "File saved!";
-            $webdata{statuscolor} = "oktext";
-            $dbh->commit;
+            }
         }
     }
     
