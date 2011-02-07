@@ -21,6 +21,10 @@ BEGIN {
 use Test::More;
 my $hasMemcached;
 BEGIN { 
+    if ( not $ENV{TEST_SIMPLE} ) {
+        my $msg = 'Author test.  Set $ENV{TEST_SIMPLE} to a true value to run.';
+        plan( skip_all => $msg );
+    }
     plan tests => 10;
     use_ok('Maplat::Web');
     use_ok('Time::HiRes', qw(sleep usleep));
@@ -39,6 +43,7 @@ BEGIN {
         $hasMemcached = 1;
     }
 };
+
 
 our $APPNAME = "Maplat Webtest";
 our $VERSION = "0.95";

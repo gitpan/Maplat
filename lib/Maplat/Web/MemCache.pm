@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::MemCache;
@@ -9,10 +9,13 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
+use Readonly;
+
+Readonly my $TESTRANGE => 1_000_000;
 
 sub new {
     my ($proto, %config) = @_;
@@ -27,33 +30,36 @@ sub new {
     # First, we try the festest one, then the standard
     # one and if everything fails we use our own
     my $memdtype;
-    if(eval('require Cache::Memcached::Fast')) {
-        print "    Cache::Memcached::Fast available.\n";
-        $memdtype = "Cache::Memcached::Fast";
-        $memd = Cache::Memcached::Fast->new ({
-                        servers   => [ $self->{service} ],
-                        namespace => $self->{namespace} . "::",
-                        connect_timeout  => 0,
-                    });
-        $memd_loaded = 1;
-        $self->{mctype} = "fast";
-    } elsif(eval('require Cache::Memcached')) {
-        print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
-        $memdtype = "Cache::Memcached";
-        $memd = Cache::Memcached->new ({
-                        servers   => [ $self->{service} ],
-                        namespace => $self->{namespace} . "::",
-                        connect_timeout  => 0,
-                    });
-        $memd_loaded = 1;
-        $self->{mctype} = "slow";
-    } else {
-        print "    No Cache::Memcached* available ... will try to use Maplat::Helpers::Cache::Memcached\n";
+    {
+        ## no critic (BuiltinFunctions::ProhibitStringyEval)
+        if(eval('require Cache::Memcached::Fast')) {
+            print "    Cache::Memcached::Fast available.\n";
+            $memdtype = "Cache::Memcached::Fast";
+            $memd = Cache::Memcached::Fast->new ({
+                            servers   => [ $self->{service} ],
+                            namespace => $self->{namespace} . "::",
+                            connect_timeout  => 0,
+                        });
+            $memd_loaded = 1;
+            $self->{mctype} = "fast";
+        } elsif(eval('require Cache::Memcached')) {
+            print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
+            $memdtype = "Cache::Memcached";
+            $memd = Cache::Memcached->new ({
+                            servers   => [ $self->{service} ],
+                            namespace => $self->{namespace} . "::",
+                            connect_timeout  => 0,
+                        });
+            $memd_loaded = 1;
+            $self->{mctype} = "slow";
+        } else {
+            print "    No Cache::Memcached* available ... will try to use Maplat::Helpers::Cache::Memcached\n";
+        }
     }
 
     # Check if the selected Memcached lib is working correctly
-    my $key = "test_" . int(rand(10000)) . "_" . int(rand(10000));
-    my $val = "test_" . int(rand(10000)) . "_" . int(rand(10000));
+    my $key = "test_" . int(rand($TESTRANGE)) . "_" . int(rand($TESTRANGE));
+    my $val = "test_" . int(rand($TESTRANGE)) . "_" . int(rand($TESTRANGE));
     my $newval;
     if($memd_loaded) {
         $memd->set($key, $val);
@@ -125,8 +131,8 @@ sub afterfork {
     }
     
     if(defined($memd)) {
-        my $key = "test_" . int(rand(10000)) . "_" . int(rand(10000));
-        my $val = "test_" . int(rand(10000)) . "_" . int(rand(10000));
+        my $key = "test_" . int(rand($TESTRANGE)) . "_" . int(rand($TESTRANGE));
+        my $val = "test_" . int(rand($TESTRANGE)) . "_" . int(rand($TESTRANGE));
 
         $memd->set($key, $val);
         my $newval = $memd->get($key);
@@ -189,6 +195,20 @@ sub refresh_lifetick {
     return 0;
 }
 
+# disable_lifetick is used to temporarly suspend lifetick operation
+# for long-running database commands; normal lifetick handling is resumed with
+# the following refresh_lifetick call.
+sub disable_lifetick {
+    my ($self) = @_;
+
+    my $ticktime = 0;
+    my $tickkey = "LIFETICK::" . $$;
+    $self->set($tickkey, $ticktime);
+    $self->{oldtime} = $ticktime;
+    
+    return 1;
+}
+
 sub get {
     my ($self, $key) = @_;
     
@@ -201,7 +221,7 @@ sub get {
     return $self->{memd}->get($key);
 }
 
-sub set {
+sub set { ## no critic (NamingConventions::ProhibitAmbiguousNames)
     my ($self, $key, $data) = @_;
 
     if($self->{forked}) {
@@ -327,7 +347,11 @@ for active commands and highlighting them in various other modules
 
 =head2 refresh_lifetick
 
-Refreshed the lifetick variable for this application in memcached.
+Refresh the lifetick variable for this application in memcached.
+
+=head2 disable_lifetick
+
+Disable lifetick handling.
 
 =head2 set
 
@@ -385,7 +409,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

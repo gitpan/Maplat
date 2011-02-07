@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Worker::MemCache;
@@ -11,8 +11,11 @@ use Maplat::Helpers::BuildNum;
 
 use Maplat::Helpers::Cache::Memcached;
 use Carp;
+use Readonly;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
+
+Readonly my $TESTRANGE => 1_000_000;
 
 sub new {
     my ($proto, %config) = @_;
@@ -26,29 +29,32 @@ sub new {
     # Decide which Memcached module we want to use
     # First, we try the festest one, then the standard
     # one and if everything fails we use our own
-    if(eval('require Cache::Memcached::Fast')) {
-        print "    Cache::Memcached::Fast available.\n";
-        $memd = Cache::Memcached::Fast->new ({
-                        servers   => [ $self->{service} ],
-                        namespace => $self->{namespace} . "::",
-                        connect_timeout  => 0,
-                    });
-        $memd_loaded = 1;
-    } elsif(eval('require Cache::Memcached')) {
-        print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
-        $memd = Cache::Memcached->new ({
-                        servers   => [ $self->{service} ],
-                        namespace => $self->{namespace} . "::",
-                        connect_timeout  => 0,
-                    });
-        $memd_loaded = 1;
-    } else {
-        print "    No Cache::Memcached* available ... will try to use Maplat::Helpers::Cache::Memcached\n";
+    {
+        ## no critic (BuiltinFunctions::ProhibitStringyEval)
+        if(eval('require Cache::Memcached::Fast')) {
+            print "    Cache::Memcached::Fast available.\n";
+            $memd = Cache::Memcached::Fast->new ({
+                            servers   => [ $self->{service} ],
+                            namespace => $self->{namespace} . "::",
+                            connect_timeout  => 0,
+                        });
+            $memd_loaded = 1;
+        } elsif(eval('require Cache::Memcached')) {
+            print "    No Cache::Memcached::Fast ... falling back to Cache::Memcached\n";
+            $memd = Cache::Memcached->new ({
+                            servers   => [ $self->{service} ],
+                            namespace => $self->{namespace} . "::",
+                            connect_timeout  => 0,
+                        });
+            $memd_loaded = 1;
+        } else {
+            print "    No Cache::Memcached* available ... will try to use Maplat::Helpers::Cache::Memcached\n";
+        }
     }
 
     # Check if the selected Memcached lib is working correctly
-    my $key = "test_" . int(rand(10000)) . "_" . int(rand(10000));
-    my $val = "test_" . int(rand(10000)) . "_" . int(rand(10000));
+    my $key = "test_" . int(rand($TESTRANGE)) . "_" . int(rand($TESTRANGE));
+    my $val = "test_" . int(rand($TESTRANGE)) . "_" . int(rand($TESTRANGE));
     my $newval;
     if($memd_loaded) {
         $memd->set($key, $val);
@@ -142,7 +148,7 @@ sub get {
     return $self->{memd}->get($key);
 }
 
-sub set {
+sub set { ## no critic (NamingConventions::ProhibitAmbiguousNames)
     my ($self, $key, $data) = @_;
     
     $key = $self->sanitize_key($key);
@@ -279,7 +285,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

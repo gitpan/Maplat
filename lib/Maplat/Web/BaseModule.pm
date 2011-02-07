@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 
@@ -6,7 +6,7 @@ package Maplat::Web::BaseModule;
 use strict;
 use warnings;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 use Carp;
 
@@ -51,11 +51,12 @@ BEGIN {
     # all other web modules, so this auto-generated functions are subclassed into
     # every child.
     my @stdFuncs = qw(prefilter postfilter defaultwebdata task loginitem
-                        logoutitem sessionrefresh prerender);
-    no strict 'refs';
+                        logoutitem sessionrefresh prerender cleanup);
     
     # -- Deep magic begins here...
     for my $a (@stdFuncs){
+        #print STDERR "Function " . __PACKAGE__ . "::register_$a will call add_$a\n";
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::register_$a"} =
             sub {
                 my $funcname = "add_$a";
@@ -314,6 +315,10 @@ generating the dynamic menus and views in module Login.
     }
   }
 
+=head2 register_cleanup
+
+Register a callback for "cleanup" operations after a page has been rendered. This might for example be a function in a
+database module that makes sure there are no open transactions.
 
 =head2 get_defaultwebdata
 
@@ -338,7 +343,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

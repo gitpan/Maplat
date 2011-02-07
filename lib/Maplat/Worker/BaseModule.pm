@@ -1,11 +1,11 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Worker::BaseModule;
 use strict;
 use warnings;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 use Carp;
 
@@ -30,6 +30,13 @@ sub register_worker {
     my ($self, $funcname) = @_;
     
     $self->{server}->add_worker($self, $funcname);
+    return;
+}
+
+sub register_cleanup {
+    my ($self, $funcname) = @_;
+    
+    $self->{server}->add_cleanup($self, $funcname);
     return;
 }
 
@@ -84,6 +91,11 @@ one argument, the name of the cyclic function, for example:
 
 It is possible to register multiple cyclic functions within the same worker module.
 
+=head2 register_cleanup
+
+Register a callback for "cleanup" operations after a workcycle has been completed. This might for example be a function in a
+database module that makes sure there are no open transactions.
+
 =head1 Configuration
 
 This module is not used directly and doesn't need configuration.
@@ -102,7 +114,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

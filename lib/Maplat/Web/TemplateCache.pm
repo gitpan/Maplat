@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::TemplateCache;
@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Template;
 use HTML::Entities;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 use Carp;
@@ -21,7 +21,11 @@ sub new {
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
     
-    $self->{processor} = Template->new();
+    $self->{processor} = Template->new({
+        PLUGINS => {
+            tr => 'Maplat::Web::TT::Translate',
+        },  
+    });
     if(!defined($self->{processor})) {
         croak("Failed to load template engine");
     }
@@ -35,8 +39,13 @@ sub reload {
 
     my %files;
 
+    my @DIRS = reverse @INC;
+    if(defined($self->{EXTRAINC})) {
+        push @DIRS, @{$self->{EXTRAINC}};
+    }
+
     foreach my $view (@{$self->{view}}) {
-        foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+        foreach my $bdir (@DIRS) {
             next if($bdir eq "."); # Load "./" at the end
             my $fulldir = $bdir . "/" . $view->{path};
             print "   ** checking $fulldir \n";
@@ -116,6 +125,7 @@ sub get {
     if(defined($self->{processor}->{_ERROR}) &&
             $self->{processor}->{_ERROR}) {
         $self->{LastError} = $self->{processor}->{_ERROR};
+        print STDERR $self->{processor}->{_ERROR}->[1] . "\n";
     }
     return $output;
 }
@@ -262,7 +272,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

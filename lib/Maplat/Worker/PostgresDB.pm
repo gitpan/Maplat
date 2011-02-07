@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Worker::PostgresDB;
@@ -12,7 +12,7 @@ use DBI;
 use Carp;
 use XML::Simple;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 sub new {
     my ($proto, %config) = @_;
@@ -48,7 +48,17 @@ sub reload {
 
 sub register {
     my $self = shift;
-    # Nothing to do...
+    
+    $self->register_cleanup("cleanup");
+    
+    return;
+}
+
+sub cleanup {
+    my ($self) = @_;
+    
+    $self->{mdbh}->rollback;
+    
     return;
 }
 
@@ -60,21 +70,24 @@ BEGIN {
     my @simpleFuncs = qw(commit rollback errstr);
     my @varSetFuncs = qw(AutoCommit RaiseError);
     my @varGetFuncs = qw();
-    no strict 'refs';
 
     for my $a (@simpleFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a(); };
     }
         
     for my $a (@stdFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->$a($_[1]); };
     }
 
     for my $a (@varSetFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a} = $_[1]; };
     }
     
     for my $a (@varGetFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { return $_[0]->{mdbh}->{$a}; };
     }
 
@@ -171,6 +184,10 @@ Commit transaction.
 
 Rollback transaction.
 
+=head2 cleanup
+
+Internal callback function, makes sure there is no active transaction after a work cycle.
+
 =head1 Dependencies
 
 This module is a basic module which does not depend on other worker modules.
@@ -186,7 +203,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

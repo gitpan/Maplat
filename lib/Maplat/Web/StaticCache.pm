@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::StaticCache;
@@ -9,7 +9,7 @@ use 5.010;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 
 use Carp;
@@ -39,7 +39,13 @@ sub reload {
     } elsif($self->{path} =~ /Static/i) {
         $extrabase = "/Maplat/Web/Static";
     }
-    foreach my $bdir (@INC, @{$self->{EXTRAINC}}) {
+
+    my @DIRS = reverse @INC;
+    if(defined($self->{EXTRAINC})) {
+        push @DIRS, @{$self->{EXTRAINC}};
+    }
+
+    foreach my $bdir (@DIRS) {
         next if($bdir eq ".");
         my $fulldir = $bdir . $extrabase;
         print "   ** checking $fulldir \n";
@@ -74,6 +80,7 @@ sub load_dir {
             next;
         }
 
+        #print STDERR "Load $nfname\n";
         if($fname =~ /(.*)\.([a-zA-Z0-9]*)/) {
             my ($kname, $type) = ($1, $2);
             given($type) {
@@ -86,11 +93,17 @@ sub load_dir {
                 when(/htm/i) {
                     $type = "text/html";
                 }
+                when(/txt/i) {
+                    $type = "text/plain";
+                }
                 when(/css/i) {
                     $type = "text/css";
                 }
                 when(/js/i) {
                     $type = "application/javascript";
+                }
+                when(/ico/i) {
+                    $type = "image/vnd.microsoft.icon";
                 }
             }
             
@@ -182,7 +195,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

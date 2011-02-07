@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Helpers::FTPSync;
@@ -9,9 +9,7 @@ use 5.008000;
 
 use Net::FTP;
 
-our $VERSION = 0.994;
-
-our @lines;
+our $VERSION = 0.995;
 
 sub new {
     my ($class, $url, $localdir, $mode, $filetype) = @_;
@@ -166,7 +164,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::PostgresDB;
@@ -8,10 +8,10 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 use DBI;
-use English;
+use English '-no_match_vars';
 use Carp;
 use XML::Simple;
 
@@ -74,7 +74,17 @@ sub reload {
 
 sub register {
     my $self = shift;
-    #$self->{server}->{webpaths}->{$self->{webpath}} = $self;
+    
+    $self->register_cleanup("cleanup");
+    
+    return;
+}
+
+sub cleanup {
+    my ($self) = @_;
+    
+    $self->{mdbh}->rollback;
+    
     return;
 }
 
@@ -100,21 +110,24 @@ BEGIN {
     my @simpleFuncs = qw(commit rollback errstr);
     my @varSetFuncs = qw(AutoCommit RaiseError);
     my @varGetFuncs = qw();
-    no strict 'refs';
 
     for my $a (@simpleFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->$a(); };
     }
         
     for my $a (@stdFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->$a($_[1]); };
     }
 
     for my $a (@varSetFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->{$a} = $_[1]; };
     }
     
     for my $a (@varGetFuncs){
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::$a"} = sub { $_[0]->checkDBH(); return $_[0]->{mdbh}->{$a}; };
     }
 
@@ -218,6 +231,10 @@ Rollback transaction.
 
 Internal function. Checks if the database handle is valid and reconnects if needed.
 
+=head2 cleanup
+
+Internal callback function, makes sure there are no open transactions after rendering a page.
+
 =head1 Dependencies
 
 This module is a basic module which does not depend on other web modules.
@@ -233,7 +250,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

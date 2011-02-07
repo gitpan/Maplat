@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Worker::SendMail;
@@ -16,7 +16,7 @@ use Maplat::Helpers::FileSlurp qw(slurpBinFile);
 
 use Carp;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 sub new {
     my ($proto, %config) = @_;
@@ -62,7 +62,7 @@ sub sendMail {
     }
     
     if(!sendmail(%mail)) {
-        return (0, "Can't send status mail: " . $Mail::Sendmail::error);
+        return (0, "Can't send status mail: " . $Mail::Sendmail::error); ## no critic (Variables::ProhibitPackageVars)
     } else {
         return (1, "Status mail sent");
     }
@@ -178,7 +178,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

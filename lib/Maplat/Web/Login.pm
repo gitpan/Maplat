@@ -1,9 +1,10 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::Login;
 use strict;
 use warnings;
+use 5.012;
 
 use base qw(Maplat::Web::BaseModule);
 
@@ -11,12 +12,17 @@ use Carp;
 use Digest::MD5 qw(md5_hex);
 use Digest::SHA1 qw(sha1_hex);
 use Maplat::Helpers::DateStrings;
+use Maplat::Helpers::DBSerialize;
 
-our $VERSION = 0.994;
+use Readonly;
+
+our $VERSION = 0.995;
 
 my $password_prefix = "CARNIVORE::";
 my $password_postfix = "# or 1984";
 my $ip_postfix = "Grummel42";
+
+Readonly my $TESTRANGE => 1_000_000;
 
 sub new {
     my ($proto, %config) = @_;
@@ -53,9 +59,28 @@ sub new {
             $insth->execute("admin", md5_hex($password), sha1_hex($password), "true", 'rene.schickbauer@gmail.com') or croak($dbh->errstr);
         }
         $dbh->commit;
-    }    
+    }
+    
+    my @publicurls;
+    $self->{publicurls} = \@publicurls;
     
     return $self;
+}
+
+sub register {
+    my $self = shift;
+    
+    $self->register_webpath($self->{login}->{webpath}, "get_login");
+    $self->register_webpath($self->{logout}->{webpath}, "get_logout");
+    $self->register_webpath($self->{pwchange}->{webpath}, "get_pwchange");
+    $self->register_webpath($self->{useredit}->{webpath}, "get_useredit");
+    $self->register_webpath($self->{viewselect}->{webpath}, "get_viewselect");
+    $self->register_webpath($self->{sessionrefresh}->{webpath}, "get_sessionrefresh");
+    $self->register_prefilter("prefilter");
+    $self->register_postfilter("postfilter");
+    $self->register_defaultwebdata("get_defaultwebdata");
+    $self->register_prerender("prerender");
+    return;
 }
 
 sub reload {
@@ -102,28 +127,6 @@ sub reload {
         }   
     }
     return;
-}
-
-sub get {
-    my ($self, $cgi) = @_;
-    
-    my $webpath = $cgi->path_info();
-    
-    if($webpath eq $self->{login}->{webpath}) { ## no critic
-        return $self->get_login($cgi);
-    } elsif($webpath eq $self->{logout}->{webpath}) {
-        return $self->get_logout($cgi);
-    } elsif($webpath eq $self->{sessionrefresh}->{webpath}) {
-        return $self->get_sessionrefresh($cgi);
-    } elsif($webpath eq $self->{pwchange}->{webpath}) {
-        return $self->get_pwchange($cgi);
-    } elsif($self->{currentData}->{type} eq "admin" && $webpath eq $self->{useredit}->{webpath}) {
-        return $self->get_useredit($cgi);
-    } elsif($self->{currentData}->{type} =~ /^(admin|user)$/ && $webpath eq $self->{viewselect}->{webpath}) {
-        return $self->get_viewselect($cgi);
-    } else {
-        return (status  =>  404);
-    }
 }
 
 sub get_viewselect {
@@ -216,8 +219,94 @@ sub get_login {
         PostLink    =>  $self->{login}->{webpath},
     );
     
+    my $mode = $cgi->param('mode') || 'username';
+    my $host_addr = $cgi->remote_addr();    
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $cardid = "";
+    
+    if($mode eq "chipcard") {
+        # First, we need to check if a chipcard is active from that client and get its ID
+        my $casth = $dbh->prepare_cached("SELECT card_id FROM cc_activecards
+                                  WHERE client_addr = ?")
+                or croak($dbh->errstr);
+        if(!$casth->execute($host_addr)) {
+            $dbh->rollback;
+        } else {
+            my ($tmpcard) = $casth->fetchrow_array;
+            $casth->finish;
+            if(defined($tmpcard)) {
+                $cardid = $tmpcard;
+            }
+        }
+        
+        if($cardid eq "") {
+            $mode = "username";
+            $webdata{statustext} = "No Chipcard";
+            $webdata{statuscolor} = "errortext";
+        }
+    }
+        
+    if($mode eq "chipcard") {    
+        my $newuser = ""; # in case we need to generate a new user on the fly
+        
+        # Now, let's check if the card already has a MAPLAT user attached to it...
+        my $custh = $dbh->prepare_cached("SELECT username FROM users
+                                  WHERE chipcard_id = ?")
+                or croak($dbh->errstr);
+        if(!$custh->execute($cardid)) {
+            $dbh->rollback;
+            $cardid = "";
+        } else {
+            my ($tmpuser) = $custh->fetchrow_array;
+            $custh->finish;
+            if(defined($tmpuser)) {
+                $webdata{username} = $tmpuser;
+                $webdata{password} = '?'; # bypass empty password check
+            } else {
+                # Ok, we need to create a new user with some default settings
+                # First, we need the chipcard username
+                my $costh = $dbh->prepare_cached("SELECT owner_name
+                                          FROM cc_card
+                                          WHERE card_id = ?")
+                        or croak($dbh->errstr);
+                if(!$costh->execute($cardid)) {
+                    $dbh->rollback;
+                    $cardid = "";
+                } else {
+                    my ($tmpowner) = $costh->fetchrow_array;
+                    $costh->finish;
+                    if(defined($tmpowner)) {
+                        $newuser = $tmpowner;
+                    } else {
+                        $cardid = "";
+                    }
+                }
+            }
+        }
+        
+        # Ok, we need to make a new user
+        if($cardid ne "" && $newuser ne "") {
+            my $nsth = $dbh->prepare_cached("INSERT INTO users
+                                     (username, password_sha1, password_md5, has_vnc,
+                                      has_chipcardonly, chipcard_id)
+                                      VALUES (?, ?, ?, ?, ?, ?)")
+                    or croak($dbh->errstr);
+            if(!$nsth->execute($newuser, '----', '----', 't', 't', $cardid)) {
+                $dbh->rollback;
+                $cardid = "";
+            } else {
+                $dbh->commit;
+                $webdata{username} = $newuser;
+                $webdata{password} = '?'; # bypass empty password check
+            }
+        }
+    }
+    
+    if($cardid eq "") {
+        $mode = "username";
+    }
+    
     if($webdata{username} ne '' && $webdata{password} ne '') {
-        my $dbh = $self->{server}->{modules}->{$self->{db}};
         my @dbRights;
         my %defaultViews;
         foreach my $ur (@{$self->{userlevels}->{userlevel}}) {
@@ -225,18 +314,43 @@ sub get_login {
             $defaultViews{$ur->{db}} = $ur->{defaultview};
         }
         my $rightCols = join(", ", @dbRights);
-        my $sth = $dbh->prepare_cached("SELECT username, email_addr,
-                                       $rightCols
-                                       FROM users " .
-                                "WHERE username = ? AND password_md5 = ? and password_sha1 = ?")
-                    or croak($dbh->errstr);
+        my $sth;
         
-        my $password = $password_prefix . $webdata{password} . $password_postfix;
-        $sth->execute($webdata{username}, md5_hex($password), sha1_hex($password));
+        if($mode eq "username") {
+            $sth = $dbh->prepare_cached("SELECT username, email_addr, chipcard_id,
+                                           $rightCols
+                                           FROM users
+                                    WHERE username = ?
+                                    AND password_md5 = ?
+                                    AND password_sha1 = ?
+                                    AND has_chipcardonly = 'false'::boolean")
+                        or croak($dbh->errstr);
+            
+            my $password = $password_prefix . $webdata{password} . $password_postfix;
+            $sth->execute($webdata{username}, md5_hex($password), sha1_hex($password));
+        } elsif($mode eq "chipcard") {
+            $sth = $dbh->prepare_cached("SELECT username, email_addr, chipcard_id, 
+                                           $rightCols
+                                           FROM users
+                                    WHERE username = ?
+                                    AND chipcard_id = ?")
+                        or croak($dbh->errstr);
+            $sth->execute($webdata{username}, $cardid);
+        }
         my %user;
         while((my $line = $sth->fetchrow_hashref)) {
             $user{username} = $line->{username};
             $user{email_addr} = $line->{email_addr};
+            $user{chipcard_id} = $line->{chipcard_id};
+            
+            if($line->{chipcard_id} eq "") {
+                # User has no chipcard - disable access to VNC since we don't have a company name
+                $line->{has_vnc} = 0;
+            }
+            
+            # Default: Set company to a save default of "UNKNOWN"
+            # This gets overriden if the user has a chipcard set in his/her profile
+            $user{company} = "UNKNOWN";
             
             if($line->{$self->{userlevels}->{admin}}) {
                 $user{type} = "admin";
@@ -252,7 +366,7 @@ sub get_login {
                         $user{view} = $defaultViews{$dbright};
                         
                         foreach my $view (@{$self->{viewselect}->{views}->{view}}) {
-                            if($user{view} eq $view->{display}) {
+                            if($user{view} eq $view->{display} && defined($view->{startlink})) {
                                 $user{logoview} = $view->{logodisplay};
                                 $user{startpage} = $view->{startlink};
                             }
@@ -272,11 +386,27 @@ sub get_login {
             last;
         }
         $sth->finish;
-        $dbh->commit;
-        if(defined($user{username})) {
-            my $session = "SESSION" . int(rand(1000000)) . int(rand(1000000)) . int(rand(1000000));
         
-            my $host_addr = $cgi->remote_addr();
+        if(defined($user{username}) && $user{chipcard_id} ne "") {
+            my $comsth = $dbh->prepare_cached("SELECT company_name
+                                              FROM cc_card
+                                              WHERE card_id = ?")
+                    or croak($dbh->errstr);
+            if(!$comsth->execute($user{chipcard_id})) {
+                $dbh->rollback;
+            } else {
+                my ($tmpcompany) = $comsth->fetchrow_array;
+                $comsth->finish;
+                if(defined($tmpcompany)) {
+                    $user{company} = $tmpcompany;
+                }
+            }
+        }
+        
+        $dbh->rollback;
+        if(defined($user{username})) {
+            my $session = "SESSION" . int(rand($TESTRANGE)) . int(rand($TESTRANGE)) . int(rand($TESTRANGE));
+        
             $session .= "-of-" . md5_hex($host_addr . $ip_postfix);
         
             $self->{server}->{modules}->{$self->{memcache}}->set($session, \%user);
@@ -293,6 +423,12 @@ sub get_login {
             $webdata{statustext} = "Login error";
             $webdata{statuscolor} = "errortext";
         } 
+    }
+    
+    # Make sure we don't pass out internal data on chipcard mode
+    if($mode eq "chipcard") {
+        $webdata{username} = "";
+        $webdata{password} = "";
     }
     
     my $template = $self->{server}->{modules}->{templates}->get("login", 1, %webdata);
@@ -318,7 +454,7 @@ sub get_pwchange {
     
     my $mode = $cgi->param('mode') || 'view';
     if($mode eq "changepw") {
-        if($webdata{pwold} ne "" && $webdata{pwnew1} ne "" && $webdata{pwnew2} ne "") { ## no critic
+        if($webdata{pwold} ne "" && $webdata{pwnew1} ne "" && $webdata{pwnew2} ne "") { ## no critic (ControlStructures::ProhibitCascadingIfElse)
             if($webdata{pwnew1} ne $webdata{pwnew2}) {
                 $webdata{statustext} = "New Passwords do not match!";
                 $webdata{statuscolor} = "errortext";
@@ -405,6 +541,7 @@ sub get_useredit {
         username    =>  $cgi->param('adduser_username') || '',
         pwnew       =>  $cgi->param('adduser_pwnew') || '',
         email       =>  $cgi->param('adduser_email') || '',
+        chipcard_id =>  $cgi->param('adduser_chipcard_id') || '',
     );
     my @addurights;
     foreach my $userLevel (@userLevels) {
@@ -427,12 +564,12 @@ sub get_useredit {
         } else {
             
             my $addsth = $dbh->prepare_cached("INSERT INTO users (username, password_md5,
-                                              password_sha1, email_addr) " .
-                                       "VALUES (?, ?, ?, ?)")
+                                              password_sha1, email_addr, chipcard_id) " .
+                                       "VALUES (?, ?, ?, ?, ?)")
                         or croak($dbh->errstr);
             my $newpw = $password_prefix . $webdata{adduser}->{pwnew} . $password_postfix;
             if(!$addsth->execute($webdata{adduser}->{username}, md5_hex($newpw),
-                                sha1_hex($newpw), $webdata{adduser}->{email})) {
+                                sha1_hex($newpw), $webdata{adduser}->{email}, $webdata{adduser}->{chipcard_id})) {
                 $webdata{statustext} = "User creation failed: " . $dbh->errstr;
                 $webdata{statuscolor} = "errortext";
                 $addsth->finish;
@@ -500,6 +637,7 @@ sub get_useredit {
         my $username = $cgi->param('username') || '';
         my $password = $cgi->param('password') || '';
         my $email = $cgi->param('email_addr') || '';
+        my $chipcard_id = $cgi->param('chipcard_id') || '';
         
         my $chsth;
         my $chstatus = 1;
@@ -520,11 +658,11 @@ sub get_useredit {
             }
         }
         if($chstatus) {
-            $chsth = $dbh->prepare_cached("UPDATE users SET email_addr = ?                                      
+            $chsth = $dbh->prepare_cached("UPDATE users SET email_addr = ?, chipcard_id = ?                                      
                                         WHERE username = ?")
             or croak($dbh->errstr);
             
-            if(!$chsth->execute($email, $username)) {
+            if(!$chsth->execute($email, $chipcard_id, $username)) {
                 $webdata{statustext} = "User change failed: " . $dbh->errstr;
                 $webdata{statuscolor} = "errortext";
                 $chsth->finish;
@@ -588,6 +726,7 @@ sub get_useredit {
         my %ud = (
             username    =>  $user->{username},
             email_addr  =>  $user->{email_addr},
+            chipcard_id =>  $user->{chipcard_id},
             rights      =>  \@urights,
         );
         
@@ -603,19 +742,11 @@ sub get_useredit {
             data    => $template);
 }
 
-sub register {
-    my $self = shift;
+
+sub register_publicurl {
+    my ($self, $url) = @_;
     
-    $self->register_webpath($self->{login}->{webpath}, "get");
-    $self->register_webpath($self->{logout}->{webpath}, "get");
-    $self->register_webpath($self->{pwchange}->{webpath}, "get");
-    $self->register_webpath($self->{useredit}->{webpath}, "get");
-    $self->register_webpath($self->{viewselect}->{webpath}, "get");
-    $self->register_webpath($self->{sessionrefresh}->{webpath}, "get");
-    $self->register_prefilter("prefilter");
-    $self->register_postfilter("postfilter");
-    $self->register_defaultwebdata("get_defaultwebdata");
-    $self->register_prerender("prerender");
+    push @{$self->{publicurls}}, $url;
     return;
 }
 
@@ -630,11 +761,15 @@ sub prefilter {
     $self->{currentSessionID} = undef;
     
     if($webpath eq $self->{login}->{webpath} || $webpath eq $self->{logout}->{webpath} ||
-       $webpath =~ /^\/(pics|static|logo)\//) {
+       $webpath =~ /^\/(pics|static|logo)\// || $webpath ~~ @{$self->{publicurls}}) {
         # Ok, we need to access our own pages as well as all
         # stuff in /static, /pics and /logo to display the login and logout pages,
         # so don't block them ;-)
         # This also speeds up the process a little bit
+        #
+        # Also, make sure some (externally) registered public urls are available for
+        # everyone
+        #
         return;
     }
     
@@ -648,14 +783,13 @@ sub prefilter {
     if($self->validateSessionID($session, $cgi)) {
         $user = $self->{server}->{modules}->{$self->{memcache}}->get($session);
         if(defined($user)) {
-            while(ref($user) eq "REF") {
-                $user = $$user;
-            }
+            $user = dbderef($user);
         }
 
         if(defined($user)) {
             # Check if the user tries to open something he's not allowed to
             foreach my $ur (@{$self->{userlevels}->{userlevel}}) {
+                next if(!defined($ur->{path}));
                 my $checkpath = "^" .  $ur->{path};
                 if(($webpath =~ /$checkpath/ && !$user->{$ur->{db}})) {
             #warn "Forbidden path $webpath\n";
@@ -678,6 +812,8 @@ sub prefilter {
             my %currentData = (sessionid    =>  $session,
                                user         =>  $user->{username},
                                email_addr    =>    $user->{email_addr},
+                               company      =>  $user->{company},
+                               chipcard_id  =>  $user->{chipcard_id},
                                type         =>  $user->{type},
                                view            =>    $user->{view},
                                logoview        =>    $user->{logoview},
@@ -979,9 +1115,9 @@ We're sorry for that!
                 </options>
         </module>
 
-=head2 get
+=head2 register_publicurl
 
-Login/logout/user managment/password change/session refresh form dispatch.
+Takes one argument. Register additional public URLS (need to be the FULL path).
 
 =head2 get_login
 
@@ -1043,7 +1179,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

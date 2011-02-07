@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Worker::DirCleaner;
@@ -13,8 +13,11 @@ use Date::Simple ('date', 'today');
 use File::stat;
 
 use Carp;
+use Readonly;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
+
+Readonly my $YEARBASEOFFSET => 1900;
 
 sub new {
     my ($proto, %config) = @_;
@@ -113,7 +116,7 @@ sub clean {
         next if(!-f "$dir/$fname");
         my $date_string;
         my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(stat("$dir/$fname")->mtime);
-        $year += 1900;
+        $year += $YEARBASEOFFSET;
         $mon += 1; $mon = doFPad($mon, 2);
         $mday = doFPad($mday, 2);
         $date_string = "$year-$mon-$mday";
@@ -228,7 +231,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

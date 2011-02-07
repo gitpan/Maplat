@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               Maplat
-version:            0.994
+version:            0.995
 abstract:           The MAPLAT Web Framework
 author:
     - Rene Schickbauer <rene.schickbauer@gmail.com>
@@ -28,16 +28,26 @@ requires:
     File::stat:           0
     File::Temp:           0
     FileHandle:           0
+    GD:                   0
+    GD::Graph:            0
     Getopt::Long:         0
     HTML::Parse:          0
+    HTML::TableExtract:   0
     HTTP::Server::Simple::CGI:  0
     IO::Handle:           0
     IO::Socket::SSL:      0
     Mail::Sendmail:       0
     MIME::Base64:         0
     MIME::QuotedPrint:    0
+    Net::Ping:            0
     Net::Server::PreFork:  0
+    Net::SNMP:            0
+    Net::SSLeay:          0
     PDF::Report:          0
+    POE::Component::Proxy::TCP:  0
+    POE::Filter::Line:    0
+    POE::Filter::Stream:  0
+    Readonly:             0
     Socket:               0
     Storable:             0
     String::CRC32:        0
@@ -45,6 +55,7 @@ requires:
     Template:             0
     Test::More:           0
     Time::HiRes:          0
+    Weather::Google:      0
     WWW::Mechanize:       0
     XML::Simple:          0
     YAML::XS:             0

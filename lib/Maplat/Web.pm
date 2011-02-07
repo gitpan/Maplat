@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 
@@ -6,7 +6,7 @@ package Maplat::Web;
 use strict;
 use warnings;
 use base qw(HTTP::Server::Simple::CGI);
-use English;
+use English '-no_match_vars';
 
 # ------------------------------------------
 # MAPLAT - Magna ProdLan Administration Tool
@@ -14,7 +14,7 @@ use English;
 #   Command-line Version
 # ------------------------------------------
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 use Template;
 use Data::Dumper;
@@ -22,36 +22,54 @@ use FileHandle;
 use Socket;
 use Data::Dumper;
 use Maplat::Helpers::Mascot;
+use Module::Load;
 #use IO::Socket::SSL;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Web::Accesslog;
+use Maplat::Web::AutoDialogs;
 use Maplat::Web::BaseModule;
 use Maplat::Web::BrowserWorkarounds;
 use Maplat::Web::CommandQueue;
+use Maplat::Web::ComputerDB::Computers;
+use Maplat::Web::ComputerDB::GlobalCostunits;
+use Maplat::Web::ComputerDB::GlobalOperatingSystem;
+use Maplat::Web::ComputerDB::GlobalProdlines;
 use Maplat::Web::Debuglog;
 use Maplat::Web::DirCleaner;
 use Maplat::Web::DocsSearch;
 use Maplat::Web::DocsSpreadSheet;
 use Maplat::Web::DocsWordProcessor;
 use Maplat::Web::Errors;
+use Maplat::Web::FileMan;
+use Maplat::Web::FiltertableSupport;
+use Maplat::Web::Logging::Devices;
+use Maplat::Web::Logging::Graphs;
+use Maplat::Web::Logging::Report;
 use Maplat::Web::Login;
 use Maplat::Web::LogoCache;
+use Maplat::Web::MapMaker;
 use Maplat::Web::MemCache;
 use Maplat::Web::MemCachePg;
 use Maplat::Web::MemCacheSim;
 use Maplat::Web::OracleDB;
 use Maplat::Web::PathRedirection;
 use Maplat::Web::PostgresDB;
+use Maplat::Web::PreventGetWithArgs;
+use Maplat::Web::RootFiles;
 use Maplat::Web::SendMail;
 use Maplat::Web::SessionSettings;
 use Maplat::Web::StandardFields;
 use Maplat::Web::StaticCache;
 use Maplat::Web::Status;
+use Maplat::Web::TT::Translate;
 use Maplat::Web::TemplateCache;
 use Maplat::Web::Themes;
+use Maplat::Web::Translate;
 use Maplat::Web::UserSettings;
+use Maplat::Web::VNC;
 use Maplat::Web::VariablesADM;
+use Maplat::Web::WebApps;
 #=!=END-AUTO-INCLUDES
 
 use Carp;
@@ -102,7 +120,7 @@ my %httpstatuscodes = (
 
 sub handle_request {
     my ($self, $cgi) = @_;
-    my $webpath = $cgi->path_info();
+    my $webpath = $cgi->path_info(); 
     my %header = (  -system  =>  "MAPLAT Version $VERSION",
                     -creator => 'Rene \'cavac\' Schickbauer',
                     -complaints_to   => 'rene.schickbauer@gmail.com',
@@ -219,6 +237,10 @@ sub handle_request {
             $header{"-Content-Length"} = length($result{data});
         }
     }
+    
+    if(defined($result{"Content-Disposition"})) {
+        $header{"-Content-Disposition"} = $result{"Content-Disposition"};
+    }
 
     # Confirm to HEAD request standard. Disable body generation. This should
     # NOT touch any headers incl. Content-Length, we just don't *deliver*
@@ -232,6 +254,7 @@ sub handle_request {
         # Some results do not have a body
         print $result{data};
     }
+    #print STDERR $result{status} . " $webpath\n";
     return; 
 }
 
@@ -248,7 +271,7 @@ sub startconfig {
     if(defined($self->{maplat}->{forking}) && $self->{maplat}->{forking}) {
         # Create new subroutine to tell HTTP::Server::Simple that we want
         # to be a preforking server
-        no strict 'refs';
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
         *{__PACKAGE__ . "::net_server"} = sub {
             my $server = 'Net::Server::PreFork';
             return $server;
@@ -256,33 +279,84 @@ sub startconfig {
 
         $self->{maplat}->{forking} = 1;
     } else {
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
+        *{__PACKAGE__ . "::net_server"} = sub {
+            my $server = 'Net::Server::Single';
+            return $server;
+        };
+        
         $self->{maplat}->{forking} = 0;
     }
 
 
-#    if(defined($self->{maplat}->{usessl}) && $self->{maplat}->{usessl}) {
-#        # Create subroutine to tell HTTP::Server::Simple that we want to use SSL
-#        # with the certs defined in the config. This is done by creating an
-#        # accept hook
-#        no strict 'refs';
-#        *{__PACKAGE__ . "::accept_hook"} = sub {
-#            my $self = shift;
-#            my $fh   = $self->stdio_handle;
-#
-#            $self->SUPER::accept_hook(@_);
-#
-#            my $newfh =
-#            IO::Socket::SSL->start_SSL( $fh, 
-#                SSL_server    => 1,
-#                SSL_use_cert  => 1,
-#                SSL_cert_file => $_[0]->{maplat}->{sslcert},
-#                SSL_key_file  => $_[0]->{maplat}->{sslkey},
-#            )
-#            or carp "problem setting up SSL socket: " . IO::Socket::SSL::errstr();
-#
-#            $self->stdio_handle($newfh) if $newfh;
-#        };
-#    }
+    if(defined($self->{maplat}->{usessl}) && $self->{maplat}->{usessl}) {
+        # we need to ovverride the _process_request sub, because we need to disable
+        # the two calls to binmode.
+        no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
+        *{__PACKAGE__ . "::_process_request"} =
+            sub {
+                my $self = shift;
+                
+                    # Create a callback closure that is invoked for each incoming request;
+                    # the $self above is bound into the closure.
+                    sub {
+                
+                        $self->stdio_handle(*STDIN) unless $self->stdio_handle;
+                
+                 # Default to unencoded, raw data out.
+                 # if you're sending utf8 and latin1 data mixed, you may need to override this
+                        #binmode STDIN,  ':raw';
+                        #binmode STDOUT, ':raw';
+                
+                        # The ternary operator below is to protect against a crash caused by IE
+                        # Ported from Catalyst::Engine::HTTP (Originally by Jasper Krogh and Peter Edwards)
+                        # ( http://dev.catalyst.perl.org/changeset/5195, 5221 )
+                        
+                        my $remote_sockaddr = getpeername( $self->stdio_handle );
+                        my ( $iport, $iaddr ) = $remote_sockaddr ? sockaddr_in($remote_sockaddr) : (undef,undef);
+                        my $peeraddr = $iaddr ? ( inet_ntoa($iaddr) || "127.0.0.1" ) : '127.0.0.1';
+                        
+                        my ( $method, $request_uri, $proto ) = $self->parse_request;
+                        
+                        if(!$self->valid_http_method($method) ) {
+                            $self->bad_request;
+                            return;
+                        }
+                
+                        $proto ||= "HTTP/0.9";
+                
+                        my ( $file, $query_string )
+                            = ( $request_uri =~ /([^?]*)(?:\?(.*))?/s );    # split at ?
+                
+                        $self->setup(
+                            method       => $method,
+                            protocol     => $proto,
+                            query_string => ( defined($query_string) ? $query_string : '' ),
+                            request_uri  => $request_uri,
+                            path         => $file,
+                            localname    => $self->host,
+                            localport    => $self->port,
+                            peername     => $peeraddr,
+                            peeraddr     => $peeraddr,
+                            peerport     => $iport,
+                        );
+                
+                        # HTTP/0.9 didn't have any headers (I think)
+                        if ( $proto =~ m{HTTP/(\d(\.\d)?)$} and $1 >= 1 ) {
+                
+                            my $headers = $self->parse_headers
+                                or do { $self->bad_request; return };
+                
+                            $self->headers($headers);
+                
+                        }
+                
+                        $self->post_setup_hook if $self->can("post_setup_hook");
+                
+                        $self->handler;
+                    }
+                }                
+    }
         
     # Clean up configuration
     my %tmpPaths;
@@ -305,6 +379,8 @@ sub startconfig {
     $self->{logoutitems} = \@logoutitems;
     my @sessionrefresh;
     $self->{sessionrefresh} = \@sessionrefresh;
+    my @cleanup;
+    $self->{cleanup} = \@cleanup;
     
     return; 
 }
@@ -347,23 +423,19 @@ sub configure {
     # ...what perl module it's supposed to be...
     my $perlmodule = "Maplat::Web::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
-    croak("$perlmodule not loaded");
-
-        ## Local module - load it first
-        #my $requirestr;
-        #if($self->{compiled} && $OSNAME eq 'MSWin32') {
-        #    my $boundname = "Web_" . $perlmodulename . ".pm";
-        #    print "Dynamically loading bound file for $boundname...\n";
-        #    my $modfilename = PerlApp::extract_bound_file($boundname);
-        #    croak("$perlmodule not bound to application") unless defined $modfilename;
-        #    print "  Bound file name $modfilename\n";
-        #    $requirestr = "require '" . $modfilename . "'";            
-        #} else {
-        #    print "Dynamically loading $perlmodule...\n";
-        #    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
-        #}
-        #eval $requirestr;
+        if($self->{compiled}) {
+            croak("$perlmodule not loaded - no dynamic loading within compiled binaries!");
+        } else {
+            print "Dynamically loading $perlmodule...\n";
+            load $perlmodule;
+        }
     }
+    
+    # Check again
+    if(!defined($perlmodule->VERSION)) {
+        croak("$perlmodule not loaded");
+    }
+
     $config{pmname} = $perlmodule;
 
     # and its parent
@@ -481,7 +553,7 @@ BEGIN {
     # writing them down one-by-one. This makes consistent changes much easier, but
     # you need perl wizardry level +12 to understand how it works...
 
-    no strict 'refs';
+    no strict 'refs'; ## no critic (TestingAndDebugging::ProhibitNoStrict)
     
     # -- Deep magic begins here...
     my %varsubs = (
@@ -492,6 +564,7 @@ BEGIN {
         loginitem       => "loginitems",
         logoutitem      => "logoutitems",
         sessionrefresh  => "sessionrefresh",
+        cleanup         => "cleanup",
         prerender       => "prerender",
     );
     for my $a (keys %varsubs){
@@ -654,6 +727,10 @@ Add a task callback. DEPRECATED, use Maplat::Worker for tasks.
 Register a webpath. The registered module/function is called whenever a corresponding path is used
 in a browser request.
 
+=head2 add_cleanup
+
+Add a callback for "cleanup" operations after a page is rendered.
+
 =head1 SEE ALSO
 
 Maplat::Worker
@@ -666,7 +743,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -6,18 +6,18 @@
             </tr>
             <tr class="tabheader">
                 <th>
-                    <div class="infotext">Status</div>
+                    <div class="infotext">[% tr.tr("Status") %]</div>
                 </th>
             </tr>
             <tr class="odd">
                 <th>
-                    <div class="errortext">[% statustext %]</div>
+                    <div class="errortext">[% tr.tr(statustext) %]</div>
                 </th>
             </tr>
         [% END %]
         <tr>
-            <td>The requested URL can not be accessed with your user privileges!<br>
-                Maybe your access right have changed, you used a stored link or something weird just happened.</td>
+            <td>[% tr.tr("The requested URL can not be accessed with your user privileges!") %]<br>
+                [% tr.tr("Maybe your access right have changed, you used a stored link or something weird just happened.") %]</td>
         </tr>
     </table>
 </p>

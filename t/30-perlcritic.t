@@ -35,7 +35,7 @@ plan(tests => $tests);
 
 
 my $rcfile = File::Spec->catfile( 't', 'perlcriticrc' );
-Test::Perl::Critic->import( -profile => $rcfile );
+Test::Perl::Critic->import( -profile => $rcfile, -verbose => "[%p] %m at line %l, column %c.  (Severity: %s)\n   %e\n");
 #all_critic_ok();
 foreach my $fname (@fnames) {
     #diag "** $fname";

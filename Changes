@@ -1,5 +1,54 @@
 Revision history for Perl extension Maplat.
 
+0.995 Mon Feb 07 11:00:00 2011
+     - Add option to backup as different user
+     - Worker can now do backups
+     - Fix command handling for commands without arguments (column = NULL)
+     - Added Admin Report
+     - Added File manager for VNC
+     - Added VNC subsystem
+     - Added basic tablefilter, added "acronis agent" flag
+     - Removed unused vars
+     - Also show PBP page number for Perl::Critic
+     - Added WebApps, switchable small tools and toys (currently implemented: Snow and Weather)
+     - Changed hard tabs to spaces
+     - Basic MapMaker function for computerdb
+     - Made graphical computer location work (alpha status)
+     - Fixed editing computers
+     - Use db instead of hardcoded domains
+     - Fixed cost unit mask
+     - Added is_active flag to globalprodlines mask
+     - Modernized user/admin handling of commandqueue
+     - Bugfix - return false on unknown user
+     - Bugfix deref
+     - Added multilanguage support
+     - Force "use English" to work properly
+     - Adapted perlcritic settings to correspond to my darkpan default
+     - Re-instating dynamic loading of modules
+     - Disable helloworld test by default. Depending on host configuration, this might block.
+     - Automatically require Net::SSLeay
+     - Added basic HTTPS support
+     - Add support for files in the root directory
+     - Add some missing mime types to StaticCache
+     - Prevent certain XSS attacks
+     - Merge plugin ComputerDB into main framework
+     - Merge Maplat::Logging into the main framework
+     - Add "loading" graphic
+     - Fixed perlcritic (heredoc terminator must be quotet)
+     - Fixed bug with undefined EXTRAINC
+     - More jquery magic, more forms. Also moved mapping.tt to its rightfull project
+     - Update to new jquery-ui 1.8.6
+     - Bugfix: Wrong handling of local copy of variable
+     - Switched back from YAML::XS to YAML::Syck - YAML::XS seems to have problems with complex reference structures
+     - Fixed missing "rollback", added more debug info
+     - Fixed lexical variable reuse
+     - Added optimized handling from memcachedb to session_settings
+     - Fixed POD coverage
+     - Bugfix: Return success on set if yamldata hasn't changed
+     - Lower the number of updates in memcachedb (only update if value has actually changed). Use YAML encoded data in realmemcache to do the checking.
+     - Fixed handling of lifeticks in MemCachePg (now pass-through wrapper to real memcache)
+     - Bugfixes for forking mode
+
 0.994 Sun Oct 17 20:40:00 2010
     - Pass Perl::Critic level 3
     - Perl::Critic Allow a max. of 7 arguments in function definitions (although varargs aren't counted)

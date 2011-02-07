@@ -5,24 +5,33 @@
       self.close();
       return false;
     }
+    
+    function setChipcardMode () {
+        var modeField = document.getElementById("mode");
+        if(modeField) {
+            modeField.value = "chipcard";
+        }
+        return true;
+    }
 </script>
 <form name="login" method="post" action="[% PostLink %]">
     <table class="data" align="center" id="MainDataTable">
         <tr class="tabheader">
             <th colspan="2">
-                <div class="infotext">Authentification</div>
+                <div class="infotext">[% tr.tr("Authentification") %]</div>
             </th>
         </tr>
         <tr>
-            <td align="right">Name:</td>
+            <td align="right">[% tr.tr("Name") %]:</td>
             <td align="left">
                 <input type="text" name="username" size="30" value="[% username %]" maxLength=40 size=20>
             </td>
         </tr>
         <tr>
-            <td align="right">Password:</td>
+            <td align="right">[% tr.tr("Password") %]:</td>
             <td align="left">
                 <input type="password" name="password" size="30" id="password" value="[% password %]">
+                <input type="hidden" name="mode" id="mode" value="username">
             </td>
         </tr>
         <tr>
@@ -39,30 +48,32 @@
             </tr>
             <tr>
                 <th colspan="2">
-                    <div class="[% statuscolor %]">[% statustext %]</div>
+                    <div class="[% statuscolor %]">[% tr.tr(statustext) %]</div>
                 </th>
             </tr>
         [% END %]
         <tr>
             <td colspan="2" align="center">
-                <input type="submit" value="Login">
-                <input type="reset" value="Reset">
+                <input type="submit" value="[% tr.tr("Login") %]">
+                <input type="reset" value="[% tr.tr("Reset") %]">
+                <input type="submit" value="[% tr.tr("Chipcard login") %]" onClick="return setChipcardMode();">
             </td>
         </tr>
         <tr>
             <td colspan="2" align="center">
-                <a href="" onClick="return openMainWindow('[% PostLink %]');">Make me an application</a>
+                <a href="" onClick="return openMainWindow('[% PostLink %]');">[% tr.tr("Make me an application") %]</a>
             </td>
         </tr>
     </table>
 
     <script type="text/javascript">
-		// <![CDATA[
-		$(function() {
-			$("#password").hashmask();
-		});
-		// ]]>
-	</script
+        // <![CDATA[
+        // Currently not implemented
+        $(function() {
+        //    $("#password").hashmask();
+        });
+        // ]]>
+    </script
 
 </form>
 

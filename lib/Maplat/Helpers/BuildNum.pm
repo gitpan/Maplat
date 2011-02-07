@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Helpers::BuildNum;
@@ -10,9 +10,9 @@ use Maplat::Helpers::DateStrings;
 use Sys::Hostname;
 
 use base qw(Exporter);
-our @EXPORT = qw(calcBuildNum readBuildNum); ## no critic
+our @EXPORT = qw(calcBuildNum readBuildNum); ## no critic (Modules::ProhibitAutomaticExportation)
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 sub calcBuildNum {
     state $fixedbuildnum;
@@ -41,7 +41,7 @@ sub readBuildNum {
         $isCompiled = 0;
     }
     
-    if($isCompiled || (defined($main::isCompiled) && $main::isCompiled == 1)) {
+    if($isCompiled || (defined($main::isCompiled) && $main::isCompiled == 1)) { ## no critic (Variables::ProhibitPackageVars)
         print "Extracting compiled-in build number\n";
         foreach my $line (PerlApp::get_bound_file($fname)) {
             chomp $line;
@@ -147,7 +147,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::CommandQueue;
@@ -9,7 +9,7 @@ use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::CommandHelper;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 
 use Carp;
@@ -32,11 +32,12 @@ sub reload {
 
 sub register {
     my $self = shift;
-    $self->register_webpath($self->{webpath}, "get");
+    $self->register_webpath($self->{admin}->{webpath}, "get_admin");
+    $self->register_webpath($self->{user}->{webpath}, "get_user");
     return;
 }
 
-sub get {
+sub get_admin {
     my ($self, $cgi) = @_;
     
     my $webpath = $cgi->path_info();
@@ -47,9 +48,9 @@ sub get {
     my %webdata = 
     (
         $self->{server}->get_defaultwebdata(),
-        PageTitle       =>  $self->{pagetitle},
+        PageTitle       =>  $self->{admin}->{pagetitle},
         LinkTitle        =>  $self->{linktitle},
-        webpath            =>  $self->{webpath},
+        webpath            =>  $self->{admin}->{webpath},
     );
     
     my %allcommands = (
@@ -68,15 +69,23 @@ sub get {
         DEACTIVATE_PRODLINE    => 'prodline',
         ACTIVATE_ALL_LINES    => 'alllines',
         DEACTIVATE_ALL_LINES=> 'alllines',
+        ADMIN_REPORT        => 'report',
+        VNC_REPORT          => 'report',
+        BACKUP              => 'simple',
     );
-    my @commandorder = ('ANALYZE_TABLE', 'VACUUM_ANALYZE_TABLE', 'VACUUM_ANALYZE', 'VACUUM_FULL',
+    my @commandorder = ('ADMIN_REPORT', 'VNC_REPORT',
+                        'ANALYZE_TABLE', 'VACUUM_ANALYZE_TABLE', 'VACUUM_ANALYZE', 'VACUUM_FULL',
                         'REINDEX_TABLE', 'REINDEX_ALL_TABLES',
+                        'BACKUP',
                         'ACTIVATE_PRODLINE', 'DEACTIVATE_PRODLINE',
                         'ACTIVATE_ALL_LINES', 'DEACTIVATE_ALL_LINES',
                         #'BACKUP', 'CALCULATE_STATS',
                         'UPDATE_SIGNALS_TRIGGER',
                         'NOP_OK', 'NOP_FAIL',
                         );
+    
+    my @reportusers = ($webdata{userData}->{email_addr}, '*');
+    $webdata{Recievers} = \@reportusers;
     
     # Read some extra data
     my $prodlinesth = $dbh->prepare_cached("SELECT * " .
@@ -133,6 +142,12 @@ sub get {
                         push @arglist, ($cgi->param('prodline') || '');
                     } elsif($allcommands{$command} eq "table") {
                         push @arglist, ($cgi->param('tablename') || '');
+                    } elsif($allcommands{$command} eq "report") {
+                        my $reciever = $cgi->param('reciever') || '';
+                        if($reciever eq '*') {
+                            $reciever = '';
+                        }
+                        push @arglist, ($reciever);
                     }
 
                     if(!$sth->execute($command, $isodate, \@arglist)) {
@@ -208,12 +223,37 @@ sub get {
     }
     $webdata{admincommands} = \@admincommands;
     
-    my $template = $th->get("commandqueue", 1, %webdata);
+    my $template = $th->get("commandqueue_admin", 1, %webdata);
     return (status  =>  404) unless $template;
     return (status  =>  200,
             type    => "text/html",
             data    => $template);
 }
+
+sub get_user {
+    my ($self, $cgi) = @_;
+    
+    my $webpath = $cgi->path_info();
+    my $dbh = $self->{server}->{modules}->{$self->{db}};
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    my $th = $self->{server}->{modules}->{templates};
+
+    my %webdata = 
+    (
+        $self->{server}->get_defaultwebdata(),
+        PageTitle       =>  $self->{user}->{pagetitle},
+        LinkTitle        =>  $self->{linktitle},
+        webpath            =>  $self->{user}->{webpath},
+        commands        => getCommandQueue($dbh, $memh),
+    );
+    
+    my $template = $th->get("commandqueue_user", 1, %webdata);
+    return (status  =>  404) unless $template;
+    return (status  =>  200,
+            type    => "text/html",
+            data    => $template);
+}
+
 
 1;
 __END__
@@ -240,16 +280,26 @@ checks if the user is an admin and gives an extended view.
                 <pm>CommandQueue</pm>
                 <options>
                         <linktitle>Commands</linktitle>
-                        <webpath>/rbs/command</webpath>
-                        <pagetitle>Commands</pagetitle>
+                        <admin>
+                            <webpath>/admin/command</webpath>
+                            <pagetitle>Commands</pagetitle>
+                        </admin>
+                        <user>
+                            <webpath>/rbs/command</webpath>
+                            <pagetitle>Commands</pagetitle>
+                        </user>
                         <db>maindb</db>
                         <memcache>memcache</memcache>
                 </options>
         </module>
 
-=head2 get
+=head2 get_user
 
-The CommandQueue form
+The CommandQueue form (user mode)
+
+=head2 get_admin
+
+The CommandQueue form (admin mode)
 
 =head1 Dependencies
 
@@ -269,7 +319,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

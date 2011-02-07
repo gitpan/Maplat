@@ -3,22 +3,22 @@ use ExtUtils::MakeMaker;
 
 my $lib;
 BEGIN {
-	use vars qw/$sep/;
+    use vars qw/$sep/;
     my %sep = (
-			   MacOS   => ':',
+               MacOS   => ':',
                MSWin32 => '\\',
                os2     => '\\',
                VMS     => '\\',
                NetWare => '\\',
                dos     => '\\',
-			   );
+               );
     $sep = $sep{$^O} || '/';
     $lib = join $sep, 't', 'lib';
 }
 
 use lib $lib;
 if ($VERSION =~ /_/) {
-	print "WARNING! This is a test version ($VERSION) and should not be used in production!\n";
+    print "WARNING! This is a test version ($VERSION) and should not be used in production!\n";
 }
 
 # We need the version information to properly set compiler options later
@@ -29,23 +29,23 @@ my $p = App::Info::Handler::Prompt->new;
 #my $pg = App::Info::RDBMS::PostgreSQL->new(on_unknown => $p);
 my $pg = App::Info::RDBMS::PostgreSQL->new();
 my ($major_ver, $minor_ver, $patch, $conf, $bindir) = map {$pg->$_}
-	qw/major_version minor_version patch_version configure bin_dir/;
+    qw/major_version minor_version patch_version configure bin_dir/;
 my $initdb = '';
 if (defined $bindir and -d $bindir) {
-	my $testinitdb = "$bindir${sep}initdb";
-	if (-e $testinitdb) {
-		$initdb = $testinitdb;
-	}
+    my $testinitdb = "$bindir${sep}initdb";
+    if (-e $testinitdb) {
+        $initdb = $testinitdb;
+    }
 }
 
 
 {
-	package MY; ## no critic
-	sub MY::test { ## no critic
-		my $string = shift->SUPER::test(@_);
-		$string =~ s/(PERL_DL_NONLAZY=1)/PGINITDB="$initdb" $1/g;
-		return $string;
-	}
+    package MY; ## no critic
+    sub MY::test { ## no critic
+        my $string = shift->SUPER::test(@_);
+        $string =~ s/(PERL_DL_NONLAZY=1)/PGINITDB="$initdb" $1/g;
+        return $string;
+    }
 }
 
 
@@ -86,6 +86,7 @@ WriteMakefile(
             "MIME::Base64" => 0,
             "MIME::QuotedPrint" => 0,
             "Net::Server::PreFork" => 0,
+            "Net::SSLeay" => 0,
             "PDF::Report" => 0,
             "Socket" => 0,
             "Storable" => 0,
@@ -96,7 +97,20 @@ WriteMakefile(
             "Time::HiRes" => 0,
             "XML::Simple" => 0,
             "YAML::XS" => 0,
+            "Weather::Google" => 0,
             "WWW::Mechanize" => 0,
+            GD        => 0,
+            "GD::Graph"    => 0,
+            "Net::Ping" => 0,
+            "Readonly" => 0,
+            "HTML::TableExtract"    => 0,
+            "Net::SNMP"    => 0,
+
+            # tcp tunnel stuff for VNC
+            "POE::Component::Proxy::TCP" => 0,
+            "POE::Filter::Stream" => 0,
+            "POE::Filter::Line" => 0,
+
     }, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?     ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM  => 'lib/Maplat.pm', # retrieve abstract from module

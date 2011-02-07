@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Helpers::CommandHelper;
@@ -10,9 +10,9 @@ use Maplat::Helpers::DateStrings;
 use Carp;
 
 use base qw(Exporter);
-our @EXPORT = qw(getCommandQueue); ## no critic
+our @EXPORT = qw(getCommandQueue); ## no critic (Modules::ProhibitAutomaticExportation)
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 sub getCommandQueue {
     my ($dbh, $memh, $command) = @_;
@@ -92,7 +92,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

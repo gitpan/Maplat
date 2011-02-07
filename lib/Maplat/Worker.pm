@@ -1,25 +1,33 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Worker;
 use strict;
 use warnings;
-use English;
+use English '-no_match_vars';
 use Carp;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 #=!=START-AUTO-INCLUDES
 use Maplat::Worker::AdminCommands;
+use Maplat::Worker::AutoScheduler;
+use Maplat::Worker::BackupCommand;
 use Maplat::Worker::BaseModule;
 use Maplat::Worker::Commands;
 use Maplat::Worker::DirCleaner;
+use Maplat::Worker::Logging::EMCTime;
+use Maplat::Worker::Logging::PAC3200;
+use Maplat::Worker::Logging::USV;
 use Maplat::Worker::MemCache;
 use Maplat::Worker::MemCachePg;
 use Maplat::Worker::OracleDB;
 use Maplat::Worker::PostgresDB;
+use Maplat::Worker::ReportCommands;
 use Maplat::Worker::Reporting;
 use Maplat::Worker::SendMail;
+use Maplat::Worker::VNCTunnel;
+use Maplat::Worker::Weather;
 #=!=END-AUTO-INCLUDES
 
 
@@ -41,6 +49,9 @@ sub startconfig {
     my @workers;
     $self->{workers} = \@workers;
     
+    my @cleanup;
+    $self->{cleanup} = \@cleanup;
+    
     my %tmpModules;
     $self->{modules} = \%tmpModules;
     return; 
@@ -55,23 +66,19 @@ sub configure {
     # ...what perl module it's supposed to be...
     my $perlmodule = "Maplat::Worker::$perlmodulename";
     if(!defined($perlmodule->VERSION)) {
-    croak("$perlmodule not loaded");
-    
-        ## Local module - load it first
-        #my $requirestr;
-        #if($self->{compiled} && $OSNAME eq 'MSWin32') {
-        #    my $boundname = "Worker_" . $perlmodulename . ".pm";
-        #    print "Dynamically loading bound file for $boundname...\n";
-        #    my $modfilename = PerlApp::extract_bound_file($boundname);
-        #    croak("$perlmodule not bound to application") unless defined $modfilename;
-        #    print "  Bound file name $modfilename\n";
-        #    $requirestr = "require '" . $modfilename . "'";            
-        #} else {
-        #    print "Dynamically loading $perlmodule...\n";
-        #    $requirestr = "require \"Maplat/Web/" . $perlmodulename . ".pm\"";
-        #}
-        #eval $requirestr;
+        if($self->{compiled}) {
+            croak("$perlmodule not loaded - no dynamic loading within compiled binaries!");
+        } else {
+            print "Dynamically loading $perlmodule...\n";
+            load $perlmodule;
+        }
     }
+    
+    # Check again
+    if(!defined($perlmodule->VERSION)) {
+        croak("$perlmodule not loaded");
+    }
+    
     $config{pmname} = $perlmodule;
     
     # and its parent
@@ -95,11 +102,22 @@ sub run {
     my ($self) = @_;
     
     my $workCount = 0;
+    
+    # Run all worker functions
     foreach my $worker (@{$self->{workers}}) {
         my $module = $worker->{Module};
         my $funcname = $worker->{Function} ;
         
         $workCount += $module->$funcname();
+    }
+
+    # Run cleanup functions
+    foreach my $worker (@{$self->{cleanup}}) {
+        my $module = $worker->{Module};
+        my $funcname = $worker->{Function} ;
+        
+        #$workCount += $module->$funcname();
+        $module->$funcname();
     }
     
     return $workCount;
@@ -114,6 +132,18 @@ sub add_worker {
     );
     
     push @{$self->{workers}}, \%conf;
+    return; 
+}
+
+sub add_cleanup {
+    my ($self, $module, $funcname) = @_;
+    
+    my %conf = (
+        Module  => $module,
+        Function=> $funcname
+    );
+    
+    push @{$self->{cleanup}}, \%conf;
     return; 
 }
 
@@ -209,6 +239,11 @@ Finish up configuration and prepare for run().
 
 Add a worker callback. Called by the various worker modules.
 
+=head2 add_cleanup
+
+Add a worker cleanup callback. This is mostly used by the database modules
+to make sure there are no active transactions at the end of a run.
+
 =head2 run
 
 Do a single run of all registered worker callbacks.
@@ -225,7 +260,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

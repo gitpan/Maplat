@@ -7,12 +7,12 @@
                 </tr>
                 <tr class="tabheader">
                     <th colspan="2">
-                        <div class="infotext">Status</div>
+                        <div class="infotext">[% tr.tr("Status") %]</div>
                     </th>
                 </tr>
                 <tr>
                     <th colspan="2">
-                        <div class="[% statuscolor %]">[% statustext %]</div>
+                        <div class="[% statuscolor %]">[% tr.tr(statustext) %]</div>
                     </th>
                 </tr>
             [% END %]
@@ -20,7 +20,7 @@
                     <td colspan="2">&nbsp;</td>
             </tr>
             <tr>
-                <td align="right">Reciever:</td>
+                <td align="right">[% tr.tr("Reciever") %]:</td>
                 <!--<td><input type="text" size="70" maxlength="100" name="reciever" value="[% reciever %]">-->
                 <td>
                     <table class="data" align="center" id="SubHelperTable1">
@@ -39,18 +39,18 @@
                 </td>
             </tr>
             <tr>
-                <td align="right">Subject:</td>
+                <td align="right">[% tr.tr("Subject") %]:</td>
                 <td><input type="text" size="70" maxlength="100" name="subject" value="[% subject %]">
             </tr>
             <tr>
-                <td align="right">Text:</td>
+                <td align="right">[% tr.tr("Text") %]:</td>
                 <td><textarea cols="70" rows="15" name="mailtext">[% mailtext %]</textarea>
             </tr>
             <tr>
                 <td colspan="2">
                     <table border="0" cellpadding="4" cellspacing="5" align="right">
-                        <td align="center"><input type="submit" value="Send"></td>
-                        <td align="center"><input type="reset" value="Reset"></td>
+                        <td align="center"><input type="submit" value="[% tr.tr("Send") %]"></td>
+                        <td align="center"><input type="reset" value="[% tr.tr("Reset") %]"></td>
                     </table>
                 </td>
             </tr>

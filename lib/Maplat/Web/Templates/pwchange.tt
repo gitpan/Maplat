@@ -2,23 +2,23 @@
     <table class="data" align="center" id="MainDataTable">
         <tr class="tabheader">
             <th colspan="2">
-                <div class="infotext">Change Password</div>
+                <div class="infotext">[% tr.tr("Change Password") %]</div>
             </th>
         </tr>
         <tr>
-            <td align="right">Old Password</td>
+            <td align="right">[% tr.tr("Old Password") %]</td>
             <td align="left">
                 <input type="password" name="pwold" value="[% pwold %]" maxLength=40 size=20>
             </td>
         </tr>
         <tr>
-            <td align="right">New Password:</td>
+            <td align="right">[% tr.tr("New Password") %]</td>
             <td align="left">
                 <input type="password" name="pwnew1" value="[% pwnew1 %]">
             </td>
         </tr>
         <tr>
-            <td align="right">Repeat:</td>
+            <td align="right">[% tr.tr("Repeat Password") %]</td>
             <td align="left">
                 <input type="password" name="pwnew2" value="[% pwnew2 %]">
             </td>
@@ -29,15 +29,15 @@
         [% IF statustext %]
             <tr class="odd">
                 <th colspan="2">
-                    <div class="[% statuscolor %]">[% statustext %]</div>
+                    <div class="[% statuscolor %]">[% tr.tr(statustext) %]</div>
                 </th>
             </tr>
         [% END %]
         <tr>
             <td colspan="2">
                 <table border="0" cellpadding="4" cellspacing="5" align="right">
-                    <td align="center"><input type="submit" value="Save"></td>
-                    <td align="center"><input type="reset" value="Reset"></td>
+                    <td align="center"><input type="submit" value="[% tr.tr("Save") %]"></td>
+                    <td align="center"><input type="reset" value="[% tr.tr("Reset") %]"></td>
                 </table>
             </td>
         </tr>

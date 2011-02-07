@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Helpers::CSVFilter;
@@ -9,7 +9,7 @@ use Carp;
 
 use Maplat::Helpers::FileSlurp qw(slurpTextFile);
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 sub new {
     my ($class, %config) = @_;
@@ -59,7 +59,7 @@ sub filter {
             $ofname =~ s/#/$filecount/g;
 
             # Special filehandle handling (i most likely know what i'm doing here), don't use Perl::Critic on this one
-            open($ofh, ">", $ofname) or croak($!); ## no critic
+            open($ofh, ">", $ofname) or croak($!); ## no critic (InputOutput::RequireBriefOpen)
             $self->{logger}->debuglog("Opening new output file $ofname");
             $outline = "";
             for(my $i = 0; $i < $#headers; $i++) {
@@ -135,7 +135,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

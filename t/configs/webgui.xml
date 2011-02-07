@@ -22,7 +22,7 @@
 		<options>
 			<view>
 				<path>Maplat/Web/Templates</path>
-				<base>/<base>
+                <base>/</base>
 			</view>
 			<!-- Layout-Template to use for complete pages -->
 			<layout>maplatlayout</layout>

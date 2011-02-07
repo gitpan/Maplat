@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Helpers::FileSlurp;
@@ -10,9 +10,7 @@ our @EXPORT_OK = qw(slurpTextFile slurpBinFile);
 
 use Carp;
 
-our $VERSION = 0.994;
-
-our @lines;
+our $VERSION = 0.995;
 
 sub slurpTextFile {
     my $fname = shift;
@@ -21,11 +19,9 @@ sub slurpTextFile {
     # We have to make sure we use binmode *and* turn on the line termination variable completly
     # to work around the multiple idiosynchrasies of Perl on Windows
     open(my $fh, "<", $fname) or croak($!);
-    my $holdTerminator = $/; ## no critic
-    undef $/;
+    local $/ = undef;
     binmode($fh);
     my $data = <$fh>;
-    $/ = $holdTerminator; ## no critic
     close($fh);
     
     # Convert line endings to a single format. This certainly is not perfect,
@@ -47,11 +43,9 @@ sub slurpBinFile {
     # We have to make sure we use binmode *and* turn on the line termination variable completly
     # to work around the multiple idiosynchrasies of Perl on Windows
     open(my $fh, "<", $fname) or croak($!);
-    my $holdTerminator = $/; ## no critic
-    undef $/;
+    local $/ = undef;
     binmode($fh);
     my $data = <$fh>;
-    $/ = $holdTerminator; ## no critic
     close($fh);
 
     return $data;
@@ -97,7 +91,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

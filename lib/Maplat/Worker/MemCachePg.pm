@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Worker::MemCachePg;
@@ -9,8 +9,13 @@ use base qw(Maplat::Worker::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::BuildNum;
 use Maplat::Helpers::DBSerialize;
+use Time::HiRes qw(sleep);
+use Readonly;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
+
+Readonly::Scalar my $RETRY_COUNT  => 10;
+Readonly::Scalar my $RETRY_WAIT   => 0.05;
 
 use Carp;
 
@@ -47,22 +52,22 @@ sub register {
     return;
 }
 
-sub refresh_lifetick {
-    my ($self) = @_;
-    
-    my $ticktime = time;
-    
-    if(($ticktime - $self->{oldtime}) > 10) {
-        # only refresh every 10 seconds or so to keep
-        # resource usage low - otherwise we'd be setting
-        # the lifetick 1000 times a second or so
-        my $tickkey = "LIFETICK::" . $$;
-        $self->set($tickkey, $ticktime);
-        $self->{oldtime} = $ticktime;
-        return 1;
-    }
-    return 0;
-}
+#sub refresh_lifetick {
+#    my ($self) = @_;
+#    
+#    my $ticktime = time;
+#    
+#    if(($ticktime - $self->{oldtime}) > 10) {
+#        # only refresh every 10 seconds or so to keep
+#        # resource usage low - otherwise we'd be setting
+#        # the lifetick 1000 times a second or so
+#        my $tickkey = "LIFETICK::" . $$;
+#        $self->set($tickkey, $ticktime);
+#        $self->{oldtime} = $ticktime;
+#        return 1;
+#    }
+#    return 0;
+#}
 
 sub get {
     my ($self, $key) = @_;
@@ -75,50 +80,76 @@ sub get {
    # Try memcached first
     my $dataref = $memh->get($key);
     if(defined($dataref)) {
-      return $dataref;
-   }
+        return Maplat::Helpers::DBSerialize::dbthaw($dataref);
+    }
 
    # Ok, try DB
    my $sth = $dbh->prepare_cached("SELECT yamldata FROM memcachedb WHERE mckey = ?")
          or croak($dbh->errstr);
    $sth->execute($key) or croak($dbh->errstr);
    while((my @line = $sth->fetchrow_array)) {
-      $dataref = Maplat::Helpers::DBSerialize::dbthaw($line[0]);
+      $dataref = $line[0];
       last;
    }
    $sth->finish;
+   $dbh->rollback;
 
    # Ok, now also store data in memcached
    if(defined($dataref)) {
       $memh->set($key, $dataref);
+      return Maplat::Helpers::DBSerialize::dbthaw($dataref);
    }
-   return $dataref;
+
+   return;
 }
 
-sub set {
+sub set { ## no critic (NamingConventions::ProhibitAmbiguousNames)
     my ($self, $key, $data) = @_;
 
     $key = $self->sanitize_key($key);
     my $dbh = $self->{server}->{modules}->{$self->{db}};
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
 
-    # Always store as reference
-    if((ref $data) ne 'SCALAR') {
-        $memh->set($key, \$data);
-    } else {
-        $memh->set($key, $data);
+    my $yamldata = Maplat::Helpers::DBSerialize::dbfreeze($data);
+
+    # Check if it already matches the key we have
+    my $olddata = $memh->get($key);
+    if(defined($olddata) && $olddata eq $yamldata) {
+        return 1;
     }
+ 
+    $memh->set($key, $yamldata);   
+    
+    # Always store as reference
+#    if((ref $data) ne 'SCALAR') {
+#        $memh->set($key, \$data);
+#    } else {
+#        $memh->set($key, $data);
+#    }
    
     my $sth = $dbh->prepare_cached("SELECT merge_memcachedb(?, ?)")
             or return;
-    if(!$sth->execute($key, Maplat::Helpers::DBSerialize::dbfreeze($data))) {
-      $sth->finish;
-      $dbh->rollback;
+    my $count = 0;
+    my $ok = 0;
+    while($count < $RETRY_COUNT) {
+        # print STDERR "WORKER: Merge $key\n";
+        if($sth->execute($key, $yamldata)) {
+            $ok = 1;
+            $sth->finish;
+            $dbh->commit;
+            last;
+        } else {
+            $count++;
+            $sth->finish;
+            $dbh->rollback;
+            if($count < $RETRY_COUNT) {
+                sleep($RETRY_WAIT); # try again in a short time
+            }
+        }
+    }
+    if(!$ok) {
         croak($dbh->errstr);
-   } else {
-      $sth->finish;
-      $dbh->commit;
-   }
+    }
     
     return 1;
 }
@@ -133,9 +164,30 @@ sub delete {## no critic(BuiltinHomonyms)
    
    my $sth = $dbh->prepare_cached("DELETE FROM memcachedb WHERE mckey = ?")
          or croak($dbh->errstr);
-   $sth->execute($key) or croak($dbh->errstr);
-   $sth->finish;
-   $dbh->commit;
+         
+         
+    my $count = 0;
+    my $ok = 0;
+    while($count < $RETRY_COUNT) {
+        print STDERR "WORKER: Delete $key\n";
+        if($sth->execute($key)) {
+            $sth->finish;
+            $dbh->commit;
+            $ok = 1;
+            last;
+        } else {
+            $sth->finish;
+            $dbh->rollback;
+            $count++;
+            if($count < $RETRY_COUNT) {
+                sleep($RETRY_WAIT); # try again in a short time
+            }
+        }
+    }
+
+    if(!$ok) {
+        croak($dbh->errstr);
+    }
     
     return 1;
 }
@@ -165,6 +217,21 @@ sub get_activecommands {
    # any real problem in the production system if this fails or is plain wrong...
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
    return $memh->get_activecommands();
+}
+
+
+sub refresh_lifetick {
+    my ($self) = @_;
+
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    return $memh->refresh_lifetick();
+}
+
+sub disable_lifetick {
+    my ($self) = @_;
+
+    my $memh = $self->{server}->{modules}->{$self->{memcache}};
+    return $memh->refresh_lifetick();
 }
 
 1;
@@ -218,7 +285,11 @@ overhead (double store).
 
 =head2 refresh_lifetick
 
-Refreshed the lifetick variable for this application in memcached.
+Refresh the lifetick variable for this application in (real) memcached.
+
+=head2 disable_lifetick
+
+Disable the lifetick variable for this application in (real) memcached.
 
 =head2 set
 
@@ -273,7 +344,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

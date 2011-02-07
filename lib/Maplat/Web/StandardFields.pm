@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::StandardFields;
@@ -7,9 +7,10 @@ use warnings;
 
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
+use Maplat::Helpers::DBSerialize;
 use Sys::Hostname;
 
-our $VERSION = 0.994;
+our $VERSION = 0.995;
 
 
 use Carp;
@@ -67,9 +68,7 @@ sub get_defaultwebdata {
     foreach my $key (keys %{$self->{memory}->{fields}}) {
         my $data = $memh->get($self->{memory}->{fields}->{$key});
         if(defined($data) && $self->{memory}->{fields}->{$key} =~ /^(BUILD|VERSION)\:\:/go) {
-            while(ref($data) eq "SCALAR") {
-                $data = $$data;
-            }
+            $data = dbderef($data);
         }
         $webdata->{$key} = $data;
 
@@ -154,7 +153,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

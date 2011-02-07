@@ -1,13 +1,13 @@
 <p align="center">
     <table class="data" align="center" id="MainDataTable">
         <tr class="tabheader">
-            <th>Reporttime</th>
-            <th>Text</th>
+            <th>[% tr.tr("Reporttime") %]</th>
+            <th>[% tr.tr("Text") %]</th>
         </tr>
         [% FOREACH debugline IN debuglines %]
             <tr>
                     <td>[% debugline.timestamp %]</td>
-					<td>[% debugline.message %]</td>
+                    <td>[% debugline.message %]</td>
             </tr>
         [% END %]
     </table>

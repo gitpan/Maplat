@@ -32,6 +32,8 @@ BEGIN {
     use_ok('XML::Simple');
     use_ok('WWW::Mechanize');
     use_ok('Maplat::Web::MemCacheSim');
+    unshift @INC, "t";
+    use_ok('Maplat::Web::HelloWorld');
     require("t/testhelpers.pm");
     my $daemon_status = connect_memcached();
     if($daemon_status ne "OK") {

@@ -1,4 +1,4 @@
-# MAPLAT  (C) 2008-2010 Rene Schickbauer
+# MAPLAT  (C) 2008-2011 Rene Schickbauer
 # Developed under Artistic license
 # for Magna Powertrain Ilz
 package Maplat::Web::SessionSettings;
@@ -8,10 +8,14 @@ use warnings;
 use base qw(Maplat::Web::BaseModule);
 use Maplat::Helpers::DateStrings;
 use Maplat::Helpers::DBSerialize;
-
+use Time::HiRes qw(time);
 use Carp;
+use Readonly;
 
-our $VERSION = 0.994;
+Readonly::Scalar my $RETRY_COUNT  => 10;
+Readonly::Scalar my $RETRY_WAIT   => 0.05;
+
+our $VERSION = 0.995;
 
 
 sub new {
@@ -21,7 +25,7 @@ sub new {
     my $self = $class->SUPER::new(%config); # Call parent NEW
     bless $self, $class; # Re-bless with our class
 
-    $self->{lastClean} = getCurrentHour();
+    $self->{lastClean} = time;
 
     return $self;
 }
@@ -63,7 +67,7 @@ sub get {
     
     $settingref = $memh->get($keyname);
     if(defined($settingref)) {
-        return (1, $settingref);
+        return (1, Maplat::Helpers::DBSerialize::dbthaw($settingref));
     }
 
     # Ok, try DB
@@ -71,21 +75,22 @@ sub get {
           or croak($dbh->errstr);
     $sth->execute($sessionid, $settingname) or croak($dbh->errstr);
     while((my @line = $sth->fetchrow_array)) {
-       $settingref = Maplat::Helpers::DBSerialize::dbthaw($line[0]);
+       $settingref = $line[0];
        last;
     }
     $sth->finish;
+    $dbh->rollback;
  
     # Ok, now also store data in memcached
     if(defined($settingref)) {
        $memh->set($keyname, $settingref);
-        return (1, $settingref);
+        return (1, Maplat::Helpers::DBSerialize::dbthaw($settingref));
     }
     
     return 0;
 }
 
-sub set {
+sub set { ## no critic (NamingConventions::ProhibitAmbiguousNames)
     my ($self, $settingname, $settingref) = @_;
     
     my $loginh = $self->{server}->{modules}->{$self->{login}};
@@ -96,20 +101,41 @@ sub set {
     return 0 if(!defined($sessionid));
     
     my $keyname = "SessionSettings::" . $sessionid . "::" . $settingname;
-    $memh->set($keyname, $settingref);
+    
+    my $yamldata = Maplat::Helpers::DBSerialize::dbfreeze($settingref);
+    my $olddata = $memh->get($keyname);
+    if(defined($olddata) && $olddata eq $yamldata) {
+        return 1;
+    }
+    
+    $memh->set($keyname, $yamldata);
 
     my $sth = $dbh->prepare_cached("SELECT merge_sessionsettings(?, ?, ?)")
             or return;
-    if(!$sth->execute($sessionid, $settingname, Maplat::Helpers::DBSerialize::dbfreeze($settingref))) {
-        $sth->finish;
-        $dbh->rollback;
+            
+    my $count = 0;
+    my $ok = 0;
+    while($count < $RETRY_COUNT) {
+        # print STDERR "SESSION: ($count) Merge $sessionid / $settingname\n";
+        if(!$sth->execute($sessionid, $settingname, $yamldata)) {
+            $sth->finish;
+            $dbh->rollback;
+            $count++;
+            if($count < $RETRY_COUNT) {
+                sleep($RETRY_WAIT); # sleep for a short time and try again
+            }
+         } else {
+            $sth->finish;
+            $dbh->commit;
+            $ok = 1;
+            last;
+         }
+    }
+    if(!$ok) {
         croak($dbh->errstr);
-     } else {
-        $sth->finish;
-        $dbh->commit;
-     }
+    }
     
-      return 1;
+    return 1;
 }
 
 sub delete {## no critic(BuiltinHomonyms)
@@ -132,11 +158,31 @@ sub delete {## no critic(BuiltinHomonyms)
 
     $memh->delete($keyname);
 
-   my $sth = $dbh->prepare_cached("DELETE FROM session_settings WHERE sid = ? AND skey = ?")
+    my $sth = $dbh->prepare_cached("DELETE FROM session_settings WHERE sid = ? AND skey = ?")
          or croak($dbh->errstr);
-   $sth->execute($sessionid, $settingname) or croak($dbh->errstr);
-   $sth->finish;
-   $dbh->commit;
+         
+    my $count = 0;
+    my $ok = 0;
+    while($count < $RETRY_COUNT) {
+        # print STDERR "SESSION: Delete ($count) $sessionid / $settingname\n";
+        if(!$sth->execute($sessionid, $settingname)) {
+            $sth->finish;
+            $dbh->rollback;
+            $count++;
+            if($count < $RETRY_COUNT) {
+                sleep($RETRY_WAIT);
+            }
+        } else {
+            $sth->finish;
+            $dbh->commit;
+            $ok = 1;
+            last;
+        }
+    }
+    
+    if(!$ok) {
+        croak($dbh->errstr);
+    }
     
     return 1;
 }
@@ -165,6 +211,7 @@ sub list {
         push @settingnames, $line[0];
     }
     $sth->finish;
+    $dbh->rollback;
 
     return (1, @settingnames);
 }
@@ -197,7 +244,12 @@ sub on_refresh {
 
     my $memh = $self->{server}->{modules}->{$self->{memcache}};
     my $dbh = $self->{server}->{modules}->{$self->{db}};
-    $self->set('lastUpdate', time);
+    
+    my $curTime = time;
+    my ($oldOk, $oldTime) = $self->get('lastUpdate');
+    if(!$oldOk || ($curTime - $oldTime) > 60) {
+        $self->set('lastUpdate', $curTime);
+    }
 
     
     # Clean up stale sessions - this is only needed if the user
@@ -206,9 +258,12 @@ sub on_refresh {
     # Only run this once an hour, automatic logout is handled by the Login module
     # by way of expiring cookies/session information. We need this just in case the
     # Login module CAN'T handle the logout because the browser was forced closed.
-    my $now = getCurrentHour();
-    #return if($now eq $self->{lastClean});
-
+    #
+    # We only do the cleanup every 5 minutes or so
+    my $now = time;
+    
+    return if(($now - $self->{lastClean}) < 300);
+    $self->{lastClean} = $now;
 
     my $liststh = $dbh->prepare("SELECT sid, yamldata
                                 FROM session_settings
@@ -219,13 +274,14 @@ sub on_refresh {
     my @stalesessions;
     my $currTime = time;
     while((my @line = $liststh->fetchrow_array)) {
-        my $oldTime = Maplat::Helpers::DBSerialize::dbthaw($line[1]);
-        my $age = ($currTime - $$oldTime) / 3600;
+        my $soldTime = Maplat::Helpers::DBSerialize::dbthaw($line[1]);
+        my $age = ($currTime - $$soldTime) / 3600;
         if($age > 2) {
             push @stalesessions, $line[0];
         }
     }
     $liststh->finish;
+    $dbh->rollback;
 
     foreach my $session (@stalesessions) {
         # "Manually" logout users
@@ -338,7 +394,7 @@ Rene Schickbauer, E<lt>rene.schickbauer@gmail.comE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2008-2010 by Rene Schickbauer
+Copyright (C) 2008-2011 by Rene Schickbauer
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
